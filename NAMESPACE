@@ -1,0 +1,37 @@
+import(lattice)
+importFrom(leaps, regsubsets)
+importFrom(stats, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile)
+importFrom(grDevices, rainbow, dev.off)
+importFrom(latticeExtra, panel.2dsmoother)
+importFrom(utils, tail)
+export(
+	bestModel,
+	boxcox,
+	checkConsistency,
+	cNORM.GUI,
+	computePowers,
+	derivationTable,
+	derive,
+	getNormCurve,
+	normTable,
+	plotBoxCox,
+	plotDensity,
+	plotDerivative,
+	plotNormCurves,
+	plotPercentiles,
+	plotPercentileSeries,
+	plotSubset,
+	plotRaw,
+	plotNorm,
+	predictNormBC,
+	predictNorm,
+	predictRaw,
+	predictRawBC,
+	prepareData,
+	printSubset,
+	rangeCheck,
+	rankByGroup,
+	rankBySlidingWindow,
+	rawTable,
+	regressionFunction, simulateRasch
+)
