@@ -17,12 +17,12 @@
 #' plotRaw(normData, m, group="group")
 #' @export
 plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
-  if(is.null(raw)){
+  if (is.null(raw)) {
     raw <- attr(data, "raw")
   }
 
 
-  if (group != ""&&!is.null(group)&&!(group %in% colnames(data))) {
+  if (group != "" && !is.null(group) && !(group %in% colnames(data))) {
     warning(paste(c("Grouping variable '", group, "' does not exist in data object. Please check variable names and fix 'group' parameter in function call."), collapse = ""))
     group <- NULL
   }
@@ -36,54 +36,57 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
   d$raw <- data[[raw]]
   d$fitted <- model$fitted.values
   d$diff <- d$fitted - d$raw
+  mse <- round(model$rmse, digits=4)
+  r <- round(cor(d$fitted, d$raw,
+                 use = "pairwise.complete.obs"), digits = 4)
   d <- as.data.frame(d)
-  if(group != "" && !is.null(group)){
+  if (group != "" && !is.null(group)) {
     d$group <- data[[group]]
     d$group <- as.factor(d$group)
 
-  if ( type == 0) {
-    lattice::xyplot(fitted ~ raw | group, d,
-    main = paste("Manifest vs. Fitted Raw Scores by ", group),
-    ylab = "Fitted Scores",
-    xlab = "Manifest Scores",
-    grid = TRUE,
-    auto.key = TRUE,
-    abline = c(0, 1), lwd = 1
-    )
-  }else{
-    lattice::xyplot(diff ~ raw | group, d,
-                    main = paste("Manifest Raw Scores vs. Difference Scores by ", group),
-                    ylab = "Difference Scores",
-                    xlab = "Manifest Scores",
-                    grid = TRUE,
-                    auto.key = TRUE,
-                    panel=function(...) {
-                      panel.xyplot(...)
-                      panel.abline(h=.0, col = 2, lty = 2)
-                    }
-    )
-  }
-  }else{
-    if(type == 0){
-    lattice::xyplot(fitted ~ raw, d,
-                    main = paste("Manifest vs. Fitted Raw Scores\n", "r = ", round(cor(d$fitted, d$raw, use = "pairwise.complete.obs"), digits = 4)),
-                    ylab = "Fitted Scores",
-                    xlab = "Manifest Scores",
-                    grid = TRUE,
-                    auto.key = TRUE,
-                    abline = c(0, 1), lwd = 1
-    )
-    }else{
+    if (type == 0) {
+      lattice::xyplot(fitted ~ raw | group, d,
+        main = paste("Observed vs. Fitted Raw Scores by ", group, "\nr = ", r, ", RMSE = ", mse),
+        ylab = "Fitted Scores",
+        xlab = "Observed Score",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1
+      )
+    } else {
+      lattice::xyplot(diff ~ raw | group, d,
+        main = paste("Observed Raw Scores vs. Difference Scores by ", group, "\nr = ", r, ", RMSE = ", mse),
+        ylab = "Difference Scores",
+        xlab = "Observed Score",
+        grid = TRUE,
+        auto.key = TRUE,
+        panel = function(...) {
+          panel.xyplot(...)
+          panel.abline(h = .0, col = 2, lty = 2)
+        }
+      )
+    }
+  } else {
+    if (type == 0) {
+      lattice::xyplot(fitted ~ raw, d,
+        main = paste("Observed vs. Fitted Raw Scores\nr = ", r, ", RMSE = ", mse),
+        ylab = "Fitted Scores",
+        xlab = "Observed Score",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1
+      )
+    } else {
       lattice::xyplot(diff ~ raw, d,
-                      main = paste("Manifest Raw Scores vs. Difference Scores"),
-                      ylab = "Difference",
-                      xlab = "Manifest Scores",
-                      grid = TRUE,
-                      auto.key = TRUE,
-                      panel=function(...) {
-                        panel.xyplot(...)
-                        panel.abline(h=.0, col = 2, lty = 2)
-                      }
+        main = paste("Observed Raw Scores vs. Difference Scores\nr = ", r, ", RMSE = ", mse),
+        ylab = "Difference",
+        xlab = "Observed Score",
+        grid = TRUE,
+        auto.key = TRUE,
+        panel = function(...) {
+          panel.xyplot(...)
+          panel.abline(h = .0, col = 2, lty = 2)
+        }
       )
     }
   }
@@ -94,7 +97,8 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' The function plots the manifest norm score against the fitted norm score from
 #' the inverse regression model per group. This helps to inspect the precision
 #' of the modeling process. The scores should not deviate too far from
-#' regression line.
+#' regression line. The computation of the standard error is based on Ooserhuis, van der
+#' Ark and Sijtsma (2016).
 #' @param data The raw data within a data.frame
 #' @param model The regression model
 #' @param group The grouping variable, use empty string "" for no group
@@ -102,6 +106,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' @param maxNorm upper bound of fitted norm scores
 #' @param type Type of display: 0 = plot manifest against fitted values, 1 = plot
 #' manifest against difference values
+#' @references Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
 #' @examples
 #' # Load example data set, compute model and plot results
 #' \dontrun{
@@ -111,17 +116,17 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' }
 #' @export
 plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, type = 0) {
-  if(is.null(minNorm)){
-    #warning("minNorm not specified, taking absolute minimum norm score from modeling...")
+  if (is.null(minNorm)) {
+    # warning("minNorm not specified, taking absolute minimum norm score from modeling...")
     minNorm <- model$minL1
   }
 
-  if(is.null(maxNorm)){
-    #warning("maxNorm not specified, taking absolute maximum norm score from modeling...")
+  if (is.null(maxNorm)) {
+    # warning("maxNorm not specified, taking absolute maximum norm score from modeling...")
     maxNorm <- model$maxL1
   }
 
-  if (group != ""&&!is.null(group)&&!(group %in% colnames(data))) {
+  if (group != "" && !is.null(group) && !(group %in% colnames(data))) {
     warning(paste(c("Grouping variable '", group, "' does not exist in data object. Please check variable names and fix 'group' parameter in function call."), collapse = ""))
     group <- NULL
   }
@@ -129,56 +134,66 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
   d <- data
   raw <- data[[model$raw]]
   age <- data[[model$age]]
-  fitted <- predictNorm(raw, age, model, minNorm = minNorm, maxNorm = maxNorm)
-  diff <- fitted - data$normValue
-  if(group != "" && !is.null(group)){
+  d$fitted <- predictNorm(raw, age, model, minNorm = minNorm, maxNorm = maxNorm)
+  d$diff <- d$fitted - data$normValue
+  d <- d[!is.na(d$fitted), ]
+  d <- d[!is.na(d$diff), ]
+
+  se <- round(sum(sqrt(d$diff^2))/(nrow(d)-2), digits = 4)
+  r <- round(cor(d$fitted, d$normValue, use = "pairwise.complete.obs"), digits = 4)
+
+  if (group != "" && !is.null(group)) {
     d$group <- data[[group]]
     d$group <- as.factor(d$group)
-    if(type == 0){
-    lattice::xyplot(fitted ~ normValue | group, d,
-                    main = paste("Manifest vs. Fitted Norm Scores by ", group),
-                    ylab = "Fitted Scores",
-                    xlab = "Manifest Scores",
-                    grid = TRUE,
-                    auto.key = TRUE,
-                    abline = c(0, 1), lwd = 1
-    )
-  }else{
-    lattice::xyplot(diff ~ normValue | group, d,
-                    main = paste("Manifest Norm Scores vs. Difference Scores by ", group),
-                    ylab = "Difference",
-                    xlab = "Manifest Scores",
-                    grid = TRUE,
-                    auto.key = TRUE,
-                    abline = c(0, 1), lwd = 1,
-                    panel=function(...) {
-                      panel.xyplot(...)
-                      panel.abline(h=.0, col = 2, lty = 2)
-                    }
-    )
-  }
-  }else{
-    if(type == 0){
-    lattice::xyplot(fitted ~ normValue, d,
-                    main = paste("Manifest vs. Fitted Norm Scores\nr = ", round(cor(fitted, d$normValue, use = "pairwise.complete.obs"), digits = 4)),
-                    ylab = "Fitted Scores",
-                    xlab = "Manifest Scores",
-                    grid = TRUE,
-                    auto.key = TRUE,
-                    abline = c(0, 1), lwd = 1
-    )
-    }else{
+    if (type == 0) {
+      lattice::xyplot(fitted ~ normValue | group, d,
+        main = paste("Observed vs. Fitted Norm Scores by ", group, "\nr = ",
+                     r, ", SE = ", se),
+        ylab = "Fitted Scores",
+        xlab = "Observed Scores",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1
+      )
+    } else {
+      lattice::xyplot(diff ~ normValue | group, d,
+        main = paste("Observed Norm Scores vs. Difference Scores by ", group, "\nr = ",
+                     r, ", SE = ", se),
+        ylab = "Difference",
+        xlab = "Observed Scores",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1,
+        panel = function(...) {
+          panel.xyplot(...)
+          panel.abline(h = .0, col = 2, lty = 2)
+        }
+      )
+    }
+  } else {
+    if (type == 0) {
+      lattice::xyplot(fitted ~ normValue, d,
+        main = paste("Observed vs. Fitted Norm Scores\nr = ",
+                     r, ", SE = ", se),
+        ylab = "Fitted Scores",
+        xlab = "Observed Scores",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1
+      )
+    } else {
       lattice::xyplot(diff ~ normValue, d,
-                      main = paste("Manifest Norm Scores vs. Difference Scores"),
-                      ylab = "Difference",
-                      xlab = "Manifest Scores",
-                      grid = TRUE,
-                      auto.key = TRUE,
-                      abline = c(0, 1), lwd = 1,
-                      panel=function(...) {
-                        panel.xyplot(...)
-                        panel.abline(h=.0, col = 2, lty = 2)
-                      }
+        main = paste("Observed Norm Scores vs. Difference Scores\nr = ",
+                     r, ", SE = ", se),
+        ylab = "Difference",
+        xlab = "Observed Scores",
+        grid = TRUE,
+        auto.key = TRUE,
+        abline = c(0, 1), lwd = 1,
+        panel = function(...) {
+          panel.xyplot(...)
+          panel.abline(h = .0, col = 2, lty = 2)
+        }
       )
     }
   }
@@ -228,19 +243,19 @@ plotNormCurves <- function(model, normList = c(30, 40, 50, 60, 70),
                            step = 0.1,
                            minRaw = NULL,
                            maxRaw = NULL) {
-  if(is.null(minAge)){
+  if (is.null(minAge)) {
     minAge <- model$minA1
   }
 
-  if(is.null(maxAge)){
+  if (is.null(maxAge)) {
     maxAge <- model$maxA1
   }
 
-  if(is.null(minRaw)){
+  if (is.null(minRaw)) {
     minRaw <- model$minRaw
   }
 
-  if(is.null(maxRaw)){
+  if (is.null(maxRaw)) {
     maxRaw <- model$maxRaw
   }
 
@@ -343,29 +358,27 @@ plotPercentiles <- function(data,
                             scale = NULL,
                             type = 7,
                             title = NULL) {
-
-
-  if(is.null(group)){
+  if (is.null(group)) {
     group <- attr(data, "group")
   }
 
-  if(is.null(minAge)){
+  if (is.null(minAge)) {
     minAge <- model$minA1
   }
 
-  if(is.null(maxAge)){
+  if (is.null(maxAge)) {
     maxAge <- model$maxA1
   }
 
-  if(is.null(minRaw)){
+  if (is.null(minRaw)) {
     minRaw <- model$minRaw
   }
 
-  if(is.null(maxRaw)){
+  if (is.null(maxRaw)) {
     maxRaw <- model$maxRaw
   }
 
-  if(is.null(raw)){
+  if (is.null(raw)) {
     raw <- model$raw
   }
 
@@ -378,10 +391,10 @@ plotPercentiles <- function(data,
   }
 
   # compute norm scores from percentile vector
-  if (is.null(scale)){
+  if (is.null(scale)) {
     # fetch scale information from model
     T <- qnorm(percentiles, model$scaleM, model$scaleSD)
-  }else if ((typeof(scale) == "double" && length(scale) == 2)) {
+  } else if ((typeof(scale) == "double" && length(scale) == 2)) {
     T <- qnorm(percentiles, scale[1], scale[2])
   } else if (scale == "IQ") {
     T <- qnorm(percentiles, 100, 15)
@@ -413,7 +426,8 @@ plotPercentiles <- function(data,
         list(data[, group]),
         FUN = function(x) quantile(x,
             probs = percentiles,
-            type = type
+            type = type,
+            na.rm = TRUE
           )
       )
     )
@@ -422,11 +436,15 @@ plotPercentiles <- function(data,
   colnames(percentile.actual) <- c(c(group), NAMES)
 
   # build finer grained grouping variable for prediction
-  gr <- percentile.actual[, group]
-  leng <- length(gr)
-  FIRST <- gr[[1]]
-  LAST <- gr[[leng]]
-  AGEP <- seq(FIRST, LAST, length.out = leng * 2 - 1)
+  AGEP <- unique(data[, group])
+  lines <- length(AGEP)
+
+  for (m in 1:lines - 1) {
+    share <- (AGEP[m + 1] - AGEP[m]) / 5
+    additional <- c(share + AGEP[m], 2 * share + AGEP[m], 3 * share + AGEP[m], 4 * share + AGEP[m])
+    AGEP <- c(AGEP, additional)
+  }
+
 
   # fitt predicted percentiles
   percentile.fitted <- data.frame(matrix(NA,
@@ -471,8 +489,10 @@ plotPercentiles <- function(data,
     }
   }
 
-  if(is.null(title)){
-    title <- "Manifest and Fitted Percentile Curves"
+  if (is.null(title)) {
+    r <- round(cor(data[, raw], model$fitted.values,
+                   use = "pairwise.complete.obs"), digits = 4)
+    title <- paste0("Observed and Predicted Percentile Curves\nModel: ", model$ideal.model, ", R2 = ", round(model$subsets$adjr2[[model$ideal.model]], digits = 4))
   }
   plot <- lattice::xyplot(formula(xyFunction), percentile,
     panel = function(...)
@@ -510,32 +530,30 @@ plotPercentiles <- function(data,
 #' m <- bestModel(data = normData)
 #' plotDensity(m, group = c (2, 4, 6))
 #' @export
-plotDensity <- function(    model,
-                            minRaw = NULL,
-                            maxRaw = NULL,
-                            minNorm = NULL,
-                            maxNorm = NULL,
-                            group = NULL) {
-
-
-  if(is.null(minNorm)){
+plotDensity <- function(model,
+                        minRaw = NULL,
+                        maxRaw = NULL,
+                        minNorm = NULL,
+                        maxNorm = NULL,
+                        group = NULL) {
+  if (is.null(minNorm)) {
     minNorm <- model$minL1
   }
 
-  if(is.null(maxNorm)){
+  if (is.null(maxNorm)) {
     maxNorm <- model$maxL1
   }
 
-  if(is.null(minRaw)){
+  if (is.null(minRaw)) {
     minRaw <- model$minRaw
   }
 
-  if(is.null(maxRaw)){
+  if (is.null(maxRaw)) {
     maxRaw <- model$maxRaw
   }
 
-  if(is.null(group)){
-    group <- c(model$minA1, (model$maxA1 + model$minA1)/2, model$maxA1)
+  if (is.null(group)) {
+    group <- c(model$minA1, (model$maxA1 + model$minA1) / 2, model$maxA1)
   }
 
   step <- (maxNorm - minNorm) / 100
@@ -545,37 +563,37 @@ plotDensity <- function(    model,
     norm <- normTable(group[[i]], model, minNorm, maxNorm, minRaw, maxRaw, step = step)
     norm$group <- rep(group[[i]], length.out = nrow(norm))
 
-    if(i==1){
+    if (i == 1) {
       matrix <- norm
-    }else{
+    } else {
       matrix <- rbind(matrix, norm)
     }
 
     i <- i + 1
   }
-  matrix <- matrix[matrix$norm>minNorm & matrix$norm<maxNorm, ]
-  matrix <- matrix[matrix$raw>minRaw&matrix$raw<maxRaw, ]
+  matrix <- matrix[matrix$norm > minNorm & matrix$norm < maxNorm, ]
+  matrix <- matrix[matrix$raw > minRaw & matrix$raw < maxRaw, ]
   matrix$density <- dnorm(matrix$norm, mean = model$scaleM, sd = model$scaleSD)
 
-   # lattice display options
+  # lattice display options
   COL <- rainbow(length(group))
   NAMES <- paste("Group ", group, sep = "")
-    panelfun <- function(..., type, group.number) {
+  panelfun <- function(..., type, group.number) {
     lattice::panel.lines(...)
   }
 
   plot <- lattice::xyplot(density ~ raw,
-                  data = matrix, groups = group,
-                  panel = function(...)
-                    lattice::panel.superpose(..., panel.groups = panelfun),
-                  main = "Density function",
-                  ylab = "Density", xlab = "Raw Score",
-                  col = COL, lwd = 1.5, grid = TRUE,
-                  key = list(
-                    corner = c(0, 1),
-                    lines = list(col = COL, lwd = 1.5),
-                    text = list(NAMES)
-                  )
+    data = matrix, groups = group,
+    panel = function(...)
+      lattice::panel.superpose(..., panel.groups = panelfun),
+    main = "Density function",
+    ylab = "Density", xlab = "Raw Score",
+    col = COL, lwd = 1.5, grid = TRUE,
+    key = list(
+      corner = c(0, 1),
+      lines = list(col = COL, lwd = 1.5),
+      text = list(NAMES)
+    )
   )
   print(plot)
   return(matrix)
@@ -584,11 +602,11 @@ plotDensity <- function(    model,
 
 #' Generates a series of plots with number curves by percentile for different models
 #'
-#'This functions makes use of 'plotPercentiles' to generate a series of plots
-#'with different number of predictors. It draws on the information provided by the model object
-#'to determine the bounds of the modeling (age and standard score range). It can be used as an
-#'additional model check to determine the best fitting model. Please have a look at the
-#''plotPercentiles' function for further information.
+#' This functions makes use of 'plotPercentiles' to generate a series of plots
+#' with different number of predictors. It draws on the information provided by the model object
+#' to determine the bounds of the modeling (age and standard score range). It can be used as an
+#' additional model check to determine the best fitting model. Please have a look at the
+#'' plotPercentiles' function for further information.
 #' @param data The raw data including the percentiles and norm scores
 #' @param model The model from the bestModel function
 #' @param start Number of predictors to start with
@@ -609,12 +627,12 @@ plotDensity <- function(    model,
 #' normData <- prepareData(elfe)
 #' model <- bestModel(data = normData)
 #' plotPercentileSeries(normData, model, start=1, end=5, group="group")
-plotPercentileSeries <- function(data, model, start = 1, end = NULL,  group = NULL,
+plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NULL,
                                  percentiles = c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975),
                                  type = 7,
-                                 filename=NULL) {
+                                 filename = NULL) {
   d <- as.data.frame(data)
-  if ((is.null(end))||(end > length(model$subsets$rss))) {
+  if ((is.null(end)) || (end > length(model$subsets$rss))) {
     end <- length(model$subsets$rss)
   }
 
@@ -672,16 +690,18 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL,  group = NU
     bestformula$k <- attributes(d)$k
 
 
-    l[[length(l) + 1]] <- cNORM::plotPercentiles(d, bestformula, minAge = model$minA1, maxAge=model$maxA1,
-                    minRaw = minR,
-                    maxRaw = maxR,
-                    percentiles = percentiles,
-                    scale = NULL,
-                    group = group,
-                    title = paste0("Manifest and Fitted Percentile Curves\nModel with ", start, " predictors, R2=", round(bestformula$subsets$adjr2[[start]], digits = 4)))
+    l[[length(l) + 1]] <- cNORM::plotPercentiles(d, bestformula,
+      minAge = model$minA1, maxAge = model$maxA1,
+      minRaw = minR,
+      maxRaw = maxR,
+      percentiles = percentiles,
+      scale = NULL,
+      group = group,
+      title = paste0("Observed and Predicted Percentiles\nModel with ", start, " predictors, R2=", round(bestformula$subsets$adjr2[[start]], digits = 4))
+    )
 
-    if(!is.null(filename)){
-      lattice::trellis.device(device="png", filename=paste0(filename, start, ".png"))
+    if (!is.null(filename)) {
+      lattice::trellis.device(device = "png", filename = paste0(filename, start, ".png"))
       print(l[[length(l)]])
       dev.off()
     }
@@ -707,8 +727,9 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL,  group = NU
 #' displayed as a dashed line.
 #' @param model The regression model from the bestModel function
 #' @param type Type of chart with 0 = adjusted R2 by number of predictors,
-#' 1 = log transformed Mallow's Cp by adjusted R2 and 2 = Bayesian Information
-#' Criterion (BIC) by adjusted R2
+#' 1 = log transformed Mallow's Cp by adjusted R2, 2 = Bayesian Information
+#' Criterion (BIC) by adjusted R2 and 3 = Root Mean Square Error (RMSE) by number
+#' of predictors
 #' @seealso bestModel, plotPercentiles, printSubset
 #' @examples
 #' normData <- prepareData()
@@ -717,7 +738,7 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL,  group = NU
 #' @export
 plotSubset <- function(model, type = 1) {
   message("Hint: Select the model with the highest BIC or Cp score while simultaneously optimizing R2.")
-  dataFrameTMP <- data.frame(adjr2=model$subsets$adjr2, bic=model$subsets$bic, cp = model$subsets$cp, nr = seq(1, length(model$subsets$adjr2), by=1))
+  dataFrameTMP <- data.frame(adjr2 = model$subsets$adjr2, bic = model$subsets$bic, cp = model$subsets$cp, RMSE = sqrt(model$subsets$rss / length(model$fitted.values)), nr = seq(1, length(model$subsets$adjr2), by = 1))
   if (type == 1) {
     lattice::xyplot(cp ~ adjr2,
       data = dataFrameTMP, type = "b",
@@ -747,7 +768,7 @@ plotSubset <- function(model, type = 1) {
         lattice::panel.xyplot(x, y, ...)
       }
     )
-  } else if(type==2){
+  } else if (type == 2) {
     lattice::xyplot(bic ~ adjr2,
       data = dataFrameTMP, type = "b",
       col.line = "lightblue", lwd = 1,
@@ -776,7 +797,15 @@ plotSubset <- function(model, type = 1) {
         lattice::panel.xyplot(x, y, ...)
       }
     )
-  }else{
+  } else if(type == 3){
+    lattice::xyplot(RMSE ~ nr,
+                    data = dataFrameTMP, type = "b",
+                    col.line = "lightblue", lwd = 1,
+                    grid = TRUE,
+                    main = "Information Function",
+                    ylab = "Root Means Square Error",
+                    xlab = "Number of Predictors" )
+  } else {
     lattice::xyplot(adjr2 ~ nr,
                     data = dataFrameTMP, type = "b",
                     col.line = "lightblue", lwd = 1,
@@ -792,8 +821,7 @@ plotSubset <- function(model, type = 1) {
                         col = c("#9933FF"),
                         lty = c(2), lwd = 2
                       ),
-                      text = list(c("Cutoff Value"
-                      ))
+                      text = list(c("Cutoff Value"))
                     ), panel = function(x, y, ...) {
                       lattice::panel.abline(
                         h = model$cutoff,
@@ -803,7 +831,6 @@ plotSubset <- function(model, type = 1) {
                       lattice::panel.xyplot(x, y, ...)
                     }
     )
-
   }
 }
 
@@ -830,8 +857,8 @@ plotSubset <- function(model, type = 1) {
 #' @param minNorm Lower end of the norm score range, in case of T scores, 25 might be good
 #' @param maxNorm Upper end of the norm score range, in case of T scores, 25 might be good
 #' @param stepNorm Stepping parameter for norm scores
-#' @param descend Reverse raw score order. If set to TRUE, lower raw scores
-#' indicate higher performance. Relevant f. e. in case of modeling errors
+#' @param order Degree of the derivative (default = 1)
+
 #' @seealso checkConsistency, bestModel, derive
 #' @examples
 #' # Load example data set, compute model and plot results
@@ -846,27 +873,29 @@ plotDerivative <- function(model,
                            maxNorm = NULL,
                            stepAge = 0.2,
                            stepNorm = 1,
-                           descend = FALSE) {
-  if(is.null(minAge)){
+                           order = 1) {
+  if (is.null(minAge)) {
     minAge <- model$minA1
   }
 
-  if(is.null(maxAge)){
+  if (is.null(maxAge)) {
     maxAge <- model$maxA1
   }
 
-  if(is.null(minNorm)){
+  if (is.null(minNorm)) {
     minNorm <- model$minL1
   }
 
-  if(is.null(maxNorm)){
+  if (is.null(maxNorm)) {
     maxNorm <- model$maxL1
   }
 
-  print(cNORM::rangeCheck(model, minAge, maxAge, minNorm, maxNorm))
   rowS <- c(seq(minNorm, maxNorm, length.out = 1 + (maxNorm - minNorm) / stepNorm))
   colS <- c(seq(minAge, maxAge, length.out = 1 + (maxAge - minAge) / stepAge))
-  coeff <- cNORM::derive(model)
+  coeff <- cNORM::derive(model, order)
+  cat(paste0(cNORM::rangeCheck(model, minAge, maxAge, minNorm, maxNorm), " Coefficients from the ", order, " order derivative function:\n\n"))
+  print(coeff)
+
   devFrame <- data.frame(matrix(NA, nrow = length(rowS), ncol = length(colS)))
   dev2 <- data.frame()
 
@@ -877,7 +906,7 @@ plotDerivative <- function(model,
   while (i <= ncol(devFrame)) {
     j <- 1
     while (j <= nrow(devFrame)) {
-      devFrame[j, i] <- cNORM::predictRaw(rowS[[j]], colS[[i]], coeff, descend)
+      devFrame[j, i] <- cNORM::predictRaw(rowS[[j]], colS[[i]], coeff)
       colList <- c(rowS[[j]], colS[[i]], devFrame[j, i])
       dev2 <- rbind(dev2, colList)
       j <- j + 1
@@ -887,21 +916,35 @@ plotDerivative <- function(model,
   colnames(dev2) <- c("X", "Y", "Z")
 
   # define range and colors
-  min <- min(dev2$Z) - .1
-  max <- max(dev2$Z) + .1
+  min <- min(dev2$Z)
+  max <- max(dev2$Z)
+  diff <- (max - min) / 10
+  min <- min - diff
+  max <- max + diff
   step <- (max - min) / 1000
   regions <- rainbow(1000, end = .8)
   key <- list(at = seq(min, max, by = step))
   sequence <- seq(min, max, by = step)
 
+  desc <- "(1st Order Derivative)"
+  if (order == 2) {
+    desc <- "(2nd Order Derivative)"
+  } else if (order == 3) {
+    desc <- "(3rd Order Derivative)"
+  } else if (order > 2) {
+    desc <- paste0(order, "th Order Derivative)")
+  }
+
+
   if (requireNamespace("latticeExtra", quietly = TRUE)) {
     p1 <- lattice::levelplot(Z ~ Y * X,
       data = dev2,
-      at = sequence, region = T,
+      at = sequence,
       colorkey = key,
+      region = T,
       col.regions = regions,
       panel = latticeExtra::panel.2dsmoother,
-      main = "Slope of the Regression Function\n(1st Order Derivative)",
+      main = paste0("Slope of the Regression Function\n", desc),
       ylab = "First Order Derivate of Norm Score",
       xlab = "Explanatory Variable"
     )
@@ -911,7 +954,7 @@ plotDerivative <- function(model,
       at = sequence, region = T,
       colorkey = key,
       col.regions = regions,
-      main = "Slope of the Regression Function\n(1st Order Derivative)",
+      main = paste0("Slope of the Regression Function\n", desc),
       ylab = "1st Order Derivate of Norm Score",
       xlab = "Explanatory Variable"
     )

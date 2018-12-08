@@ -6,7 +6,7 @@
 \usage{
 rankBySlidingWindow(data, age = "age", raw = "raw", width,
   method = 4, scale = "T", descend = FALSE, descriptives = TRUE,
-  nGroup = 0)
+  nGroup = 0, group = NA)
 }
 \arguments{
 \item{data}{data.frame with norm sample data}
@@ -39,6 +39,9 @@ standard deviation per group is added to each observation}
 equi distant groups, named by the group mean age of each group. It creates the
 column 'group' in the data.frame and in case, there is already one with that name,
 overwrites it.}
+
+\item{group}{Optional parameter for providing the name of the grouping variable (if present; overwritten
+if ngroups is used)}
 }
 \value{
 the dataset with the individual percentiles and norm scores
@@ -51,7 +54,9 @@ grouping. When collecting data on the basis of a continuous age variable, cases
 located far from the mean age of the group receive distorted percentiles when building
 discrete groups and generating percentiles with the traditional approach. The distortion
 increases with distance from the group mean and this effect can be avoided by the
-sliding window.
+sliding window. Nonetheless, please ensure, that the optional grouping variable in fact
+represents the correct mean age of the respective age groups, as this variable is
+later on used for displaying the manifest data in the percentile plots.
 }
 \details{
 In case of bindings, the function uses the medium rank and applies the algorithms

@@ -35,6 +35,8 @@
 #' @param group grouping variable in the data, e. g. age groups, grades ...
 #' @param raw the raw scores
 #' @param age the continuous explanatory variable; by default set to "group"
+#' @param width if a width is provided, the function switches to rankBySlidingWindow to determine the
+#' observed raw scores, otherwise, ranking is done by group (default)
 #' @return data frame including the norm scores, powers and interactions of the norm score and
 #' grouping variable
 #' @examples
@@ -44,7 +46,7 @@
 #' # variable names can be specified as well, here with the BMI data included in the package
 #' data.bmi <- prepareData(CDC, group="group", raw="bmi", age="age")
 #' @export
-prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group") {
+prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group", width = NA) {
   if (is.null(data)) {
     normData <- cNORM::elfe
   } else {
@@ -79,7 +81,11 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
   normData <- normData[!is.na(normData[, age]), ]
 
   # ranking and powers
-  normData <- rankByGroup(normData, group = group, raw = raw)
+  if(is.na(width)){
+    normData <- rankByGroup(normData, group = group, raw = raw)
+  }else{
+    normData <- rankBySlidingWindow(normData, group = group, raw = raw, width = width)
+  }
   normData <- computePowers(normData, k = 4, norm = "normValue", age = age)
   return(normData)
 }
@@ -132,6 +138,12 @@ rankByGroup <-
              descend = FALSE,
              descriptives = TRUE) {
     d <- as.data.frame(data)
+
+    if(anyNA(d[, group]) || anyNA(d[, raw])){
+      cat("Missing values found in grouping or raw score variable... excluding from dataset")
+      d <- d[!is.na(d[, group]), ]
+      d <- d[!is.na(d[, raw]), ]
+    }
 
     # check if columns exist
     if ((typeof(group) != "logical") && !(group %in% colnames(d))) {
@@ -245,7 +257,9 @@ rankByGroup <-
 #' located far from the mean age of the group receive distorted percentiles when building
 #' discrete groups and generating percentiles with the traditional approach. The distortion
 #' increases with distance from the group mean and this effect can be avoided by the
-#' sliding window.
+#' sliding window. Nonetheless, please ensure, that the optional grouping variable in fact
+#' represents the correct mean age of the respective age groups, as this variable is
+#' later on used for displaying the manifest data in the percentile plots.
 #'
 #' In case of bindings, the function uses the medium rank and applies the algorithms
 #' already described in the \code{\link{rankByGroup}} function. At the upper and lower end of the
@@ -273,6 +287,8 @@ rankByGroup <-
 #' equi distant groups, named by the group mean age of each group. It creates the
 #' column 'group' in the data.frame and in case, there is already one with that name,
 #' overwrites it.
+#' @param group Optional parameter for providing the name of the grouping variable (if present; overwritten
+#' if ngroups is used)
 #' @return the dataset with the individual percentiles and norm scores
 #'
 #' @examples
@@ -295,10 +311,17 @@ rankBySlidingWindow <- function(data,
                                 scale = "T",
                                 descend = FALSE,
                                 descriptives = TRUE,
-                                nGroup = 0) {
+                                nGroup = 0,
+                                group = NA) {
 
   # copy data frame
   d <- as.data.frame(data)
+
+  if(anyNA(d[, raw]) || anyNA(d[, age])){
+    cat("Missing values found in raw score or age variable... excluding from dataset")
+    d <- d[!is.na(d[, raw]), ]
+    d <- d[!is.na(d[, age]), ]
+  }
 
   # check if columns exist
   if (!(age %in% colnames(d))) {

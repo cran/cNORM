@@ -1,14 +1,16 @@
 import(lattice)
 importFrom(leaps, regsubsets)
-importFrom(stats, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile)
+importFrom(stats, complete.cases, predict.lm, t.test, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile, coef)
 importFrom(grDevices, rainbow, dev.off)
+importFrom(graphics, par, plot, points, legend, abline)
 importFrom(latticeExtra, panel.2dsmoother)
-importFrom(utils, tail)
+importFrom(utils, tail, menu)
 export(
 	bestModel,
 	boxcox,
 	checkConsistency,
 	cNORM.GUI,
+	cnorm.cv,
 	computePowers,
 	derivationTable,
 	derive,

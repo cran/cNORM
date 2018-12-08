@@ -48,11 +48,3 @@ predictNorm(15, 4.7, model, minNorm = 25, maxNorm = 75)
 ## ------------------------------------------------------------------------
 predictRaw(55, 4.5, model$coefficients, minRaw = 0, maxRaw = 28)
 
-## ------------------------------------------------------------------------
-# Generate norm table for grade 3
-normTable(3, model, minRaw = 0, maxRaw = 28, minNorm=30.5, maxNorm=69.5, step = 1, descend = FALSE)
-
-## ------------------------------------------------------------------------
-# Generate raw table for grade 3.5
-rawTable(3.5, model, minRaw = 0, maxRaw = 28, minNorm = 25, maxNorm = 75, step = 1, descend = FALSE)
-

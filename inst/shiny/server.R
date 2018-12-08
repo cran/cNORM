@@ -1,7 +1,22 @@
-library(shiny)
-library(foreign)
-library(readxl)
-library(cNORM)
+if(!require(shiny)){
+  install.packages("shiny")
+  require(shiny)
+}
+
+if(!require(markdown)){
+  install.packages("markdown")
+  require(markdown)
+}
+
+if(!require(foreign)){
+  install.packages("foreign")
+  require(foreign)
+}
+
+if(!require(readxl)){
+  install.packages("readxl")
+  require(readxl)
+}
 
 # Define server logic required for cNORM-Application
 shinyServer(function(input, output, session) {
@@ -321,6 +336,31 @@ shinyServer(function(input, output, session) {
 
     cNORM::plotRaw(preparedData(), bestModel(), group = chosenGrouping(), raw = chosenRaw())
   })
+
+  normScorePlot <- eventReactive(c(input$grouping, input$differences), {
+    type <- 0
+    if(input$differences)
+      type <- 1
+
+    if(input$grouping){
+      cNORM::plotNorm(preparedData(), bestModel(), group = bestModel()$group, type = type)
+    }else{
+      cNORM::plotNorm(preparedData(), bestModel(), type = type)
+    }
+  })
+
+  rawScorePlot <- eventReactive(c(input$grouping1, input$differences1), {
+    type <- 0
+    if(input$differences1)
+      type <- 1
+
+    if(input$grouping1){
+      cNORM::plotRaw(preparedData(), bestModel(), group = bestModel()$group, type = type)
+    }else{
+      cNORM::plotRaw(preparedData(), bestModel(), type = type)
+    }
+  })
+
   # Prints best model
   output$BestModel1 <- renderText({
     return(bestModel()$report[1])
@@ -337,7 +377,13 @@ shinyServer(function(input, output, session) {
   output$BestModel5 <- renderText({
     return(bestModel()$report[5])
   })
-
+  output$BestModel6 <- renderText({
+    if(checkConsistency(bestModel())){
+      return("WARNING! The model seems to be inconsistent. Please check the percentile plot for intersecting percentile curves and change the number of terms for a different solution.")
+    }else{
+      return("No violations of model consistency found within the boundaries of the original data.")
+    }
+  })
 
 
   # Plots model derivation
@@ -356,6 +402,16 @@ shinyServer(function(input, output, session) {
   output$PlotValues <- renderPlot({
 
     return(valuesPlot())
+  })
+
+  output$PlotNormScores <- renderPlot({
+
+    return(normScorePlot())
+  })
+
+  output$PlotRawScores <- renderPlot({
+
+    return(rawScorePlot())
   })
 
   output$PrintSubset <- renderDataTable({
@@ -553,6 +609,8 @@ shinyServer(function(input, output, session) {
                                            minRaw = MIN_RAW, maxRaw = MAX_RAW, step = STEPPING)
 
       currentNormTable$raw <- round(currentNormTable$raw, digits = 2)
+      currentNormTable$percentile <- round(currentNormTable$percentile, digits = 2)
+
       return(currentNormTable)}
   })
 
@@ -602,6 +660,8 @@ shinyServer(function(input, output, session) {
       currentRawTable <- cNORM::rawTable(currentAgeForRawTable, currentBestModel, minNorm = MIN_NORM, maxNorm = MAX_NORM,
                                          minRaw = MIN_RAW, maxRaw = MAX_RAW, step = STEPPING)
       currentRawTable$norm <- round(currentRawTable$norm, digits = 3)
+      currentRawTable$percentile <- round(currentRawTable$percentile, digits = 2)
+
 
       return(currentRawTable)}
   })

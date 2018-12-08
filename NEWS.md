@@ -3,12 +3,80 @@ This file documents the development of the package as well as open issues or poi
 
 
 
-### Version in 1.0.1
-Date: 2018.11.02
+
+### Version in 1.1.1 (current)
+Date: 2018.12.01
+
+Changes:
+*    Parameters added to cv.norm: Significance level for stratification process
+*    Additional plot in cv.norm: delta R2 in norm score validation
+*    Example in readme improved
+*    CDC data: group variable set to center of interval
+*    descend parameter removed from plotPercentileSeries, plotPercentiles, checkConsistency,
+     rawTable & normTable; instead take default from model; vigniette updated accordingly
+*    stop criterion added to data sampling in cnorm.cv  
+*    cv.norm: lines added to R2 delta plot
+*    normTable and rawTable can now produce list of tables
+
+
+
+### Version in 1.1.0
+Date: 2018.11.23
 
 Changes:
 
-*   Minor improvements in the GUI: Waiting circle shown to indicate ongoing computation
+*    Cross validation added: new function: cnorm.cv() for assessing RMSE for raw data and R2 and CROSSFIT for norm data
+*    Data table output fpr cnorm.cv
+*    rankBySlidingWindow now accessibe via prepareData()
+*    group, raw, age and width can now be provided in cnorm.cv
+*    parameter for full cross validation (seperate ranking for train and validation)
+*    Additional NA checks and warning messages
+*    plotPercentiles now with R2adjr in title
+
+
+
+### Version in 1.0.3
+Date: 2018.11.16
+
+Changes:
+
+*    Additional instruction on series section of visualization tab in Shiny GUI
+*    Code cleanup in bestModel function
+*    SE added to plotNorm based on Oosterhuis, van der Ark & Sijtsma (2016)
+*    RMSE added to model object (m$subsets), to plotRaw and to plotSubset
+*    additional plotting options added to GUI:
+     +    plotting of differences in raw and norm plot
+     +    RMSE in model selection information function
+
+
+
+### Version in 1.0.2
+Date: 2018.11.16
+
+Changes:
+
+*    Improvements in precision of plotPercentiles
+*    error corrected in ppvt dataset: groups did not represent group means
+*    function description in 'ranBySlidingWindow' updated
+*    checking for missing packages in shiny GUI improved
+*    user menu asking to install missing packages added
+*    derive-function: more general approach with "order" parameter
+*    plotDerivative function can now plot derivatives of higher order
+*    exclude cases with missing values in rankByX functions
+*    percentile columns added to rawTable and normTable
+*    additional data cleansing for data objects imported from Excel file format
+
+
+
+### Version in 1.0.1
+Date: 2018.11.03
+
+Changes:
+
+*   Improvements in the GUI: Waiting circle shown to indicate ongoing computation
+*   Additional help texts on best model in GUI
+*   Additional plotting options in cNORM.GUI(): Raw Score and Norm Score plots
+*   User input asking for missing suggested packages to install
 
 
 

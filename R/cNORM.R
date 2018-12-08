@@ -8,11 +8,12 @@
 #'
 #' Conventional methods for producing test norm score tables are often plagued with
 #' "jumps" or "gaps" (i.e., discontinuities) in norm tables and low confidence for
-#' assessing extreme scores. cNORM addresses these problems and also has the added
-#' advantage of not requiring assumptions about the distribution of the raw data:
-#' The norm scores are established from raw data by modeling the latter ones as a
-#' function  of both percentile scores and an explanatory variable (e.g., age). The
-#' method minimizes bias arising from sampling and measurement error, while handling
+#' assessing extreme scores.  The continuous norming method introduced by A.
+#' Lenhard et al. (2016), <doi:10.1177/1073191116656437> addresses these problems
+#' and also has the added advantage of not requiring assumptions about the distribution
+#' of the raw data: The norm scores are established from raw data by modeling the latter
+#' ones as a function  of both percentile scores and an explanatory variable (e.g., age).
+#' The method minimizes bias arising from sampling and measurement error, while handling
 #' marked deviations from normality - such as are commonplace in clinical samples.
 #'
 #' Conducting the analysis consists of four steps and cNORM offers all according functions
@@ -115,8 +116,16 @@ NULL
 #' cNORM.GUI()
 #' }
 cNORM.GUI <- function(launch.browser=TRUE){
-  if (!requireNamespace(c("shiny", "shinycssloaders", "foreign", "readxl", "rmarkdown"), quietly = TRUE)) {
-    utils::install.packages(c("shiny", "foreign", "readxl", "rmarkdown", "shinycssloaders"))
+  packageList <- c("shiny", "shinycssloaders", "foreign", "readxl", "markdown")
+
+  if (!requireNamespace(packageList, quietly = TRUE)) {
+    cat("Additional packages are needed to start the user interface. Would you like to try to install them now?")
+    installChoice <- menu(c("yes", "no"))
+    if(installChoice == 1){
+      utils::install.packages(packageList)
+    } else {
+      stop("Packages are missing. Unable to start the GUI")
+    }
   }
 
   shiny::runApp(system.file('shiny', package='cNORM'),
