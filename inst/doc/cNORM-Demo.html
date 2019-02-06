@@ -12,14 +12,14 @@
 
 <meta name="author" content="Wolfgang Lenhard, Alexandra Lenhard" />
 
-<meta name="date" content="2018-12-08" />
+<meta name="date" content="2019-02-06" />
 
 <title>Demonstration for creating continuous norms with cNORM</title>
 
 
 
 <style type="text/css">code{white-space: pre;}</style>
-<style type="text/css">
+<style type="text/css" data-origin="pandoc">
 div.sourceCode { overflow-x: auto; }
 table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
   margin: 0; padding: 0; vertical-align: baseline; border: none; }
@@ -55,7 +55,29 @@ code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
 code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
 code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
 code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+
 </style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
 
 
 
@@ -70,7 +92,7 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 
 <h1 class="title toc-ignore">Demonstration for creating continuous norms with cNORM</h1>
 <h4 class="author"><em>Wolfgang Lenhard, Alexandra Lenhard</em></h4>
-<h4 class="date"><em>2018-12-08</em></h4>
+<h4 class="date"><em>2019-02-06</em></h4>
 
 
 
@@ -161,7 +183,7 @@ normData &lt;-<span class="st"> </span><span class="kw">computePowers</span>(nor
 <span class="co">#&gt; R-Square Adj. = 0.990838</span>
 <span class="co">#&gt; Final regression model: raw ~ L3 + L1A1 + L3A3</span>
 <span class="co">#&gt; Regression function: raw ~ -11.39665566 + (2.08886395e-05*L3) + (0.1649386974*L1A1) + (-5.892663055e-07*L3A3)</span>
-<span class="co">#&gt; RMSE = 0.68348</span>
+<span class="co">#&gt; Raw Score RMSE = 0.68348</span>
 <span class="co">#&gt; Use 'printSubset(model)' to get detailed information on the different solutions, 'plotSubset(model)' to inspect model fit and 'summary(model)' for statistics on the regression model.</span></code></pre></div>
 <p>Fine! The determined model already exceeds the predefined threshold of <span class="math inline">\(R_{adjusted}^{2}\)</span> = .99 with only three predictors (plus intercept). The ‘bestModel’ function as well returns the coefficients and the complete regression formula, which - as was specified - captures more than 99% of the variance in the data set.</p>
 <p>If you want to have a look at the selection procedure, all the information is available in ‘model$subsets’. The variable selection process per step is listed in ‘outmat’ and ‘which’. There, you can find the <span class="math inline">\(R^{2}\)</span>, <span class="math inline">\(R_{adjusted}^{2}\)</span>, <span class="math inline">\(C_p\)</span> and <span class="math inline">\(BIC\)</span>:</p>

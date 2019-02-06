@@ -143,7 +143,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
   r <- round(cor(d$fitted, d$normValue, use = "pairwise.complete.obs"), digits = 4)
 
   if (group != "" && !is.null(group)) {
-    d$group <- data[[group]]
+    d$group <- d[[group]]
     d$group <- as.factor(d$group)
     if (type == 0) {
       lattice::xyplot(fitted ~ normValue | group, d,
@@ -690,7 +690,7 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
     bestformula$k <- attributes(d)$k
 
 
-    l[[length(l) + 1]] <- cNORM::plotPercentiles(d, bestformula,
+    l[[length(l) + 1]] <- plotPercentiles(d, bestformula,
       minAge = model$minA1, maxAge = model$maxA1,
       minRaw = minR,
       maxRaw = maxR,

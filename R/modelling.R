@@ -220,7 +220,7 @@ bestModel <- function(data,
 
   # Print output
   report[4] <- paste0("Regression function: ", regressionFunction(bestformula, digits = 10))
-  report[5] <- paste0("RMSE = ", round(rmse, digits = 5))
+  report[5] <- paste0("Raw Score RMSE = ", round(rmse, digits = 5))
 
   bestformula$report <- report
   cat(report, sep = "\n")
@@ -563,14 +563,26 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' when doing repeated cv or comparing models up to the maximum number of terms. When using
 #' the cv = "full" option, the ranking is done for the test and validation dataset
 #' separately (always based on T scores), resulting in a complete cross validation. In
-#' order to only validate the modeling, you as well can use a pre ranked data set with
+#' order to only validate the modeling, you as well can use a pre-ranked data set with
 #' prepareData() already applied. In this case, the training and validation data is
 #' drawn from the already ranked data and the scores for the validation set should improve.
 #' It is however no independent test, as the ranking between both samples is interlinked.
-#'
-#' As a suggestion for real tests, combine visual inspection of the percentiles with a
-#' repeated cross validation (e. g. 10 repetitions). Fokus on norm score R2 in the
-#' validation dataset and avoid models with a high overfit (e. g. crossfit > 1.25).
+#' In the output, you will get RMSE for the raw score models, norm score R2 and delta R2 and the crossfit.
+#' For assessing, if a model over-fits the data and to what extent, we need cross-validation. We assumed
+#' that an overfitting occurred when a model captures more variance of the observed norm scores of the
+#' training sample compared to the captured variance of the norm scores of the validation sample. The
+#' overfit can therefore be described as:
+#' \deqn{CROSSFIT = R(Training; Model)^2 / R(Validation; Model)^2}
+#' A CROSSFIT higher than 1 is a sign of overfitting. Value lower than 1 indicate an underfit due to a
+#' suboptimal modeling procedure, i. e. the method may not have captured all the variance of the observed
+#' data it could possibly capture. Values around 1 are ideal, as long as the raw score RMSE is low and the
+#' norm score validation R2 reaches high levels. As a suggestion for real tests:
+#' \itemize{
+#'   \item Use visual inspection of the percentiles with plotPercentiles or plotPercentileSeries
+#'   \item Combine the visual inspection of the percentiles with a repeated cross validation (e. g. 10 repetitions)
+#'   \item Focus on low raw score RMSE, high norm score R2 in the validation dataset and
+#' avoid a number of terms with a high overfit (e. g. crossfit > 1.1).
+#' }
 #'
 #' @param data data frame of norm sample with ranking, powers and interaction of L and A
 #' @param repetitions number of repetitions for cross validation
@@ -794,8 +806,12 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     legend("bottomright", legend = c("Training", "Validation"), col = c("red", "blue"), pch = 19)
 
     # plot CROSSFIT
-    plot(tab$crossfit, pch = 19, type = "b", col = "black", main = "Norm Score CROSSFIT", ylab = "Crossfit", xlab = "Number of terms", ylim=c(min(tab$crossfit, na.rm = TRUE),max(tab$crossfit, na.rm = TRUE)))
+    plot(tab$crossfit, pch = 19, type = "b", col = "black", main = "Norm Score CROSSFIT", ylab = "Crossfit", xlab = "Number of terms", ylim=c(min(c(tab$crossfit, .88), na.rm = TRUE),max(c(tab$crossfit, 1.12), na.rm = TRUE)))
     abline(h = 1, col = 3, lty = 2)
+    abline(h = .9, col = 2, lty = 3)
+    text(max, .89, adj = c(1,1), "underfit", col=2, cex = .75)
+    abline(h = 1.1, col = 2, lty = 3)
+    text(max, 1.11, adj = c(1,0), "overfit", col=2, cex = .75)
 
     # plot delta r2 test
     plot(tab$delta.r2.test, pch = 19, type = "b", col = "black", main = "Norm Score Delta R2 in Validation", ylab = "Delta R2", xlab = "Number of terms", ylim=c(min(tab$delta.r2.test, na.rm = TRUE),max(tab$delta.r2.test, na.rm = TRUE)))
@@ -805,7 +821,7 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   cat(paste0("\nNumber of terms with best crossfit: ", which.min((1-tab$crossfit)^2)))
   cat(paste0("\nNumber of terms with best raw validation RMSE: ", which.min(tab$RMSE.raw.test)))
   cat(paste0("\nNumber of terms with best norm validation R2: ", which.max(r2.test)))
-  cat("\nPlease investiate the plots and the summary table, as the results might vary within a narrow range.")
+  cat("\nPlease investigate the plots and the summary table, as the results might vary within a narrow range.")
   cat("\nEspacially pay attention to RMSE.raw.test, r2.test, crossfit near 1 and where delta R2 stops to progress.")
   cat("\n")
   return(tab)

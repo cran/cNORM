@@ -3,8 +3,48 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 1.1.5
+Date: 2019.02.06, preparing for CRAN release
 
-### Version in 1.1.1 (current)
+Changes:
+*   Cross Validation added to shiny GUI
+*   cnorm.cv documentation improved
+*   added information to BestModel output
+
+
+
+
+### Version in 1.1.4
+Date: 2018.12.18
+
+Changes:
+*   scale parameter added to prepareData function
+*   fix for plotNorm by group with missing values
+
+
+
+### Version in 1.1.3 - Second release on CRAN
+Date: 2018.12.09
+
+Changes:
+*   rmarkdown moved from imports to suggests
+*   cnorm.cv info added to README
+
+
+
+### Version in 1.1.2
+Date: 2018.12.08
+
+Changes:
+*   deleted code in vignette needing to much build time
+*   removed UTF-8 attributes from ppvt dataset and cleared all datasets from non ASCII signs
+*   deleted code in vignette needing to much build time
+*   additional tests run on R-hub
+*   added rmarkdown to imports
+
+
+
+### Version in 1.1.1
 Date: 2018.12.01
 
 Changes:
@@ -68,7 +108,7 @@ Changes:
 
 
 
-### Version in 1.0.1
+### Version in 1.0.1  - First release on CRAN
 Date: 2018.11.03
 
 Changes:

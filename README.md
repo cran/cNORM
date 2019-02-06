@@ -2,7 +2,7 @@
 
 # cNorm
 
-The package cNorm provides methods for generating non-parametric regression based continuous standard scores, as f. e. for psychometric test development, biometrics (biological and (e. g. physiological growth curves), and screenings in the medical domain. It is based on the approach suggested by A. Lenhard et al. (2016). For an in-depth tutorial please consult the project homepage https://www.psychometrica.de/cNorm_en.html
+The package cNorm provides methods for generating non-parametric regression based continuous standard scores, as f. e. for psychometric test development, biometrics (e. g. biological and physiological growth curves), and screenings in the medical domain. It is based on the approach suggested by A. Lenhard et al. (2016). For an in-depth tutorial please consult the project homepage https://www.psychometrica.de/cNorm_en.html
 
 ## Approach
 
@@ -67,8 +67,12 @@ plotPercentiles(data.elfe, model.elfe)
 # number of predictors up to 14 predictors.
 plotPercentileSeries(data.elfe, model.elfe, end=14)
 
-# Print norm table (for grade 3) with T scores from T = 25 to T = 75
-normTable(3, model.elfe, minNorm = 25, maxNorm = 75, step = 1)
+# Cross validation of number of terms with 20% of the data for validation and 80% training.
+# Due to the time intensity, max terms is restricted to 10; 3 repetitions
+cnorm.cv(data.elfe, max=7, repetitions=10)
+
+# Print norm table (for grade 3, 3.2, 3.4, 3.6) with T scores from T = 25 to T = 75
+normTable(c(3, 3.2, 3.4, 3.6), model.elfe, minNorm = 25, maxNorm = 75, step = 1)
 
 # The other way round: Print raw table (for grade 3)
 rawTable(3, model.elfe)
