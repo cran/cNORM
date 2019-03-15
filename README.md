@@ -38,7 +38,7 @@ Conducting the analysis consists of four steps:
 1.  Validating the model
 1.  Generating norm tables and plotting the results
 
-cNORM offers function for all of these steps, helps in selecting the best fitting models and in generating the norm tables.
+cNORM offers functions for all of these steps, helps in selecting the best fitting models and in generating the norm tables.
 
 ```{r example}
 ## Basic example code for modeling the sample dataset
@@ -56,7 +56,7 @@ data.elfe <- prepareData(elfe)
 # Find best fitting regression model
 model.elfe <- bestModel(data.elfe)
 
-# Plot R2 of different model solution in dependence of the number of predictors
+# Plot R2 of different model solutions in dependence of the number of predictors
 plotSubset(model.elfe, type=0)        # plot R2
 plotSubset(model.elfe, type=3)        # plot MSE
 
@@ -69,13 +69,20 @@ plotPercentileSeries(data.elfe, model.elfe, end=14)
 
 # Cross validation of number of terms with 20% of the data for validation and 80% training.
 # Due to the time intensity, max terms is restricted to 10; 3 repetitions
-cnorm.cv(data.elfe, max=7, repetitions=10)
+cnorm.cv(data.elfe, max=10, repetitions=3)
 
 # Print norm table (for grade 3, 3.2, 3.4, 3.6) with T scores from T = 25 to T = 75
 normTable(c(3, 3.2, 3.4, 3.6), model.elfe, minNorm = 25, maxNorm = 75, step = 1)
 
 # The other way round: Print raw table (for grade 3)
 rawTable(3, model.elfe)
+
+# cNORM can as well be used for conventional norming
+# In this case, the group variable has to be set to FALSE when ranking the data.
+d <- rankByGroup(elfe, raw="raw", group=FALSE)
+d <- computePowers(d)
+m <- bestModel(d)
+rawTable(0, model = m) # please use an arbitrary value for age when generating the tables
 
 # start vignette for a complete walk through
 vignette("cNORM-Demo", package = "cNORM")
@@ -98,7 +105,8 @@ The package includes data from two large test norming projects, namely ELFE 1-6 
 ## Terms of use / License
 cNORM is licensed under GNU Affero General Public License v3 (AGPL-3.0). This means that copyrighted parts of cNORM can be used free of charge for commercial and non-commercial purposes that run under this same license, retain the copyright notice, provide their source code and correctly cite cNORM. Copyright protection includes, for example, the reproduction and distribution of source code or parts of the source code of cNORM or of graphics created with cNORM. The integration of the package into a server environment in order to access the functionality of the software (e.g. for online delivery of norm scores) is also subject to this license. However, a regression function determined with cNORM is not subject to copyright protection and may be used freely without preconditions. If you want to apply cNORM in a way that is not compatible with the terms of the AGPL 3.0 license, please do not hesitate to contact us to negotiate individual conditions.
 
-If you want to use cNORM for scientific publications, we would also ask you to quote the source.
+If you want to use cNORM for scientific publications, we would also ask you to quote the source:
+*   Lenhard, A., Lenhard, W. & Gary, S. (2018). cNORM - Generating Continuous Test Norms. Retrieved from: https://www.psychometrica.de/cNorm_en.html. Dettelbach (Germany): Psychometrica. DOI: 10.13140/RG.2.2.25821.26082
 
 ## References
 *   Lenhard, A., Lenhard, W., Segerer, R. & Suggate, S. (2015). Peabody Picture Vocabulary Test - Revision IV (Deutsche Adaption). Frankfurt a. M./Germany: Pearson Assessment.

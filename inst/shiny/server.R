@@ -106,14 +106,14 @@ shinyServer(function(input, output, session) {
     if(is.element("group", currentNames)|| is.element("Group", currentNames))
     {
       if(is.element("group", currentNames)){
-        selectInput(inputId = "InputGroupingVariable", "Grouping variable", choices = variableNames(), selected = "group")
+        selectInput(inputId = "InputGroupingVariable", "Grouping Variable", choices = variableNames(), selected = "group")
       }
       else{
-        selectInput(inputId = "InputGroupingVariable", "Grouping variable", choices = variableNames(), selected = "group")
+        selectInput(inputId = "InputGroupingVariable", "Grouping Variable", choices = variableNames(), selected = "group")
 
       }
     }
-    else{    selectInput(inputId = "InputGroupingVariable", "Grouping variable", choices = variableNames(), selected = NULL)
+    else{    selectInput(inputId = "InputGroupingVariable", "Grouping Variable", choices = variableNames(), selected = NULL)
     }
   })
 
@@ -129,15 +129,15 @@ shinyServer(function(input, output, session) {
     currentNames <- names(currentFile())
     if(is.element("raw", currentNames)||is.element("Raw", currentNames)){
       if(is.element("raw", currentNames)){
-        selectInput(inputId = "InputRawValues", "Choose raw values", choices = variableNames(), selected = "raw")
+        selectInput(inputId = "InputRawValues", "Raw Score Variable", choices = variableNames(), selected = "raw")
       }
       else{
-        selectInput(inputId = "InputRawValues", "Choose raw values", choices = variableNames(), selected = "Raw")
+        selectInput(inputId = "InputRawValues", "Raw Score Variable", choices = variableNames(), selected = "Raw")
 
       }
     }
     else{
-      selectInput(inputId = "InputRawValues", "Choose raw values", choices = variableNames(), selected = NULL)
+      selectInput(inputId = "InputRawValues", "Raw Score Variable", choices = variableNames(), selected = NULL)
     }
 
   })
@@ -178,6 +178,13 @@ shinyServer(function(input, output, session) {
     return(input$InputRawValues)
   })
 
+  chosenDescend <- reactive({
+    if(input$RankingOrder == "Descending")
+      return(TRUE)
+    else
+      return(FALSE)
+  })
+
   # Returns chosen explanatory variable
   chosenExplanatory <- reactive({
 
@@ -185,7 +192,8 @@ shinyServer(function(input, output, session) {
   })
 
   chosenMethod <- reactive({
-    return(as.numeric(input$Method))
+    methods <- c("Blom (1985)", "Tukey (1949)", "Van der Warden (1952)", "Rankit (Bliss, 1967)", "Levenbach (1953)", "Filliben (1975)", "Yu & Huang (2001)")
+    return(match(input$Method, methods))
   })
 
   chosenScale <- reactive({
@@ -219,7 +227,8 @@ shinyServer(function(input, output, session) {
                                            group = chosenGrouping(),
                                            raw = chosenRaw(),
                                            method = chosenMethod(),
-                                           scale = chosenScale())
+                                           scale = chosenScale(),
+                                           descend = chosenDescend())
       # Computation of powers and linear combinations
       data_to_output <- cNORM::computePowers(data_to_output,
                                              k = chosenNumberOfPowers(), age = chosenGrouping(),
@@ -319,7 +328,8 @@ shinyServer(function(input, output, session) {
 
 
   chosenTypeOfPlotSubset <- reactive({
-    return(input$chosenTypePlotSubset)
+    method <- c("Adjusted R2 by Number of Predictors", "Log Transformed Mallow's Cp by Adjusted R2", "Bayesian Information Criterion (BIC) by Adjusted R2", "RMSE by Number of Predictors")
+    return(match(input$chosenTypePlotSubset, method) - 1)
   })
 
   changeObject <- reactive({
@@ -359,7 +369,8 @@ shinyServer(function(input, output, session) {
     r <- chosenRaw()
     e <- chosenExplanatory()
 
-        cNORM::cnorm.cv(preparedData(), repetitions = rep, norms = norm, min = 1, max = maxT, group = g, raw = r, age = e)
+        table <- cNORM::cnorm.cv(preparedData(), repetitions = rep, norms = norm, min = 1, max = maxT, group = g, raw = r, age = e)
+        output$TableCV <- renderDataTable({table})
   })
 
 
@@ -398,7 +409,9 @@ shinyServer(function(input, output, session) {
       return("No violations of model consistency found within the boundaries of the original data.")
     }
   })
-
+  output$BestModel7 <- renderText({
+    return(rangeCheck(bestModel()))
+  })
 
   # Plots model derivation
   output$PlotDerivatives <- renderPlot({
@@ -540,7 +553,7 @@ shinyServer(function(input, output, session) {
   output$InputNormValue <- renderUI({
     tagList(numericInput(inputId = "NormValueInputAge", label = "Choose age", value = NULL, min = bestModel()$minA1, max = bestModel()$maxA1),
             numericInput(inputId = "NormValueInputRaw", label = "Choose raw value", value = NULL, min = bestModel()$minRaw, max = bestModel()$maxRaw),
-            actionButton(inputId = "CalcNormValue",label = "Calc norm value"))
+            actionButton(inputId = "CalcNormValue",label = "Norm Score"))
   })
 
   normValue <- eventReactive(input$CalcNormValue,{
@@ -570,7 +583,7 @@ shinyServer(function(input, output, session) {
   output$InputRawValue <- renderUI({
     tagList(numericInput(inputId = "RawValueInputAge", label = "Choose age", value = NULL, min = bestModel()$minA1, max = bestModel()$maxA1),
             numericInput(inputId = "RawValueInputNorm", label = "Choose norm value", value = NULL, min = bestModel()$minL1, max = bestModel()$maxL1),
-            actionButton(inputId = "CalcRawValue",label = "Calc raw value"))
+            actionButton(inputId = "CalcRawValue",label = "Raw Score"))
   })
 
   rawValue <- eventReactive(input$CalcRawValue,{

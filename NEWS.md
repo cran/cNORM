@@ -3,8 +3,40 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 1.1.8 (Third release to CRAN)
+Date: 2019.03.15 (mainly testing and cleaning minor errors)
+
+Changes:
+*   fixing exceptions
+*   group and age can now be deactivated, resulting in conventional norming procedure, based in ranking + regression over powers of L
+
+
+
+### Version in 1.1.7
+Date: 2019.02.28
+
+Changes:
+*   bestModel function now accepts a formula as a predictors object
+*   plotPercentile now accepts descending ranking
+*   rawTable and normTable adapted for descending values
+*   rangeCheck prints additional information
+*   Leaner GUI with more options
+*   predictNorm now much faster through using lookup tables, large speed gains as well for depending functions
+*   Setting age = FALSE in computePowers prevents computation of powers of age and interactions. All plotting and modelling functions changed accordingly. cNORM in this case models norm score tables simply based on regression without computing different groups
+*    normTable automatically chooses default values for minNorm, maxNorm and step
+
+
+
+### Version in 1.1.6
+Date: 2019.02.07, third release on CRAN
+
+Changes:
+*   Improvement to cv function in GUI and in package
+
+
+
 ### Version in 1.1.5
-Date: 2019.02.06, preparing for CRAN release
+Date: 2019.02.06, third release on CRAN
 
 Changes:
 *   Cross Validation added to shiny GUI
@@ -53,7 +85,7 @@ Changes:
 *    Example in readme improved
 *    CDC data: group variable set to center of interval
 *    descend parameter removed from plotPercentileSeries, plotPercentiles, checkConsistency,
-     rawTable & normTable; instead take default from model; vigniette updated accordingly
+     rawTable & normTable; instead take default from model; vignette updated accordingly
 *    stop criterion added to data sampling in cnorm.cv  
 *    cv.norm: lines added to R2 delta plot
 *    normTable and rawTable can now produce list of tables
@@ -66,8 +98,8 @@ Date: 2018.11.23
 Changes:
 
 *    Cross validation added: new function: cnorm.cv() for assessing RMSE for raw data and R2 and CROSSFIT for norm data
-*    Data table output fpr cnorm.cv
-*    rankBySlidingWindow now accessibe via prepareData()
+*    Data table output for cnorm.cv
+*    rankBySlidingWindow now accessible via prepareData()
 *    group, raw, age and width can now be provided in cnorm.cv
 *    parameter for full cross validation (seperate ranking for train and validation)
 *    Additional NA checks and warning messages
@@ -275,7 +307,7 @@ Date: 2018.08.23
 Changes:
 
 *   Generating group variable in rankBySlidingWindow
-*   prarameters in plotPercentile to restrict age range
+*   parameters in plotPercentile to restrict age range
 *   ppvt dataset restricted
 
 
@@ -296,7 +328,7 @@ Date: 2018.08.18
 
 Changes:
 
-*   Addeditional dataset: vocabulary development (PPVT4)
+*   Additional dataset: vocabulary development (PPVT4)
 
 
 
@@ -316,7 +348,7 @@ Date: 2018.08.14
 
 Changes:
 
-*   Box Cox power transformation for regression model at specific age: optional parametric modelling for non-paramteric regression model
+*   Box Cox power transformation for regression model at specific age: optional parametric modelling for non-parametric regression model
 
 
 
@@ -337,7 +369,7 @@ Date: 2018.08.12
 Changes:
 
 *   parameter checks added
-*   new parameter 'descriptives' addad to rankByGroup and rankBySlidingWindow added to retrieve descriptive statistics for each observation
+*   new parameter 'descriptives' added to rankByGroup and rankBySlidingWindow added to retrieve descriptive statistics for each observation
 *   improvements in the documentation
 *   errors in bestModel and plotPercentiles corrected, when variable names are not as in example sample
 

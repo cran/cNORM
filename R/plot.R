@@ -17,6 +17,11 @@
 #' plotRaw(normData, m, group="group")
 #' @export
 plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
+
+  if (!attr(data, "useAge")){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if (is.null(raw)) {
     raw <- attr(data, "raw")
   }
@@ -101,7 +106,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' Ark and Sijtsma (2016).
 #' @param data The raw data within a data.frame
 #' @param model The regression model
-#' @param group The grouping variable, use empty string "" for no group
+#' @param group The grouping variable, use empty string for no group
 #' @param minNorm lower bound of fitted norm scores
 #' @param maxNorm upper bound of fitted norm scores
 #' @param type Type of display: 0 = plot manifest against fitted values, 1 = plot
@@ -116,6 +121,10 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' }
 #' @export
 plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, type = 0) {
+  if (!attr(data, "useAge")){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if (is.null(minNorm)) {
     # warning("minNorm not specified, taking absolute minimum norm score from modeling...")
     minNorm <- model$minL1
@@ -243,6 +252,11 @@ plotNormCurves <- function(model, normList = c(30, 40, 50, 60, 70),
                            step = 0.1,
                            minRaw = NULL,
                            maxRaw = NULL) {
+
+  if (!model$useAge){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if (is.null(minAge)) {
     minAge <- model$minA1
   }
@@ -358,6 +372,11 @@ plotPercentiles <- function(data,
                             scale = NULL,
                             type = 7,
                             title = NULL) {
+
+  if (!model$useAge){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if (is.null(group)) {
     group <- attr(data, "group")
   }
@@ -389,6 +408,8 @@ plotPercentiles <- function(data,
   if (!(group %in% colnames(data))) {
     stop(paste(c("ERROR: Grouping variable '", group, "' does not exist in data object."), collapse = ""))
   }
+
+
 
   # compute norm scores from percentile vector
   if (is.null(scale)) {
@@ -432,6 +453,11 @@ plotPercentiles <- function(data,
       )
     )
   }
+
+  if(model$descend){
+    NAMES <- rev(NAMES)
+  }
+
   # compute percentile table
   colnames(percentile.actual) <- c(c(group), NAMES)
 
@@ -552,8 +578,10 @@ plotDensity <- function(model,
     maxRaw <- model$maxRaw
   }
 
-  if (is.null(group)) {
+  if (is.null(group)&&model$useAge) {
     group <- c(model$minA1, (model$maxA1 + model$minA1) / 2, model$maxA1)
+  }else if(!model$useAge){
+    group <- c(1)
   }
 
   step <- (maxNorm - minNorm) / 100
@@ -631,7 +659,13 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
                                  percentiles = c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975),
                                  type = 7,
                                  filename = NULL) {
+
   d <- as.data.frame(data)
+
+  if (!attr(d, "useAge")){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if ((is.null(end)) || (end > length(model$subsets$rss))) {
     end <- length(model$subsets$rss)
   }
@@ -674,7 +708,7 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
     bestformula$ideal.model <- model$ideal.model
     bestformula$cutoff <- model$cutoff
     bestformula$subsets <- model$subsets
-
+    bestformula$useAge <- model$useAge
     bestformula$maxA1 <- model$maxA1
     bestformula$minA1 <- model$minA1
     bestformula$minL1 <- model$minL1
@@ -737,7 +771,6 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
 #' plotSubset(m)
 #' @export
 plotSubset <- function(model, type = 1) {
-  message("Hint: Select the model with the highest BIC or Cp score while simultaneously optimizing R2.")
   dataFrameTMP <- data.frame(adjr2 = model$subsets$adjr2, bic = model$subsets$bic, cp = model$subsets$cp, RMSE = sqrt(model$subsets$rss / length(model$fitted.values)), nr = seq(1, length(model$subsets$adjr2), by = 1))
   if (type == 1) {
     lattice::xyplot(cp ~ adjr2,
@@ -874,6 +907,10 @@ plotDerivative <- function(model,
                            stepAge = 0.2,
                            stepNorm = 1,
                            order = 1) {
+  if (!model$useAge){
+    stop("Age or group variable explicitely set to FALSE in dataset. No plotting available.")
+  }
+
   if (is.null(minAge)) {
     minAge <- model$minA1
   }

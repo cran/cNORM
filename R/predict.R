@@ -196,20 +196,41 @@ normTable <- function(A,
                       maxNorm = NULL,
                       minRaw = NULL,
                       maxRaw = NULL,
-                      step = 0.1) {
-  if (is.null(minNorm) || is.null(maxNorm)) {
-    stop("ERROR: Please specify minimum and maximum norm score")
+                      step = NULL) {
+
+  if (model$useAge&&!is.numeric(A)){
+    stop("Please specify age.")
   }
+
+  if (is.null(model)){
+    stop("No model specified")
+  }
+
+  if (is.null(minNorm)||is.na(minNorm)){
+    minNorm <- model$scaleM - 2 * model$scaleSD
+  }
+
+  if (is.null(maxNorm)||is.na(maxNorm)){
+    maxNorm <- model$scaleM + 2 * model$scaleSD
+  }
+
+  # in case it still fails
+  if (is.null(minNorm)||is.null(maxNorm)){
+    stop("Please specify minNorm and maxNorm.")
+  }
+
+  if(is.null(step)||is.na(step)){
+    step <- model$scaleSD / 10
+  }
+
   descend <- model$descend
 
 
-  if (is.null(minRaw)) {
-    warning("Minimum raw score not specified. Taking value from original dataset.")
+  if (is.null(minRaw)||is.na(minRaw)) {
     minRaw <- model$minRaw
   }
 
-  if (is.null(maxRaw)) {
-    warning("Maximum raw score not specified. Taking value from original dataset.")
+  if (is.null(maxRaw)||is.na(maxRaw)) {
     maxRaw <- model$maxRaw
   }
 
@@ -222,7 +243,7 @@ normTable <- function(A,
     raw <- vector("list", (maxn - minn) / step + 1)
     i <- 1
     l <- length(norm)
-    if (!descend) {
+
       while (i <= l) {
         r <- predictRaw(minn, A[[x]], model$coefficients, minRaw = minRaw, maxRaw = maxRaw)
 
@@ -232,17 +253,7 @@ normTable <- function(A,
         minn <- minn + step
         i <- i + 1
       }
-    } else {
-      while (maxn >= minn) {
-        r <- predictRaw(maxn, A[[x]], model$coefficients)
 
-        norm[[i]] <- maxn
-        raw[[i]] <- r
-
-        maxn <- maxn - step
-        i <- i + 1
-      }
-    }
 
     normTable <-
       do.call(rbind, Map(data.frame, norm = norm, raw = raw))
@@ -296,21 +307,32 @@ rawTable <- function(A,
                      minNorm = NULL,
                      maxNorm = NULL,
                      step = 1) {
-  if (is.null(minNorm)) {
+
+  if (model$useAge&&!is.numeric(A)){
+    stop("Please specify age.")
+  }
+
+  if (is.null(step)||is.na(step)){
+    step <- 1
+  }
+
+  if (is.null(model)){
+    stop("No model specified")
+  }
+
+  if (is.null(minNorm)||is.na(minNorm)) {
     minNorm <- model$minL1
   }
 
-  descend <- model$descend
-
-  if (is.null(maxNorm)) {
+  if (is.null(maxNorm)||is.na(maxNorm)) {
     maxNorm <- model$maxL1
   }
 
-  if (is.null(minRaw)) {
+  if (is.null(minRaw)||is.na(minRaw)) {
     minRaw <- model$minRaw
   }
 
-  if (is.null(maxRaw)) {
+  if (is.null(maxRaw)||is.na(maxRaw)) {
     maxRaw <- model$maxRaw
   }
   tables <- vector("list", length(A))
@@ -323,7 +345,6 @@ rawTable <- function(A,
     norm <- vector("list", (maxr - minr) / step)
     raw <- vector("list", (maxr - minr) / step)
     i <- 1
-    if (!descend) {
       while (minr <= maxr) {
         i <- i + 1
         n <-
@@ -333,17 +354,7 @@ rawTable <- function(A,
 
         minr <- minr + step
       }
-    } else {
-      while (maxr >= minr) {
-        i <- i + 1
-        n <-
-          predictNorm(minr, A[[x]], model, minNorm, maxNorm)
-        norm[[i]] <- n
-        raw[[i]] <- maxr
 
-        maxr <- maxr - step
-      }
-    }
 
     table <-
       do.call(rbind, Map(data.frame, raw = raw, norm = norm))
@@ -352,22 +363,25 @@ rawTable <- function(A,
       table$percentile <- pnorm((table$norm - model$scaleM) / model$scaleSD) * 100
     }
 
+    if(model$descend){
+      table <- table[order(table$norm),]
+    }
     # checking consistency
     k <- 1
     SUCCESS <- TRUE
+    errorText <- ""
     while (k < nrow(table)) {
-      if (table$norm[k] > table$norm[k + 1]) {
+      if ((table$norm[k] >= table$norm[k + 1])) {
         # inconsistent results -> warning
         SUCCESS <- FALSE
-        message(paste("Raw ", table$raw[k], " value with inconsistent norm value", sep = ""))
+        errorText <- paste0(errorText, table$raw[k], ",")
       }
 
       k <- k + 1
     }
 
     if (!SUCCESS) {
-      message("The raw table generation yielded inconsistent entries. Please check model consistency.")
-      print(rangeCheck(model, A, A, minNorm, maxNorm))
+      message(paste0("The raw table generation yielded indications of inconsistent raw score results: ", errorText, " please check! Additionally, check overall model consistency."))
     }
 
     tables[[x]] <- table
@@ -485,19 +499,61 @@ predictNorm <-
       } else if (anyNA(raw)) {
         stop(paste0("NAs are present in 'raw' vector. Please exclude missing values first."))
       }
-      cat("Retrieving norm scores ...\n")
-      #  initialize vectors and starting values
-      n <- length(raw)
+
+
+      # initialize vectors and starting values
+      # of retrieved norm scores to specific cases; needed for later matching
+      # create simple hash based on cantor pairing
+      # (values need to be shifted to positive values)
+      r <- raw
+      a <- A
+
+      if(min(raw) < 0){
+        r <- r - min(raw)
+      }
+
+      if(min(A) < 0){
+        a <- a - min(A)
+      }
+      hash <- (r + a) * (r + a + 1) / 2 + a
+
+      # build norm table and use this as a lookup table
+      # delete duplicates
+      normTable <- data.frame(A = A, raw = raw, hash = hash)
+      normTable <- normTable[!duplicated(normTable[,c('hash')]),]
+
+      if(nrow(normTable)>500){
+        cat("Retrieving norm scores, please stand by ...\n")
+      }
+      raw2 <- normTable$raw
+      A2 <- normTable$A
+      n <- length(raw2)
       values <- rep(NA, n)
 
-      # iterate through cases and increase precision by factor 2 in each step
+      # iterate through cases
       for (i in 1:n) {
-        v <- predictNormByRoots(raw[[i]], A[[i]], model, minNorm, maxNorm)
+        v <- predictNormByRoots(raw2[[i]], A2[[i]], model, minNorm, maxNorm)
         if (length(v) == 0) {
           v <- NA
         }
         values[[i]] <- v
       }
+
+      # project values on original data
+      values <- values[match(hash, normTable$hash)]
+
+      # n <- length(raw)
+      # values <- rep(NA, n)
+      #
+      # # iterate through cases
+      # for (i in 1:n) {
+      #   v <- predictNormByRoots(raw[[i]], A[[i]], model, minNorm, maxNorm)
+      #   if (length(v) == 0) {
+      #     v <- NA
+      #   }
+      #   values[[i]] <- v
+      # }
+
       return(values)
     } else {
       stop("Please check raw and A value. Both have to be either single values or vectors of the same length.")
