@@ -12,7 +12,7 @@ plotNorm(data, model, group = "", minNorm = NULL, maxNorm = NULL,
 
 \item{model}{The regression model}
 
-\item{group}{The grouping variable, use empty string "" for no group}
+\item{group}{The grouping variable, use empty string for no group}
 
 \item{minNorm}{lower bound of fitted norm scores}
 
@@ -25,7 +25,7 @@ manifest against difference values}
 The function plots the manifest norm score against the fitted norm score from
 the inverse regression model per group. This helps to inspect the precision
 of the modeling process. The scores should not deviate too far from
-regression line. The computation of the standard error is based on Ooserhuis, van der
+regression line. The computation of the standard error is based on Oosterhuis, van der
 Ark and Sijtsma (2016).
 }
 \examples{

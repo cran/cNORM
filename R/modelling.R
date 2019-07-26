@@ -18,7 +18,7 @@
 #' \code{plotSubset(model)} can be used to weigh up R2 and information criteria (Cp, an AIC like measure)
 #' and fitted versus manifest scores can be plotted with 'plotRaw', 'plotNorm' and 'plotPercentiles'.
 #' Use \code{checkConsistency(model)} to check the model for violations. \code{cnorm.cv} can help
-#' in identifiying the ideal number of predictors.
+#' in identifying the ideal number of predictors.
 #'
 #' @param data The preprocessed dataset, which should include the variables 'raw'
 #'  and the powers and interactions of the norm score (L = Location; usually T scores)
@@ -47,6 +47,8 @@
 #' resp. list of predictors, are ignored without further notice and thus do not show up in
 #' the final result. Additionally, all other functions like norm table generation and plotting
 #' are so far not yet prepared to handle covariates.
+#' @param weights Optional vector with weights for the single cases. All weights have to be positive.
+#' This is currently an experimental feature.
 #' @return The model meeting the R2 criteria with coefficients and variable selection
 #' in model$coefficients. Use \code{plotSubset(model)} and
 #' \code{plotPercentiles(data, model)} to inspect model
@@ -89,10 +91,11 @@
 #' @export
 bestModel <- function(data,
                       raw = NULL,
-                      R2 = 0.99,
+                      R2 = NULL,
                       k = NULL,
                       predictors = NULL,
                       terms = 0,
+                      weights = NULL,
                       force.in = NULL) {
 
   # retrieve attributes
@@ -108,7 +111,11 @@ bestModel <- function(data,
 
 
   # check variable range
-  if (R2 <= 0 || R2 >= 1) {
+  if(is.null(R2)&&is.null(attr(data, "covariate"))){
+    R2 <- .99
+  }else if(is.null(R2)&&!is.null(attr(data, "covariate"))){
+    R2 <- .98
+  }else if (R2 <= 0 || R2 >= 1) {
     stop("R2 parameter out of bounds.")
   }
 
@@ -128,6 +135,11 @@ bestModel <- function(data,
     stop("ERROR: Missing variables from predictors variable. Please check variable list.")
   }
 
+  covTerms <- ""
+  if(!is.null(attr(data, "covariate"))){
+    covTerms <- "+ COV + L1COV + A1COV + L1A1COV"
+  }
+
   if (!is.null(predictors)) {
     if (inherits(predictors, "formula")) {
       lmX <- predictors
@@ -136,40 +148,44 @@ bestModel <- function(data,
     }
   } else if (attr(data, "useAge")) {
     if (k == 1) {
-      lmX <- formula(paste(raw, "L1 + A1 + L1A1", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + A1 + L1A1", covTerms))
     } else if (k == 2) {
       lmX <-
-        formula(paste(raw, "L1 + L2 + A1 + A2 + L1A1 + L1A2 + L2A1 + L2A2", sep = " ~ "))
+        formula(paste0(raw, " ~ L1 + L2 + A1 + A2 + L1A1 + L1A2 + L2A1 + L2A2", covTerms))
     } else if (k == 3) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + A1 + A2 + A3 + L1A1 + L1A2 + L1A3 + L2A1 + L2A2 + L2A3 + L3A1 + L3A2 + L3A3", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + A1 + A2 + A3 + L1A1 + L1A2 + L1A3 + L2A1 + L2A2 + L2A3 + L3A1 + L3A2 + L3A3", covTerms))
     } else if (k == 4) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + A1 + A2 + A3 + A4 + L1A1 + L1A2 + L1A3 + L1A4 + L2A1 + L2A2 + L2A3 + L2A4 + L3A1 + L3A2 + L3A3 + L3A4 + L4A1 + L4A2 + L4A3 + L4A4", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4 + A1 + A2 + A3 + A4 + L1A1 + L1A2 + L1A3 + L1A4 + L2A1 + L2A2 + L2A3 + L2A4 + L3A1 + L3A2 + L3A3 + L3A4 + L4A1 + L4A2 + L4A3 + L4A4", covTerms))
     } else if (k == 5) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + A1 + A2 + A3 + A4 + A5 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4 + L5 + A1 + A2 + A3 + A4 + A5 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5", covTerms))
     } else if (k == 6) {
       lmX <-
-        formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + L6 + A1 + A2 + A3 + A4 + A5 + A6 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L1A6 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L2A6 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L3A6 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L4A6 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5 + L5A6 + L6A1 + L6A2 + L6A3 + L6A4 + L6A5 + L6A6", sep = " ~ "))
+        formula(paste0(raw, "~ L1 + L2 + L3 + L4 + L5 + L6 + A1 + A2 + A3 + A4 + A5 + A6 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L1A6 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L2A6 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L3A6 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L4A6 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5 + L5A6 + L6A1 + L6A2 + L6A3 + L6A4 + L6A5 + L6A6", covTerms))
     } else {
       message("Power parameter unknown, setting to k = 4")
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + A1 + A2 + A3 + A4 + L1A1 + L1A2 + L1A3 + L1A4 + L2A1 + L2A2 + L2A3 + L2A4 + L3A1 + L3A2 + L3A3 + L3A4 + L4A1 + L4A2 + L4A3 + L4A4", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4 + A1 + A2 + A3 + A4 + L1A1 + L1A2 + L1A3 + L1A4 + L2A1 + L2A2 + L2A3 + L2A4 + L3A1 + L3A2 + L3A3 + L3A4 + L4A1 + L4A2 + L4A3 + L4A4", covTerms))
     }
   } else {
     # in case, age is missing
+    if(!is.null(attr(data, "covariate"))){
+      covTerms <- "+ COV + L1COV"
+    }
+
     if (k == 1) {
-      lmX <- formula(paste(raw, "L1", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1", covTerms))
     } else if (k == 2) {
-      lmX <- formula(paste(raw, "L1 + L2", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2",covTerms))
     } else if (k == 3) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3", covTerms))
     } else if (k == 4) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4", covTerms))
     } else if (k == 5) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + L5", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4 + L5", covTerms))
     } else if (k == 6) {
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + L6", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4 + L5 + L6", covTerms))
     } else {
       message("Power parameter unknown, setting to k = 4")
-      lmX <- formula(paste(raw, "L1 + L2 + L3 + L4", sep = " ~ "))
+      lmX <- formula(paste0(raw, " ~ L1 + L2 + L3 + L4", covTerms))
     }
   }
 
@@ -189,7 +205,7 @@ bestModel <- function(data,
     index <- NULL
   }
 
-  subsets <- leaps::regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big)
+  subsets <- leaps::regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big, weights = weights)
   results <- summary(subsets)
 
   i <- 1
@@ -227,7 +243,19 @@ bestModel <- function(data,
   text <- paste0(raw, " ~ ", paste(variables, collapse = " + ")) # build regression formula
 
   report[3] <- paste0("Final regression model: ", text)
-  bestformula <- lm(text, as.data.frame(data))
+
+  if(is.null(weights)){
+    bestformula <- lm(text, as.data.frame(data))
+  }else{
+    d <- as.data.frame(data)
+    d$weights <- weights
+    bestformula <- lm(text, d, weights = d$weights)
+  }
+
+  if(!is.null(attr(data, "covariate"))){
+    if(length(grep("COV", names(bestformula$coefficients)))==0)
+      stop("No covariate term included in the regression result. The covariates turned out to be irrelevant under the current configuration. No model generated on the basis of the current dataset. Either rerun the bestModel function with different numbers of terms or R2, or do not specify a covariate when ranking the data.")
+  }
 
   # compute rmse
   tab <- data.frame(raw = data[, raw], fitted = bestformula$fitted.values)
@@ -261,6 +289,9 @@ bestModel <- function(data,
   bestformula$group <- attributes(data)$group
   bestformula$age <- attributes(data)$age
   bestformula$k <- attributes(data)$k
+  if(!is.null(attr(data, "covariate"))){
+      bestformula$covariate <- attributes(data)$covariate
+  }
 
   # Print output
   report[4] <- paste0("Regression function: ", regressionFunction(bestformula, digits = 10))
@@ -269,6 +300,9 @@ bestModel <- function(data,
   bestformula$report <- report
   cat(report, sep = "\n")
 
+  if(anyNA(bestformula$coefficients)){
+    warning("The regression contains missing coefficients. No fitting model could be found. Please try a different number of terms.")
+  }
   message("Use 'printSubset(model)' to get detailed information on the different solutions, 'plotSubset(model)' to inspect model fit and 'summary(model)' for statistics on the regression model.")
   return(bestformula)
 }
@@ -336,6 +370,8 @@ printSubset <- function(model) {
 #' @param warn If set to TRUE, already minor violations of the model assumptions
 #' are displayed (default = FALSE)
 #' @param silent turn off messages
+#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
+#' the specific value here.
 #' @return Boolean, indicating model violations (TRUE) or no problems (FALSE)
 #' @examples
 #' normData <- prepareData()
@@ -356,7 +392,16 @@ checkConsistency <- function(model,
                              stepAge = 1,
                              stepNorm = 1,
                              warn = FALSE,
-                             silent = FALSE) {
+                             silent = FALSE,
+                             covariate = NULL) {
+
+  if(!is.null(covariate)&&is.null(model$covariate)){
+    warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
+    covariate = NULL
+  }else if(is.null(covariate)&&!is.null(model$covariate)){
+    stop("Covariate specified in the model, but no function parameter available.")
+  }
+
   if (is.null(minAge)) {
     minAge <- model$minA1
   }
@@ -387,7 +432,7 @@ checkConsistency <- function(model,
   major <- 0
   results <- c()
   while (i <= maxAge) {
-    norm <- normTable(i, model, minNorm = minNorm, maxNorm = maxNorm, minRaw = minRaw, maxRaw = maxRaw, step = stepNorm)
+    norm <- normTable(i, model, minNorm = minNorm, maxNorm = maxNorm, minRaw = minRaw, maxRaw = maxRaw, step = stepNorm, covariate = covariate)
     k <- 1
     maxR <- 0
     while (k < length(norm$raw)) {
@@ -516,15 +561,28 @@ regressionFunction <- function(model, raw = NULL, digits = NULL) {
 #' age group or in general #' intersecting percentile curves.
 #' @param model The regression model
 #' @param order The degree of the derivate, default: 1
+#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
+#' the specific value here.
 #' @return The derived coefficients
 #' @examples
 #' normData <- prepareData()
 #' m <- bestModel(normData)
 #' derivedCoefficients <- derive(m)
 #' @export
-derive <- function(model, order = 1) {
+derive <- function(model, order = 1, covariate = NULL) {
+
+  if(!is.null(covariate)&&is.null(model$covariate)){
+    warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
+    covariate = NULL
+  }else if(is.null(covariate)&&!is.null(model$covariate)){
+    stop("Covariate specified in the model, but no function parameter available.")
+  }
+
   coeff <- model$coefficients[grep("L", names(model$coefficients))]
 
+  if(!is.null(covariate)){
+    coef <- simplifyCoefficients(coefficients = coeff, covariate = covariate)
+  }
 
   for (o in 1:order) {
     if (o > 1) {
@@ -660,6 +718,12 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   if (!attr(data, "useAge")){
     stop("Age variable set to FALSE in dataset. No cross validation possible.")
   }
+
+  ## TODO
+  if (!is.null(attr(data, "covariate"))){
+    stop("This function is currently not ready for including covariates.")
+  }
+
   d <- data
 
   if (is.na(raw) || is.na(group) || is.na(age)) {
