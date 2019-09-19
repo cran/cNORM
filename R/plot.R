@@ -53,7 +53,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
     d$group <- as.factor(d$group)
 
     if (type == 0) {
-      lattice::xyplot(fitted ~ raw | group, d,
+      xyplot(fitted ~ raw | group, d,
         main = paste("Observed vs. Fitted Raw Scores by ", group, "\nr = ", r, ", RMSE = ", mse),
         ylab = "Fitted Scores",
         xlab = "Observed Score",
@@ -63,7 +63,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
         abline = c(0, 1), lwd = 1
       )
     } else {
-      lattice::xyplot(diff ~ raw | group, d,
+      xyplot(diff ~ raw | group, d,
         main = paste("Observed Raw Scores vs. Difference Scores by ", group, "\nr = ", r, ", RMSE = ", mse),
         ylab = "Difference Scores",
         xlab = "Observed Score",
@@ -78,7 +78,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
     }
   } else {
     if (type == 0) {
-      lattice::xyplot(fitted ~ raw, d,
+      xyplot(fitted ~ raw, d,
         main = paste("Observed vs. Fitted Raw Scores\nr = ", r, ", RMSE = ", mse),
         ylab = "Fitted Scores",
         xlab = "Observed Score",
@@ -88,7 +88,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
         abline = c(0, 1), lwd = 1
       )
     } else {
-      lattice::xyplot(diff ~ raw, d,
+      xyplot(diff ~ raw, d,
         main = paste("Observed Raw Scores vs. Difference Scores\nr = ", r, ", RMSE = ", mse),
         ylab = "Difference",
         xlab = "Observed Score",
@@ -168,7 +168,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
     d$group <- d[[group]]
     d$group <- as.factor(d$group)
     if (type == 0) {
-      lattice::xyplot(fitted ~ normValue | group, d,
+      xyplot(fitted ~ normValue | group, d,
         main = paste("Observed vs. Fitted Norm Scores by ", group, "\nr = ",
                      r, ", SE = ", se),
         ylab = "Fitted Scores",
@@ -179,7 +179,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
         abline = c(0, 1), lwd = 1
       )
     } else {
-      lattice::xyplot(diff ~ normValue | group, d,
+      xyplot(diff ~ normValue | group, d,
         main = paste("Observed Norm Scores vs. Difference Scores by ", group, "\nr = ",
                      r, ", SE = ", se),
         ylab = "Difference",
@@ -196,7 +196,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
     }
   } else {
     if (type == 0) {
-      lattice::xyplot(fitted ~ normValue, d,
+      xyplot(fitted ~ normValue, d,
         main = paste("Observed vs. Fitted Norm Scores\nr = ",
                      r, ", SE = ", se),
         ylab = "Fitted Scores",
@@ -207,7 +207,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
         abline = c(0, 1), lwd = 1
       )
     } else {
-      lattice::xyplot(diff ~ normValue, d,
+      xyplot(diff ~ normValue, d,
         main = paste("Observed Norm Scores vs. Difference Scores\nr = ",
                      r, ", SE = ", se),
         ylab = "Difference",
@@ -384,7 +384,7 @@ plotNormCurves <- function(model, normList = c(30, 40, 50, 60, 70),
 #' of the raw data (default 7)
 #' @param title custom title for plot
 #' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
+#' the specific value here. If no covariate is specified, both degrees will be plotted.
 #' @seealso plotNormCurves, plotPercentileSeries
 #' @examples
 #' # Load example data set, compute model and plot results
@@ -409,7 +409,23 @@ plotPercentiles <- function(data,
     warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
     covariate = NULL
   }else if(is.null(covariate)&&!is.null(model$covariate)){
-    stop("Covariate specified in the model, but no function parameter available.")
+    degree <- unique(data[, attr(data, "covariate")])
+
+    if (is.null(title)) {
+      title <- paste0("Observed and Predicted Percentile Curves\nModel: ", model$ideal.model, ", R2 = ", round(model$subsets$adjr2[[model$ideal.model]], digits = 4), ", Covariates: ", degree[[1]], " versus ", degree[[2]])
+    }
+
+    trel <- c(plotPercentiles(data, model, covariate = degree[[1]],
+                              minRaw = minRaw, maxRaw = maxRaw,
+                              minAge = minAge, maxAge = maxAge,
+                              raw = raw, group = group, percentiles = percentiles,
+                              scale = scale, title = title),
+              plotPercentiles(data, model, covariate = degree[[2]],
+              minRaw = minRaw, maxRaw = maxRaw,
+              minAge = minAge, maxAge = maxAge,
+              raw = raw, group = group, percentiles = percentiles,
+              scale = scale, title = title))
+    return(print(trel))
   }
 
   if(!is.null(model$covariate)){
@@ -561,10 +577,9 @@ plotPercentiles <- function(data,
   }
 
   if (is.null(title)) {
-    r <- round(cor(data[, raw], model$fitted.values,
-                   use = "pairwise.complete.obs"), digits = 4)
     title <- paste0("Observed and Predicted Percentile Curves\nModel: ", model$ideal.model, ", R2 = ", round(model$subsets$adjr2[[model$ideal.model]], digits = 4))
   }
+
   plot <- lattice::xyplot(formula(xyFunction), percentile,
     panel = function(...)
       lattice::panel.superpose(..., panel.groups = panelfun),
@@ -820,14 +835,17 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
 #' 1 = log transformed Mallow's Cp by adjusted R2, 2 = Bayesian Information
 #' Criterion (BIC) by adjusted R2 and 3 = Root Mean Square Error (RMSE) by number
 #' of predictors
+#' @param index add index labels to data points
 #' @seealso bestModel, plotPercentiles, printSubset
 #' @examples
 #' normData <- prepareData()
 #' m <- bestModel(data = normData)
 #' plotSubset(m)
 #' @export
-plotSubset <- function(model, type = 1) {
+plotSubset <- function(model, type = 1, index = FALSE) {
   dataFrameTMP <- data.frame(adjr2 = model$subsets$adjr2, bic = model$subsets$bic, cp = model$subsets$cp, RMSE = sqrt(model$subsets$rss / length(model$fitted.values)), nr = seq(1, length(model$subsets$adjr2), by = 1))
+  indexLabel <- seq(from = 1, to = nrow(dataFrameTMP))
+
   if (type == 1) {
     lattice::xyplot(cp ~ adjr2,
       data = dataFrameTMP, type = "b",
@@ -855,6 +873,9 @@ plotSubset <- function(model, type = 1) {
           col = "#9933FF", label = model$cutoff
         )
         lattice::panel.xyplot(x, y, ...)
+        # add index value to data points
+        if(index)
+          lattice::ltext(x = x, y = y, labels = indexLabel, cex=.7)
       }
     )
   } else if (type == 2) {
@@ -884,6 +905,9 @@ plotSubset <- function(model, type = 1) {
           col = "#9933FF", label = model$cutoff
         )
         lattice::panel.xyplot(x, y, ...)
+        # add index value to data points
+        if(index)
+          lattice::ltext(x = x, y = y, labels = indexLabel, cex=.7)
       }
     )
   } else if(type == 3){
@@ -893,7 +917,12 @@ plotSubset <- function(model, type = 1) {
                     grid = TRUE,
                     main = "Information Function",
                     ylab = "Root Means Square Error (Raw Score)",
-                    xlab = "Number of Predictors" )
+                    xlab = "Number of Predictors", panel = function(x, y, ...) {
+                      lattice::panel.xyplot(x, y, ...)
+                      # add index value to data points
+                      if(index)
+                        lattice::ltext(x = x, y = y, labels = indexLabel, cex=.7)
+                    } )
   } else {
     lattice::xyplot(adjr2 ~ nr,
                     data = dataFrameTMP, type = "b",
@@ -918,6 +947,9 @@ plotSubset <- function(model, type = 1) {
                         col = "#9933FF", label = model$cutoff
                       )
                       lattice::panel.xyplot(x, y, ...)
+                      # add index value to data points
+                      if(index)
+                        lattice::ltext(x = x, y = y, labels = indexLabel, cex=.7)
                     }
     )
   }

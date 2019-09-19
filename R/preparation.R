@@ -22,7 +22,7 @@
 }
 
 
-#' Prepare data for modelling in one step (convenience method)
+#' Prepare data for modeling in one step (convenience method)
 #'
 #' This is a convenience method to either load the inbuilt sample dataset, or
 #' to provide a data frame with the variables "raw" (for the raw scores) and "group"
@@ -33,7 +33,7 @@
 #' named 'raw'. In case no object is provided, cNORM uses the inbuilt sample data to
 #' demonstrate the procedure.
 #' @param group grouping variable in the data, e. g. age groups, grades ...
-#' Setting group = FALSE deactivates modelling in dependence of age. Use this in case you do want
+#' Setting group = FALSE deactivates modeling in dependence of age. Use this in case you do want
 #' conventional norm tables.
 #' @param raw the raw scores
 #' @param age the continuous explanatory variable; by default set to "group"
@@ -42,6 +42,7 @@
 #' @param scale type of norm scale, either T (default), IQ, z or percentile (= no
 #' transformation); a double vector with the mean and standard deviation can as well,
 #' be provided f. e. c(10, 3) for Wechsler scale index point
+#' @param silent set to TRUE to suppress messages
 #' @return data frame including the norm scores, powers and interactions of the norm score and
 #' grouping variable
 #' @examples
@@ -51,12 +52,12 @@
 #' # variable names can be specified as well, here with the BMI data included in the package
 #' data.bmi <- prepareData(CDC, group = "group", raw = "bmi", age = "age")
 #'
-#' # modelling with only one group with the 'elfe' dataset as an example
+#' # modeling with only one group with the 'elfe' dataset as an example
 #' # this results in conventional norming
 #' data.elfe2 <- prepareData(data = elfe, group = FALSE)
 #' m <- bestModel(data.elfe2)
 #' @export
-prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group", width = NA, scale = "T") {
+prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group", width = NA, scale = "T", silent = FALSE) {
   if (is.null(data)) {
     normData <- cNORM::elfe
   } else {
@@ -103,6 +104,11 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
   if (typeof(group) != "logical") {
     normData <- normData[!is.na(normData[, group]), ]
     normData <- normData[!is.na(normData[, age]), ]
+
+    if(max(normData[, age])<min(normData[, group])||min(normData[, age])>max(normData[, group])){
+      warning("The range of the age and group variable do not match. Please specify a grouping variable whose values relate to the range of the age variable. You can automatically generate a grouping variable by using the 'rankBySlidingWindow' function and setting a desired number of groups with the 'nGroup' parameter.")
+      plot(normData[, age], normData[, group])
+    }
   }
   normData <- normData[!is.na(normData[, raw]), ]
 
@@ -114,9 +120,9 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
   }
 
   if (typeof(group) != "logical" || group) {
-    normData <- computePowers(normData, k = 4, norm = "normValue", age = age)
+    normData <- computePowers(normData, k = 4, norm = "normValue", age = age, silent = silent)
   } else {
-    normData <- computePowers(normData, k = 4, norm = "normValue")
+    normData <- computePowers(normData, k = 4, norm = "normValue", silent = silent)
   }
 
   return(normData)
@@ -136,13 +142,13 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
 #' @section Remarks on using covariates:
 #' So far the inclusion of a binary covariate is experimental and far from optimized.
 #' The according variable name has to be specified in the ranking procedure
-#' and the modelling includes this in the further process. At the moment, during ranking
+#' and the modeling includes this in the further process. At the moment, during ranking
 #' the data are split into the according cells group x covariate, which leads to small
 #' sample sizes. Please take care to have enough cases in each combination. Additionally,
-#' covariates can lead to unstable modelling solutions. The question, if it is really
+#' covariates can lead to unstable modeling solutions. The question, if it is really
 #' reasonable to include covariates when norming a test is a decision beyond the pure data
-#' modelling. Please use with care or alternatively split the dataset into the two groups
-#' beforehand and modell them seperately.
+#' modeling. Please use with care or alternatively split the dataset into the two groups
+#' beforehand and model them separately.
 #'
 #' @param data data.frame with norm sample data
 #' @param group name of the grouping variable (default 'group'), e. g. grade, setting
@@ -161,7 +167,7 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
 #' performance
 #' @param descriptives If set to TRUE (default), information in n, mean, median and
 #' standard deviation per group is added to each observation
-#' @param covariate Include a binary covariate into the preparation and subsequently modelling,
+#' @param covariate Include a binary covariate into the preparation and subsequently modeling,
 #' either by specifying the variable name or including the variable itself. BEWARE!
 #' Not all subsequent functions are already prepared for it.  It is an experimental feature.
 #' @return the dataset with the percentiles and norm scales per group
@@ -207,6 +213,9 @@ rankByGroup <-
 
     if (is.numeric(covariate) && (length(covariate) == nrow(d))) {
       d$COV <- covariate
+      covariate <- "COV"
+    }else if (!is.null(covariate)&&!is.numeric(covariate)) {
+      d$COV <- d[, covariate]
       covariate <- "COV"
     }
 
@@ -295,11 +304,7 @@ rankByGroup <-
     } else {
       variance <- cor(d$raw, d$COV, method="kendall")^2
       if(variance < .1){
-        question <- askYesNo(paste0("The covariate explains only a share of ", variance ," of the raw score variable. This share is likely not relevant enough to be included in the modelling. Do you want to remove the covariate from the ranking process?"), default = TRUE,
-                 prompts = getOption("askYesNo", gettext(c("Yes", "No", "Cancel"))))
-        if(question){
-          return(rankByGroup(d, scale = scale, raw = raw, group = group, descriptives = descriptives, method = method, descend = descend, covariate = NULL))
-        }
+        warning(paste0("The covariate explains only a share of ", round(variance, digits = 4) ," of the variance of the raw score variable. This share is likely not relevant enough to be included in the modeling."))
       }
 
       warning("Using covariates is an EXPERIMENTAL feature in this package currently.")
@@ -393,6 +398,7 @@ rankByGroup <-
     attr(d, "scaleSD") <- scaleSD
     attr(d, "descend") <- descend
     attr(d, "normValue") <- "normValue"
+    attr(d, "width") <- NA
 
     if (descriptives && min(d$n) < 30) {
       warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the grouping variable. The confidence of the norm scores is low in that part of the scale. Consider redividing the cases over the grouping variable."))
@@ -423,13 +429,13 @@ rankByGroup <-
 #' @section Remarks on using covariates:
 #' So far the inclusion of a binary covariate is experimental and far from optimized.
 #' The according variable name has to be specified in the ranking procedure
-#' and the modelling includes this in the further process. At the moment, during ranking
+#' and the modeling includes this in the further process. At the moment, during ranking
 #' the data are split into the according degrees of the covariate and the ranking is done
 #' separately. This may lead to small sample sizes. Please take care to have enough cases in each combination. Additionally,
-#' covariates can lead to unstable modelling solutions. The question, if it is really
+#' covariates can lead to unstable modeling solutions. The question, if it is really
 #' reasonable to include covariates when norming a test is a decision beyond the pure data
-#' modelling. Please use with care or alternatively split the dataset into the two groups
-#' beforehand and modell them seperately.
+#' modeling. Please use with care or alternatively split the dataset into the two groups
+#' beforehand and model them separately.
 #'
 #' @param data data.frame with norm sample data
 #' @param age the continuous age variable. Setting 'age' to FALSE inhibits computation of
@@ -455,7 +461,7 @@ rankByGroup <-
 #' overwrites it.
 #' @param group Optional parameter for providing the name of the grouping variable (if present; overwritten
 #' if ngroups is used)
-#' @param covariate Include a binary covariate into the preparation and subsequently modelling,
+#' @param covariate Include a binary covariate into the preparation and subsequently modeling,
 #' either by specifying the variable name or including the variable itself. BEWARE!
 #' Not all subsequent functions are already prepared for it.  It is an experimental feature.
 #' @return the dataset with the individual percentiles and norm scores
@@ -504,6 +510,9 @@ rankBySlidingWindow <- function(data,
     d$COV <- covariate
     covariate <- "COV"
     warning("Using covariates is an EXPERIMENTAL feature in this package currently.")
+  }else if (!is.null(covariate)&&!is.numeric(covariate)) {
+    d$COV <- d[, covariate]
+    covariate <- "COV"
   }
 
   if (anyNA(d[, raw]) || anyNA(d[, age])) {
@@ -643,6 +652,7 @@ rankBySlidingWindow <- function(data,
   attr(d, "scaleMean") <- scaleM
   attr(d, "scaleSD") <- scaleSD
   attr(d, "descend") <- descend
+  attr(d, "width") <- width
   attr(d, "normValue") <- "normValue"
   attr(d, "group") <- "group"
 
@@ -677,11 +687,12 @@ rankBySlidingWindow <- function(data,
 #' explanatory variables can be used here instead an age variable as well, as long as the variable is
 #' at least ordered metric, e. g. language or development levels ... The label 'age' is used, as this is the
 #' most common field of application.
-#' @param covariate Include a binary covariate into the preparation and subsequently modelling,
+#' @param covariate Include a binary covariate into the preparation and subsequently modeling,
 #' either by specifying the variable name or including the variable itself. If this has already
 #' been done in the ranking, the function uses the according variable. BEWARE!
 #' Not all subsequent functions are already prepared for it. It is an experimental feature and
 #' may lead to unstable models subsequently.
+#' @param silent set to TRUE to suppress messages
 #' @return data.frame with the powers and interactions of location and explanatory variable / age
 #' @seealso bestModel
 #' @examples
@@ -698,7 +709,7 @@ computePowers <-
              k = 4,
              norm = NULL,
              age = NULL,
-             covariate = NULL) {
+             covariate = NULL, silent = FALSE) {
     d <- as.data.frame(data)
 
     # check variables, if NULL take attributes from d
@@ -723,6 +734,11 @@ computePowers <-
 
     if (!is.numeric(d[, norm])) {
       warning(paste(c("Norm score variable '", norm, "' has to be numeric."), collapse = ""))
+    }
+
+    if (is.numeric(age) && (length(age) == nrow(d))) {
+      d$age <- age
+      age <- "age"
     }
 
     if (useAge && !is.numeric(d[, age])) {
@@ -847,29 +863,13 @@ computePowers <-
     attr(d, "useAge") <- useAge
 
     # check, if it is worthwhile to continue with continuous norming
-    if (useAge) {
-      if (k == 1) {
-        form <- formula(paste(attr(d, "raw"), "A1", sep = " ~ "))
-      }
-      else if (k == 2) {
-        form <- formula(paste(attr(d, "raw"), "A1 + A2", sep = " ~ "))
-      }
-      else if (k == 3) {
-        form <- formula(paste(attr(d, "raw"), "A1 + A2 + A3", sep = " ~ "))
-      }
-      else if (k == 4) {
-        form <- formula(paste(attr(d, "raw"), "A1 + A2 + A3 + A4", sep = " ~ "))
-      }
-      else if (k == 5) {
-        form <- formula(paste(attr(d, "raw"), "A1 + A2 + A3 + A4 + A5", sep = " ~ "))
-      }
-      else if (k == 6) {
-        form <- formula(paste(attr(d, "raw"), "A1 + A2 + A3 + A4 + A5 + A6", sep = " ~ "))
-      }
+    if (useAge&&!silent) {
+      r2 <- summary(lm(as.numeric(d[[attr(d, "raw")]]) ~ poly(A1, k, raw=TRUE)))$r.squared
 
-      r2 <- summary(lm(form, data = d))$r.squared
       if (r2 < .05) {
         warning(paste0("Multiple R2 between the explanatory variable and the raw score is low with R2 = ", r2, ". Thus, there is not much variance that can be captured by the continuous norming procedure. The models are probably unstable."))
+      }else{
+        cat(paste0("Multiple R2 between raw score and explanatory variable: R2 = ", round(r2, 4), "\n"))
       }
     }
 

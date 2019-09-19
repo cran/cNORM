@@ -49,6 +49,7 @@
 #' are so far not yet prepared to handle covariates.
 #' @param weights Optional vector with weights for the single cases. All weights have to be positive.
 #' This is currently an experimental feature.
+#' @param plot If set to TRUE (default), the percentile plot of the model is shown
 #' @return The model meeting the R2 criteria with coefficients and variable selection
 #' in model$coefficients. Use \code{plotSubset(model)} and
 #' \code{plotPercentiles(data, model)} to inspect model
@@ -96,7 +97,8 @@ bestModel <- function(data,
                       predictors = NULL,
                       terms = 0,
                       weights = NULL,
-                      force.in = NULL) {
+                      force.in = NULL,
+                      plot = TRUE) {
 
   # retrieve attributes
   if (is.null(raw)) {
@@ -109,13 +111,8 @@ bestModel <- function(data,
     stop("k parameter exceeds the power degrees in the dataset. Please use computePowers with a higher degree in preparating the data. ")
   }
 
-
   # check variable range
-  if(is.null(R2)&&is.null(attr(data, "covariate"))){
-    R2 <- .99
-  }else if(is.null(R2)&&!is.null(attr(data, "covariate"))){
-    R2 <- .98
-  }else if (R2 <= 0 || R2 >= 1) {
+  if (!is.null(R2)&&(R2 <= 0 || R2 >= 1)) {
     stop("R2 parameter out of bounds.")
   }
 
@@ -211,6 +208,16 @@ bestModel <- function(data,
   i <- 1
   rAdj <- results$adjr2[i]
 
+  if(is.null(R2)&&(terms==0)){
+    if(results$adjr[[length(results$adjr2)]]>.99){
+      R2 <- .99
+    }else if(nvmax > 4){
+      R2 <- results$adjr[[5]]
+    }else {
+      R2 <- results$adjr[[nvmax]]
+    }
+  }
+
   if (terms > 0 && terms <= length(results$adjr2)) {
     i <- terms
     report <- paste0("User specified solution: ", i, " terms")
@@ -226,7 +233,7 @@ bestModel <- function(data,
     } else if (results$adjr2[length(results$adjr2)] < R2) {
       i <- length(results$adjr2)
       report <- (paste0(
-        "Specified R2 exceeds the R2 of the model with the highest fit. Consider rerunning the analysis with higher k value. Falling back to model ", i
+        "Specified R2 exceeds the R2 of the model with the highest fit. Consider reducing the R2 or fixing the number of terms (e.g. 4 to 10). You can use the plotSubset function to find a good balance between number of terms and R2. Look out for an 'elbow' in the information function or use the cnorm.cv function to determine the optimal number of terms. Falling back to model ", i
       ))
     } else {
       while (rAdj < R2) {
@@ -237,6 +244,7 @@ bestModel <- function(data,
     }
   }
   report[2] <- paste0("R-Square Adj. = ", round(results$adjr2[i], digits = 6))
+
 
   variables <- names(coef(subsets, id = i))
   variables <- variables[2:length(variables)] # remove '(Intercept)' variable
@@ -303,7 +311,16 @@ bestModel <- function(data,
   if(anyNA(bestformula$coefficients)){
     warning("The regression contains missing coefficients. No fitting model could be found. Please try a different number of terms.")
   }
-  message("Use 'printSubset(model)' to get detailed information on the different solutions, 'plotSubset(model)' to inspect model fit and 'summary(model)' for statistics on the regression model.")
+
+  if (terms > 15) {
+    message("\nThe model includes a high number of terms. Simpler models are usually more robust. Cross validation with 'cnorm.cv' or an inspection of information functions with 'plotSubset' might help to identify a balanced number of terms. Consider fixing this parameter to a smaller number.")
+  }
+
+  message("\nUse 'printSubset(model)' to get detailed information on the different solutions, 'plotSubset(model)' to inspect model fit, 'plotPercentiles(data, model)' to visualize percentile curves and 'summary(model)' for statistics on the regression model.")
+
+  if(plot&&attr(data, "useAge"))
+    plotPercentiles(data, bestformula)
+
   return(bestformula)
 }
 
@@ -428,80 +445,36 @@ checkConsistency <- function(model,
   descend <- model$descend
 
   i <- minAge
-  minor <- 0
   major <- 0
   results <- c()
   while (i <= maxAge) {
     norm <- normTable(i, model, minNorm = minNorm, maxNorm = maxNorm, minRaw = minRaw, maxRaw = maxRaw, step = stepNorm, covariate = covariate)
-    k <- 1
-    maxR <- 0
-    while (k < length(norm$raw)) {
-      if (norm$raw[[k]] > maxR) {
-        maxR <- norm$raw[[k]]
-      }
-      diff <- maxR - norm$raw[[k + 1]]
-      if ((!descend && diff >= 1) || (descend && diff <= -1)) {
-        if (!silent) {
-          message(paste0(
-            "Considerable violation of consistency at age ",
-            round(i, digits = 1), ", raw value ",
-            round(norm$raw[[k]],
-              digits = 1
-            )
-          ))
-        }
-        results <- c(results, paste0(
-          "Considerable violation of consistency at
-                                       age ",
-          round(i, digits = 1), ",
-                                             raw value ",
-          round(norm$raw[[k]],
-            digits = 1
-          )
-        ))
-        major <- major + 1
-        k <- length(norm$raw) + 1
-      } else if (warn & ((!descend && diff > 0) || (descend && diff < 0))) {
-        if (!silent) {
-          message(paste0(
-            "Negligible violation of consistency at age ",
-            round(i, digits = 1),
-            ", raw value ",
-            round(norm$raw[[k]],
-              digits = 1
-            )
-          ))
-        }
-        results <- c(results, paste0(
-          results, "Negligible violation of
-                                       consistency at age ",
-          round(i, digits = 1), ",
-                                             raw value ",
-          round(norm$raw[[k]],
-            digits = 1
-          )
-        ))
-        minor <- minor + 1
-      }
-      k <- k + 1
+    correct <- TRUE
+    if(descend)
+      correct <- !is.unsorted(-norm$raw)
+    else
+      correct <- !is.unsorted(norm$raw)
+
+    if(!correct){
+    if (!silent) {
+      message(paste0(
+        "Violation of monotonicity at age ", round(i, digits = 1), "."))
+    }
+      results <- c(results, paste0("Violation of monotonicity at age ", round(i, digits = 1), "."))
+      major <- major + 1
     }
 
     i <- i + stepAge
   }
-  if (minor == 0 & major == 0) {
+
+  if (major == 0) {
     if (!silent) {
       message("\nNo violations of model consistency found.")
     }
     return(FALSE)
-  } else if (major == 0) {
-    if (!silent) {
-      message(paste0("\n", minor, " minor violations of model consistency found."))
-      message(rangeCheck(model, minAge, maxAge, minNorm, maxNorm))
-    }
-    return(TRUE)
   } else {
     if (!silent) {
-      message(paste0("\nAt least ", major, " major and ", minor, " minor violations of model consistency found."))
+      message(paste0("\nAt least ", major, " violations of monotonicity found within the specified range of age and norm score."))
       message("Use 'plotNormCurves' to visually inspect the norm curve and restrict the valid value range accordingly.")
       message("Be careful with horizontal and vertical extrapolation.")
       message(rangeCheck(model, minAge, maxAge, minNorm, maxNorm))
@@ -701,7 +674,7 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' otherwise, a pre ranked dataset has to be provided, which is then split into train and validation (and thus
 #' only the modelling, but not the ranking is independent)
 #' @param pCutoff The function checks the stratification for unbalanced data sampling.
-#' It performs a t-test per group . pCutoff specifies the p-value per group that the test result
+#' It performs a t-test per group. pCutoff specifies the p-value per group that the test result
 #' has to reach at least. To minimize beta error, the value is set to .2 per default
 #' @param width If provided, ranking is done via rankBySlidingWindow, otherwise by group
 #' @param raw Name of the raw variable
@@ -714,7 +687,15 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' # plot cross validation RMSE by number of terms up to 9 with three repetitions
 #' data <- prepareData()
 #' cnorm.cv(data, 3, max = 7, norms = FALSE)
-cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = .2, width = NA, raw = NA, group = NA, age = NA) {
+cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
+
+  if(is.na(pCutoff)){
+    if(nrow(data)<10000)
+      pCutoff = .2
+    else
+      pCutoff = .1
+  }
+
   if (!attr(data, "useAge")){
     stop("Age variable set to FALSE in dataset. No cross validation possible.")
   }
@@ -745,6 +726,8 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   if (is.na(scaleSD) || cv == "full") {
     scaleSD <- 10
   }
+
+  width <- attr(d, "width")
 
   k <- attr(d, "k")
   if (is.na(k)) {
@@ -823,8 +806,8 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
       test <- do.call(rbind, test)
 
       if (cv == "full") {
-        train <- prepareData(train, raw = raw, group = group, age = age)
-        test <- prepareData(test, raw = raw, group = group, age = age)
+        train <- prepareData(train, raw = raw, group = group, age = age, width = width, silent = TRUE)
+        test <- prepareData(test, raw = raw, group = group, age = age, width = width, silent = TRUE)
       }
       # test for overall significant differences between groups, restart stratification if necessary
       # p.value <- t.test(train[, raw], test[, raw])$p.value
@@ -931,6 +914,8 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     plot(tab$Delta.R2.test, pch = 19, type = "b", col = "black", main = "Norm Score Delta R2 in Validation", ylab = "Delta R2", xlab = "Number of terms", ylim = c(min(tab$Delta.R2.test, na.rm = TRUE), max(tab$Delta.R2.test, na.rm = TRUE)))
     abline(h = 0, col = 3, lty = 2)
   }
+
+
   cat("\n")
   cat("The simulation yielded the following optimal settings:\n")
   cat(paste0("\nNumber of terms with best crossfit: ", which.min((1 - tab$Crossfit)^2)))
