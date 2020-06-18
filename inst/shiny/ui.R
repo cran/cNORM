@@ -32,7 +32,11 @@ shinyUI(fluidPage(
           multiple = FALSE
         ), hr(),
         fileInput("file", "Choose a file", multiple = FALSE, accept = c(".csv", ".xlsx", ".xls", ".rda", ".sav")),
-        tags$p(tags$b("HINT: If you choose a file from your own directory, the chosen example will not be used during the session anymore!"))
+        tags$p(tags$b("HINT: If you choose a file from your own directory, the chosen example will not be used during the session anymore!")),
+        hr(),tags$p(tags$b("The built-in example data:")),
+        tags$ul(tags$li("'elfe' includes norming sample data of a reading comprehension in elementary school, based on a multiple choice sentence completion task with raw scores ranging from 0 to 28 "),
+        tags$li("'ppvt' uses data from the Peabody Picture Vocabulary Test (Revision IV) ranging from age 2.5 to 17.5 with raw scores from 0 to 228"),
+        tags$li("'CDC' is a data collection of BMI, weight and growth development from 2 to 18; large sample based on epidemiological studies of the Center of Disease Control (CDC)"))
       ),
       mainPanel(htmlOutput("introduction"), dataTableOutput("table"))
     )),
@@ -185,7 +189,7 @@ shinyUI(fluidPage(
             min = 1, max = 24, value = 5
           ), tags$br(), tags$br(),
           tags$p("Please use the slider to change the number of terms in the model. Please select a model with non-intersecting percentile curves. Avoid undulating curves, as these indicate model overfit."),
-          tags$br(), tags$b("After choosing the best fitting number of terms, please rerun the model calculation before generating norm tables.")
+          tags$br(), tags$b("After choosing the best fitting number of terms, please rerun the model calculation with a fixed number of terms before generating norm tables.")
         ),
         mainPanel(plotOutput("Series", width = "100%", height = "800px"))
       )),
@@ -221,7 +225,12 @@ shinyUI(fluidPage(
         tags$h3("Norm Scores Plot"), tags$p("The plot shows the observed and predicted norm scores. You can identify, how well the model is able to predict the norm scores of the dataset. The duration of the computation increases with the size of the dataset."),
         tags$br(),
         checkboxInput("grouping", "Plot by group", FALSE),
-        checkboxInput("differences", "Plot differences", FALSE)
+        checkboxInput("differences", "Plot differences", FALSE), tags$br(),
+        actionButton(
+          inputId = "normScoreButton",
+
+          label = "Update"
+        )
       ), mainPanel(
         withSpinner(
           plotOutput("PlotNormScores", width = "100%", height = "800px"),
@@ -233,8 +242,12 @@ shinyUI(fluidPage(
         tags$h3("Raw Scores Plot"), tags$p("The plot shows the observed and predicted raw scores. You can identify, how well the model is able to predict the raw scores of the original dataset."),
         tags$br(),
         checkboxInput("grouping1", "Plot by group", FALSE),
-        checkboxInput("differences1", "Plot differences", FALSE)
-      ), mainPanel(
+        checkboxInput("differences1", "Plot differences", FALSE), tags$br(),
+        actionButton(
+          inputId = "rawScoreButton",
+
+          label = "Update"
+      )), mainPanel(
         withSpinner(
           plotOutput("PlotRawScores", width = "100%", height = "800px"),
           type = 5

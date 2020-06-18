@@ -202,8 +202,9 @@ bestModel <- function(data,
     index <- NULL
   }
 
-  subsets <- leaps::regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big, weights = weights)
+  subsets <- regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big, weights = weights)
   results <- summary(subsets)
+  results$numberOfTerms <- as.numeric(rowSums(results$which)-1)
 
   i <- 1
   rAdj <- results$adjr2[i]
@@ -346,7 +347,8 @@ printSubset <- function(model) {
       RSS = model$subsets$rss,
       RMSE = sqrt(model$subsets$rss / length(model$fitted.values)),
       Cp = model$subsets$cp,
-      BIC = model$subsets$bic
+      BIC = model$subsets$bic,
+      Terms = model$subsets$numberOfTerms
     ))
   return(table)
 }
@@ -447,8 +449,9 @@ checkConsistency <- function(model,
   i <- minAge
   major <- 0
   results <- c()
+
   while (i <= maxAge) {
-    norm <- normTable(i, model, minNorm = minNorm, maxNorm = maxNorm, minRaw = minRaw, maxRaw = maxRaw, step = stepNorm, covariate = covariate)
+    norm <- normTable(i, model, minNorm = minNorm, maxNorm = maxNorm, minRaw = minRaw, maxRaw = maxRaw, step = stepNorm, covariate = covariate, monotonuous = FALSE)
     correct <- TRUE
     if(descend)
       correct <- !is.unsorted(-norm$raw)
@@ -474,14 +477,19 @@ checkConsistency <- function(model,
     return(FALSE)
   } else {
     if (!silent) {
-      message(paste0("\nAt least ", major, " violations of monotonicity found within the specified range of age and norm score."))
-      message("Use 'plotNormCurves' to visually inspect the norm curve and restrict the valid value range accordingly.")
-      message("Be careful with horizontal and vertical extrapolation.")
+      message(paste0("\nAt least ", major,
+                     " violations of monotonicity found within the specified range of age and norm score.",
+                     "Use 'plotNormCurves' to visually inspect the norm curve or 'plotDerivative' to ",
+                     "identify regions violating the consistency. ",
+                     "Rerun the modeling with adjusted parameters or restrict the valid value range accordingly. ",
+                     "Be careful with horizontal and vertical extrapolation."))
       message(rangeCheck(model, minAge, maxAge, minNorm, maxNorm))
     }
     return(TRUE)
   }
 }
+
+
 
 #' Regression function
 #'
@@ -814,7 +822,7 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     }
 
     # compute leaps model
-    subsets <- leaps::regsubsets(lmX, data = train, nbest = 1, nvmax = max, really.big = n.models > 25)
+    subsets <- regsubsets(lmX, data = train, nbest = 1, nvmax = max, really.big = n.models > 25)
 
     # retrieve models coefficients for each number of terms
     for (i in min:max) {
@@ -851,7 +859,7 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   }
 
   # now for the complete data the same logic
-  complete <- leaps::regsubsets(lmX, data = d, nbest = 1, nvmax = n.models, really.big = n.models > 25)
+  complete <- regsubsets(lmX, data = d, nbest = 1, nvmax = n.models, really.big = n.models > 25)
   for (i in 1:max) {
     variables <- names(coef(complete, id = i))
     variables <- variables[2:length(variables)]
@@ -915,12 +923,16 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     abline(h = 0, col = 3, lty = 2)
   }
 
+  FirstNegative <- which(tab$Delta.R2.test <= 0)[1]
+  suggest <- FirstNegative - 1
 
   cat("\n")
   cat("The simulation yielded the following optimal settings:\n")
   cat(paste0("\nNumber of terms with best crossfit: ", which.min((1 - tab$Crossfit)^2)))
   cat(paste0("\nNumber of terms with best raw validation RMSE: ", which.min(tab$RMSE.raw.test)))
-  cat(paste0("\nNumber of terms with best norm validation R2: ", which.max(r2.test)))
+  cat(paste0("\nNumber of terms with best norm validation R2: ", which.max(r2.test), "\n"))
+  cat(paste0("The first model with a negative Delta R2 in norm score cross validation is model ", FirstNegative, "\n"))
+  cat(paste0("Thus, choosing a model with ", suggest, " terms might be the best choice. For this, use the parameter 'terms = ", suggest, "' in the bestModel-function.\n"))
   cat("\nPlease investigate the plots and the summary table, as the results might vary within a narrow range.")
   cat("\nEspacially pay attention to RMSE.raw.test, r2.test, crossfit near 1 and where delta R2 stops to progress.")
   cat("\n")

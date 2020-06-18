@@ -4,6 +4,24 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 1.2.3 (in progress)
+Date: 2020.06.18
+
+Changes:
+
+*    Error in citation fixed
+*    Improved explanations in the Shiny GUI
+*    Additional 'Update'-Buttons in norm and raw scores plot in visualization tab of shiny gui
+*    removed unnecessary import askYesNo
+*    spell checking in diverse function descriptions
+*    correction for monotonicity in rawTable and normTable (now default)
+*    predictRaw can now return matrices for list of norm x age
+*    new dataset added on the basis of the EPM paper
+*    Bug in plotPercentiles fixed for datasets with decending ranking order
+*    'descend' parameter added to prepareData
+*    rawTable can now return matrices
+
+
 ### Version in 1.2.2 (fifth release)
 Date: 2019.09.18
 

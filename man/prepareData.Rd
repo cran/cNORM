@@ -2,10 +2,18 @@
 % Please edit documentation in R/preparation.R
 \name{prepareData}
 \alias{prepareData}
-\title{Prepare data for modelling in one step (convenience method)}
+\title{Prepare data for modeling in one step (convenience method)}
 \usage{
-prepareData(data = NULL, group = "group", raw = "raw",
-  age = "group", width = NA, scale = "T", silent = FALSE)
+prepareData(
+  data = NULL,
+  group = "group",
+  raw = "raw",
+  age = "group",
+  width = NA,
+  scale = "T",
+  descend = FALSE,
+  silent = FALSE
+)
 }
 \arguments{
 \item{data}{data.frame with a grouping variable named 'group' and a raw score variable
@@ -13,7 +21,7 @@ named 'raw'. In case no object is provided, cNORM uses the inbuilt sample data t
 demonstrate the procedure.}
 
 \item{group}{grouping variable in the data, e. g. age groups, grades ...
-Setting group = FALSE deactivates modelling in dependence of age. Use this in case you do want
+Setting group = FALSE deactivates modeling in dependence of age. Use this in case you do want
 conventional norm tables.}
 
 \item{raw}{the raw scores}
@@ -26,6 +34,11 @@ observed raw scores, otherwise, ranking is done by group (default)}
 \item{scale}{type of norm scale, either T (default), IQ, z or percentile (= no
 transformation); a double vector with the mean and standard deviation can as well,
 be provided f. e. c(10, 3) for Wechsler scale index point}
+
+\item{descend}{ranking order (default descent = FALSE): inverses the
+ranking order with higher raw scores getting lower norm scores; relevant
+for example when norming error scores, where lower scores mean higher
+performance}
 
 \item{silent}{set to TRUE to suppress messages}
 }
@@ -47,7 +60,7 @@ data.elfe <- prepareData()
 # variable names can be specified as well, here with the BMI data included in the package
 data.bmi <- prepareData(CDC, group = "group", raw = "bmi", age = "age")
 
-# modelling with only one group with the 'elfe' dataset as an example
+# modeling with only one group with the 'elfe' dataset as an example
 # this results in conventional norming
 data.elfe2 <- prepareData(data = elfe, group = FALSE)
 m <- bestModel(data.elfe2)

@@ -11,6 +11,21 @@
 calcPolyInL <- function(raw, age, model) {
   k <- model$k
   coeff <- model$coefficients
+  return(calcPolyInLBase(raw, age, coeff, k))
+}
+
+#' Internal function for retrieving regression function coefficients at specific age
+#'
+#' The function is an inline for searching zeros in the inverse regression
+#' function. It collapses the regression function at a specific age and simplifies
+#' the coefficients.
+#' @param raw The raw value (subtracted from the intercept)
+#' @param age The age
+#' @param coeff The cNORM regression model coefficients
+#' @param k The cNORM regression model power parameter
+#'
+#' @return The coefficients
+calcPolyInLBase <- function(raw, age, coeff, k) {
   nam <- names(coeff)
 
   coeff_L <- coeff[grep("L", nam)]
@@ -84,10 +99,11 @@ predictNormByRoots <- function(raw, age, model, minNorm, maxNorm, polynom = NULL
   }
 
   if (is.null(polynom)) {
-    polynomForPrediction <- calcPolyInL(
+    polynomForPrediction <- calcPolyInLBase(
       raw = raw,
       age = age,
-      model = model
+      coeff = model$coefficients,
+      k = model$k
     )
   } else {
     polynomForPrediction <- polynom

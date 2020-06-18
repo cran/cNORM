@@ -42,6 +42,10 @@
 #' @param scale type of norm scale, either T (default), IQ, z or percentile (= no
 #' transformation); a double vector with the mean and standard deviation can as well,
 #' be provided f. e. c(10, 3) for Wechsler scale index point
+#' @param descend ranking order (default descent = FALSE): inverses the
+#' ranking order with higher raw scores getting lower norm scores; relevant
+#' for example when norming error scores, where lower scores mean higher
+#' performance
 #' @param silent set to TRUE to suppress messages
 #' @return data frame including the norm scores, powers and interactions of the norm score and
 #' grouping variable
@@ -57,7 +61,7 @@
 #' data.elfe2 <- prepareData(data = elfe, group = FALSE)
 #' m <- bestModel(data.elfe2)
 #' @export
-prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group", width = NA, scale = "T", silent = FALSE) {
+prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group", width = NA, scale = "T", descend = FALSE, silent = FALSE) {
   if (is.null(data)) {
     normData <- cNORM::elfe
   } else {
@@ -114,9 +118,9 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
 
   # ranking and powers
   if (is.na(width)) {
-    normData <- rankByGroup(normData, group = group, raw = raw, scale = scale)
+    normData <- rankByGroup(normData, group = group, raw = raw, scale = scale, descend = descend)
   } else {
-    normData <- rankBySlidingWindow(normData, group = group, raw = raw, width = width, scale = scale)
+    normData <- rankBySlidingWindow(normData, group = group, raw = raw, width = width, scale = scale, descend = descend)
   }
 
   if (typeof(group) != "logical" || group) {
@@ -401,7 +405,7 @@ rankByGroup <-
     attr(d, "width") <- NA
 
     if (descriptives && min(d$n) < 30) {
-      warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the grouping variable. The confidence of the norm scores is low in that part of the scale. Consider redividing the cases over the grouping variable."))
+      warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the grouping variable. The confidence of the norm scores is low in that part of the scale. Consider redividing the cases over the grouping variable. In cases of disorganized percentile curves after modelling, it might help to reduce the 'k' parameter."))
     }
 
     return(d)
