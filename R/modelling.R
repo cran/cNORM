@@ -640,13 +640,13 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' Cross validation for term selection
 #'
 #' This function helps in selecting the number of terms for the model by doing repeated
-#' cross validation with 80 percent of the data as training data and 20 percent as the validation data.
-#' The cases are drawn randomly but stratified by norm group. Successive models are retrieved
-#' with increasing number of terms and the RMSE of raw scores (fitted by the regression model)
-#' is plotted for the training, validation and the complete dataset. Additionally to this
-#' analysis on the raw score level, it is possible (default) to estimate the mean norm score
-#' reliability and crossfit measures. For this, please set the norms parameter to TRUE. Due
-#' to the high computational load when computing norm scores, it takes time to finish
+#' Monte Carlo cross validation with 80 percent of the data as training data and 20 percent as
+#' the validation data. The cases are drawn randomly but stratified by norm group. Successive
+#' models are retrieved with increasing number of terms and the RMSE of raw scores (fitted by
+#' the regression model) is plotted for the training, validation and the complete dataset.
+#' Additionally to this analysis on the raw score level, it is possible (default) to estimate
+#' the mean norm score reliability and crossfit measures. For this, please set the norms parameter
+#' to TRUE. Due to the high computational load when computing norm scores, it takes time to finish
 #' when doing repeated cv or comparing models up to the maximum number of terms. When using
 #' the cv = "full" option, the ranking is done for the test and validation dataset
 #' separately (always based on T scores), resulting in a complete cross validation. In
@@ -672,6 +672,7 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' }
 #'
 #' @param data data frame of norm sample with ranking, powers and interaction of L and A
+#' @param formula prespecified formula, e. g. from an existing regression model; min and max functions will be ignored
 #' @param repetitions number of repetitions for cross validation
 #' @param norms determine norm score crossfit and R2 (if set to TRUE). The option is
 #' computationally intensive and duration increases with sample size, number of
@@ -693,9 +694,16 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' @export
 #' @examples
 #' # plot cross validation RMSE by number of terms up to 9 with three repetitions
-#' data <- prepareData()
-#' cnorm.cv(data, 3, max = 7, norms = FALSE)
-cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
+#' data <- prepareData(elfe)
+#' cnorm.cv(data, min = 3, max = 7, norms = FALSE)
+#'
+#' # cross validate prespecified formula
+#' # here, we will use the formula from a model to cross validate it and to retrieve norm RMSE
+#' # own regression functions can of course be used as well
+#' # data <- prepareData(elfe)
+#' # model <- bestModel(data)
+#' # cnorm.cv(data, formula = model$terms, repetitions = 5)
+cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
 
   if(is.na(pCutoff)){
     if(nrow(data)<10000)
@@ -748,6 +756,7 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   }
 
   # set up regression formulas (from bestModel function)
+  if(is.null(formula)){
   if (k == 1) {
     lmX <- formula(paste(raw, "L1 + A1 + L1A1", sep = " ~ "))
   } else if (k == 2) {
@@ -763,6 +772,11 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     lmX <-
       formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + L6 + A1 + A2 + A3 + A4 + A5 + A6 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L1A6 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L2A6 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L3A6 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L4A6 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5 + L5A6 + L6A1 + L6A2 + L6A3 + L6A4 + L6A5 + L6A6", sep = " ~ "))
   }
+  }else {
+    lmX <- formula
+    min <- length(formula)
+    max <- length(formula)
+  }
 
 
   # set up vectors to store RMSE for training, test and complete dataset models
@@ -775,6 +789,8 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   r2.test <- rep(0, max)
   delta <- rep(NA, max)
   crossfit <- rep(0, max)
+  norm.rmse <- rep(0, max)
+  norm.rmse.min <- rep(0, max)
 
   # draw test and training data several times ('repetitions' parameter), model data and store MSE
   for (a in 1:repetitions) {
@@ -826,7 +842,9 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
 
     # retrieve models coefficients for each number of terms
     for (i in min:max) {
-      cat(paste0("Repetition ", a, ", cycle ", i, "\n"))
+      if(norms && is.null(formula)){
+        cat(paste0("Repetition ", a, ", cycle ", i, "\n"))
+      }
       variables <- names(coef(subsets, id = i))
       variables <- variables[2:length(variables)] # remove '(Intercept)' variable
       reg <- paste0(raw, " ~ ", paste(variables, collapse = " + ")) # build regression formula
@@ -854,11 +872,13 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
 
         r2.train[i] <- r2.train[i] + (cor(train$normValue, train$T, use = "pairwise.complete.obs")^2)
         r2.test[i] <- r2.test[i] + (cor(test$normValue, test$T, use = "pairwise.complete.obs")^2)
-      }
+        norm.rmse[i] <- norm.rmse[i] + sqrt(mean((test$T - test$normValue)^2, na.rm = TRUE))
+        }
     }
   }
 
   # now for the complete data the same logic
+  norm.rmse.min[1] <- NA
   complete <- regsubsets(lmX, data = d, nbest = 1, nvmax = n.models, really.big = n.models > 25)
   for (i in 1:max) {
     variables <- names(coef(complete, id = i))
@@ -876,9 +896,15 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     if (norms) {
       r2.train[i] <- r2.train[i] / repetitions
       r2.test[i] <- r2.test[i] / repetitions
+      norm.rmse[i] <- norm.rmse[i] / repetitions
 
       if (i > min) {
         delta[i] <- r2.test[i] - r2.test[i - 1]
+        if(norm.rmse[i]>0){
+          norm.rmse.min[i] <- norm.rmse[i] - norm.rmse[i - 1]
+        }else{
+          norm.rmse.min[i] <- NA
+        }
       }
     }
 
@@ -888,6 +914,11 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
       val.errors[i] <- NA
       train.errors[i] <- NA
       complete.errors[i] <- NA
+      norm.rmse[i] <- NA
+    }
+
+    if (i <= min) {
+      norm.rmse.min[i] <- NA
     }
   }
 
@@ -896,8 +927,9 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
   } else {
     par(mfrow = c(1, 1))
   }
-  tab <- data.frame(RMSE.raw.train = train.errors, RMSE.raw.test = val.errors, RMSE.raw.complete = complete.errors, R2.norm.train = r2.train, R2.norm.test = r2.test, Delta.R2.test = delta, Crossfit = r2.train / r2.test)
+  tab <- data.frame(RMSE.raw.train = train.errors, RMSE.raw.test = val.errors, RMSE.raw.complete = complete.errors, R2.norm.train = r2.train, R2.norm.test = r2.test, Delta.R2.test = delta, Crossfit = r2.train / r2.test, RMSE.norm.test = norm.rmse)
 
+  if(is.null(formula)){
   # plot RMSE
   plot(val.errors, pch = 19, type = "b", col = "blue", main = "Raw Score RMSE", ylab = "Root MSE", xlab = "Number of terms", ylim = c(min(train.errors, na.rm = TRUE), max(val.errors, na.rm = TRUE)))
   points(complete.errors, pch = 19, type = "b", col = "black")
@@ -921,6 +953,12 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
     # plot delta r2 test
     plot(tab$Delta.R2.test, pch = 19, type = "b", col = "black", main = "Norm Score Delta R2 in Validation", ylab = "Delta R2", xlab = "Number of terms", ylim = c(min(tab$Delta.R2.test, na.rm = TRUE), max(tab$Delta.R2.test, na.rm = TRUE)))
     abline(h = 0, col = 3, lty = 2)
+  }else{
+    tab$R2.norm.train <- NULL
+    tab$R2.norm.test <- NULL
+    tab$Delta.R2.test <- NULL
+    tab$Crossfit <- NULL
+    tab$RMSE.norm.test <- NULL
   }
 
   FirstNegative <- which(tab$Delta.R2.test <= 0)[1]
@@ -928,14 +966,29 @@ cnorm.cv <- function(data, repetitions = 1, norms = TRUE, min = 1, max = 12, cv 
 
   cat("\n")
   cat("The simulation yielded the following optimal settings:\n")
-  cat(paste0("\nNumber of terms with best crossfit: ", which.min((1 - tab$Crossfit)^2)))
+  if (norms){
+    cat(paste0("\nNumber of terms with best crossfit: ", which.min((1 - tab$Crossfit)^2)))
+  }
   cat(paste0("\nNumber of terms with best raw validation RMSE: ", which.min(tab$RMSE.raw.test)))
-  cat(paste0("\nNumber of terms with best norm validation R2: ", which.max(r2.test), "\n"))
-  cat(paste0("The first model with a negative Delta R2 in norm score cross validation is model ", FirstNegative, "\n"))
-  cat(paste0("Thus, choosing a model with ", suggest, " terms might be the best choice. For this, use the parameter 'terms = ", suggest, "' in the bestModel-function.\n"))
-  cat("\nPlease investigate the plots and the summary table, as the results might vary within a narrow range.")
-  cat("\nEspacially pay attention to RMSE.raw.test, r2.test, crossfit near 1 and where delta R2 stops to progress.")
+  if (norms){
+    cat(paste0("\nNumber of terms with best norm validation R2: ", which.max(r2.test), "\n"))
+    cat(paste0("The first model with a negative Delta R2 in norm score cross validation is model ", FirstNegative, "\n"))
+    cat(paste0("Thus, choosing a model with ", suggest, " terms might be the best choice. For this, use the parameter 'terms = ", suggest, "' in the bestModel-function.\n"))
+    cat("\nPlease investigate the plots and the summary table, as the results might vary within a narrow range.")
+    cat("\nEspacially pay attention to RMSE.raw.test, r2.test, crossfit near 1 and where delta R2 stops to progress.")
+  }
+
   cat("\n")
   cat("\n")
-  return(tab)
+  return(tab[min:max, ])
+  }else{
+    cat("\n")
+    cat("\n")
+
+    cat("Repeated cross validation with prespecified formula yielded the following results:\n")
+    cat("\n")
+    tab$Delta.R2.test <- NULL
+    return(tab[complete.cases(tab), ])
+  }
+
 }

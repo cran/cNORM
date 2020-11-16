@@ -1,9 +1,9 @@
 Package: cNORM
 Type: Package
 Title: Continuous Norming
-Version: 1.2.3
+Version: 1.2.4
 Maintainer: Wolfgang Lenhard <wolfgang.lenhard@uni-wuerzburg.de>
-Date: 2020-06-18
+Date: 2020-11-16
 Authors@R: c(person("Wolfgang", "Lenhard", role = c("cre","aut"), email="wolfgang.lenhard@uni-wuerzburg.de", comment=c("<https://orcid.org/0000-0002-8184-6889>")), person("Alexandra", "Lenhard", role=c("aut")), person("Sebastian", "Gary", role=c("aut")))
 Description: Conventional methods for producing standard scores in psychometrics or biometrics 
     are often plagued with "jumps" or "gaps" (i.e., discontinuities) in norm tables and low 
@@ -22,7 +22,7 @@ Suggests: knitr, markdown, shiny, shinycssloaders, foreign, readxl,
         rmarkdown
 License: AGPL-3
 VignetteBuilder: knitr
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 NeedsCompilation: no
 Repository: CRAN
 Encoding: UTF-8
@@ -30,8 +30,8 @@ LazyData: true
 URL: https://www.psychometrica.de/cNorm_en.html,
         https://github.com/WLenhard/cNORM
 BugReports: https://github.com/WLenhard/cNORM/issues
-Packaged: 2020-06-18 07:02:17 UTC; gbpa005
+Packaged: 2020-11-16 14:38:33 UTC; gbpa005
 Author: Wolfgang Lenhard [cre, aut] (<https://orcid.org/0000-0002-8184-6889>),
   Alexandra Lenhard [aut],
   Sebastian Gary [aut]
-Date/Publication: 2020-06-18 07:20:02 UTC
+Date/Publication: 2020-11-16 15:00:02 UTC

@@ -6,6 +6,7 @@
 \usage{
 cnorm.cv(
   data,
+  formula = NULL,
   repetitions = 1,
   norms = TRUE,
   min = 1,
@@ -20,6 +21,8 @@ cnorm.cv(
 }
 \arguments{
 \item{data}{data frame of norm sample with ranking, powers and interaction of L and A}
+
+\item{formula}{prespecified formula, e. g. from an existing regression model; min and max functions will be ignored}
 
 \item{repetitions}{number of repetitions for cross validation}
 
@@ -53,13 +56,13 @@ sample, R2 for the norm scores and the crossfit measure (1 = ideal, <1 = underfi
 }
 \description{
 This function helps in selecting the number of terms for the model by doing repeated
-cross validation with 80 percent of the data as training data and 20 percent as the validation data.
-The cases are drawn randomly but stratified by norm group. Successive models are retrieved
-with increasing number of terms and the RMSE of raw scores (fitted by the regression model)
-is plotted for the training, validation and the complete dataset. Additionally to this
-analysis on the raw score level, it is possible (default) to estimate the mean norm score
-reliability and crossfit measures. For this, please set the norms parameter to TRUE. Due
-to the high computational load when computing norm scores, it takes time to finish
+Monte Carlo cross validation with 80 percent of the data as training data and 20 percent as
+the validation data. The cases are drawn randomly but stratified by norm group. Successive
+models are retrieved with increasing number of terms and the RMSE of raw scores (fitted by
+the regression model) is plotted for the training, validation and the complete dataset.
+Additionally to this analysis on the raw score level, it is possible (default) to estimate
+the mean norm score reliability and crossfit measures. For this, please set the norms parameter
+to TRUE. Due to the high computational load when computing norm scores, it takes time to finish
 when doing repeated cv or comparing models up to the maximum number of terms. When using
 the cv = "full" option, the ranking is done for the test and validation dataset
 separately (always based on T scores), resulting in a complete cross validation. In
@@ -86,6 +89,13 @@ avoid a number of terms with a high overfit (e. g. crossfit > 1.1).
 }
 \examples{
 # plot cross validation RMSE by number of terms up to 9 with three repetitions
-data <- prepareData()
-cnorm.cv(data, 3, max = 7, norms = FALSE)
+data <- prepareData(elfe)
+cnorm.cv(data, min = 3, max = 7, norms = FALSE)
+
+# cross validate prespecified formula
+# here, we will use the formula from a model to cross validate it and to retrieve norm RMSE
+# own regression functions can of course be used as well
+# data <- prepareData(elfe)
+# model <- bestModel(data)
+# cnorm.cv(data, formula = model$terms, repetitions = 5)
 }
