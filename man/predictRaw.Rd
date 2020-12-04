@@ -18,7 +18,7 @@ predictRaw(
 
 \item{age}{The age value or a vector of scores}
 
-\item{coefficients}{The coefficients from the regression model}
+\item{coefficients}{The coefficients from the regression model or a cnorm model}
 
 \item{minRaw}{Minimum score for the results; can be used for clipping unrealistic outcomes,
 usually set to the lower bound of the range of values of the test (default: 0)}
@@ -44,9 +44,13 @@ You than have to provide a prepared data frame with the according input variable
 }
 \examples{
 # Prediction of single scores
-normData <- prepareData()
+normData <- prepareData(elfe)
 m <- bestModel(data = normData)
 predictRaw(35, 3.5, m$coefficients)
+
+# using a cnorm object
+result <- cnorm(raw = elfe$raw, group = elfe$group)
+predictRaw(35, 3.5, result)
 
 # Fitting complete data sets
 fitted.values <- predict(m)
@@ -54,3 +58,12 @@ fitted.values <- predict(m)
 # break up contribution of each predictor variable
 fitted.partial <- predict(m, type = "terms")
 }
+\seealso{
+Other predict: 
+\code{\link{derivationTable}()},
+\code{\link{getNormCurve}()},
+\code{\link{normTable}()},
+\code{\link{predictNorm}()},
+\code{\link{rawTable}()}
+}
+\concept{predict}

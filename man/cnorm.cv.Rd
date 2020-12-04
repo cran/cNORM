@@ -7,7 +7,7 @@
 cnorm.cv(
   data,
   formula = NULL,
-  repetitions = 1,
+  repetitions = 5,
   norms = TRUE,
   min = 1,
   max = 12,
@@ -20,9 +20,11 @@ cnorm.cv(
 )
 }
 \arguments{
-\item{data}{data frame of norm sample with ranking, powers and interaction of L and A}
+\item{data}{data frame of norm sample with ranking, powers and interaction of L and A or a cnorm object}
 
-\item{formula}{prespecified formula, e. g. from an existing regression model; min and max functions will be ignored}
+\item{formula}{prespecified formula, e. g. from an existing regression model; min and max functions will be ignored
+In case a cnorm object is used, this functions automatically draws on the formula of the inbuilt regression
+function}
 
 \item{repetitions}{number of repetitions for cross validation}
 
@@ -51,7 +53,7 @@ has to reach at least. To minimize beta error, the value is set to .2 per defaul
 \item{age}{Name of the age variable}
 }
 \value{
-table with results per term number, including RMSE for raw scores in training, validationand complete
+table with results per term number, including RMSE for raw scores in training, validation and complete
 sample, R2 for the norm scores and the crossfit measure (1 = ideal, <1 = underfit, >1 = overfit)
 }
 \description{
@@ -67,10 +69,11 @@ when doing repeated cv or comparing models up to the maximum number of terms. Wh
 the cv = "full" option, the ranking is done for the test and validation dataset
 separately (always based on T scores), resulting in a complete cross validation. In
 order to only validate the modeling, you as well can use a pre-ranked data set with
-prepareData() already applied. In this case, the training and validation data is
+prepareData(elfe) already applied. In this case, the training and validation data is
 drawn from the already ranked data and the scores for the validation set should improve.
 It is however no independent test, as the ranking between both samples is interlinked.
-In the output, you will get RMSE for the raw score models, norm score R2 and delta R2 and the crossfit.
+In the output, you will get RMSE for the raw score models, norm score R2 and delta R2, the crossfit
+and the norm score SE sensu Oosterhuis, van der Ark, & Sijtsma (2016).
 For assessing, if a model over-fits the data and to what extent, we need cross-validation. We assumed
 that an overfitting occurred when a model captures more variance of the observed norm scores of the
 training sample compared to the captured variance of the norm scores of the validation sample. The
@@ -95,7 +98,22 @@ cnorm.cv(data, min = 3, max = 7, norms = FALSE)
 # cross validate prespecified formula
 # here, we will use the formula from a model to cross validate it and to retrieve norm RMSE
 # own regression functions can of course be used as well
-# data <- prepareData(elfe)
-# model <- bestModel(data)
-# cnorm.cv(data, formula = model$terms, repetitions = 5)
+# result <- cnorm(raw = efe$raw, group = elfe$group)
+# cnorm.cv(result, repetitions = 5)
 }
+\references{
+Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
+}
+\seealso{
+Other model: 
+\code{\link{bestModel}()},
+\code{\link{checkConsistency}()},
+\code{\link{derive}()},
+\code{\link{modelSummary}()},
+\code{\link{print.cnorm}()},
+\code{\link{printSubset}()},
+\code{\link{rangeCheck}()},
+\code{\link{regressionFunction}()},
+\code{\link{summary.cnorm}()}
+}
+\concept{model}

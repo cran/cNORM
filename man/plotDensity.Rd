@@ -15,7 +15,7 @@ plotDensity(
 )
 }
 \arguments{
-\item{model}{The model from the bestModel function}
+\item{model}{The model from the bestModel function or a cnorm object}
 
 \item{minRaw}{Lower bound of the raw score}
 
@@ -33,14 +33,25 @@ the specific value here.}
 \description{
 The function plots the density  curves based on the regression model against
 the actual percentiles from the raw data. As in 'plotNormCurves',
-please check for inconsistent curves, especially curves showing implausible shapes.
+please check for inconsistent curves, especially curves showing implausible shapes as f. e.
+violations of biuniqueness.
 }
 \examples{
 # Load example data set, compute model and plot results for age values 2, 4 and 6
-normData <- prepareData()
-m <- bestModel(data = normData)
-plotDensity(m, group = c (2, 4, 6))
+result <- cnorm(raw = elfe$raw, group = elfe$group)
+plotDensity(result, group = c (2, 4, 6))
 }
 \seealso{
 plotNormCurves, plotPercentiles
+
+Other plot: 
+\code{\link{plot.cnorm}()},
+\code{\link{plotDerivative}()},
+\code{\link{plotNormCurves}()},
+\code{\link{plotNorm}()},
+\code{\link{plotPercentileSeries}()},
+\code{\link{plotPercentiles}()},
+\code{\link{plotRaw}()},
+\code{\link{plotSubset}()}
 }
+\concept{plot}

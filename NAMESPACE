@@ -1,22 +1,22 @@
+
 import(lattice)
 importFrom(leaps, regsubsets)
-importFrom(stats, poly, na.omit, complete.cases, predict.lm, t.test, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile, coef)
+importFrom(stats, summary.lm, approx, poly, na.omit, complete.cases, predict.lm, t.test, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile, coef)
 importFrom(grDevices, rainbow, dev.off)
 importFrom(graphics, par, plot, points, legend, abline, text)
 importFrom(latticeExtra, panel.2dsmoother)
 importFrom(utils, tail, menu)
 export(
 	bestModel,
-	boxcox,
 	checkConsistency,
 	cNORM.GUI,
 	cnorm.cv,
+	cnorm,
 	computePowers,
 	derivationTable,
 	derive,
 	getNormCurve,
 	normTable,
-	plotBoxCox,
 	plotDensity,
 	plotDerivative,
 	plotNormCurves,
@@ -25,15 +25,23 @@ export(
 	plotSubset,
 	plotRaw,
 	plotNorm,
-	predictNormBC,
+	plotCnorm,
 	predictNorm,
 	predictRaw,
-	predictRawBC,
 	prepareData,
 	printSubset,
 	rangeCheck,
 	rankByGroup,
 	rankBySlidingWindow,
 	rawTable,
-	regressionFunction, simulateRasch
+	regressionFunction,
+	simulateRasch,
+	modelSummary,
+	getNormScoreSE
 )
+
+
+
+S3method(plot, cnorm)
+S3method(print, cnorm)
+S3method(summary, cnorm)

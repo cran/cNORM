@@ -7,9 +7,9 @@
 plotNorm(data, model, group = "", minNorm = NULL, maxNorm = NULL, type = 0)
 }
 \arguments{
-\item{data}{The raw data within a data.frame}
+\item{data}{The raw data within a data.frame or a cnorm object}
 
-\item{model}{The regression model}
+\item{model}{The regression model (optional)}
 
 \item{group}{The grouping variable, use empty string for no group}
 
@@ -30,11 +30,22 @@ Ark and Sijtsma (2016).
 \examples{
 # Load example data set, compute model and plot results
 \dontrun{
-normData <- prepareData()
-m <- bestModel(data = normData)
-plotNorm(normData, m, group="group", minNorm=25, maxNorm=75)
+result <- cnorm(raw = elfe$raw, group = elfe$group)
+plotNorm(result, group="group", minNorm=25, maxNorm=75)
 }
 }
 \references{
 Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
 }
+\seealso{
+Other plot: 
+\code{\link{plot.cnorm}()},
+\code{\link{plotDensity}()},
+\code{\link{plotDerivative}()},
+\code{\link{plotNormCurves}()},
+\code{\link{plotPercentileSeries}()},
+\code{\link{plotPercentiles}()},
+\code{\link{plotRaw}()},
+\code{\link{plotSubset}()}
+}
+\concept{plot}

@@ -34,11 +34,12 @@
 #'   \code{\link{plotNormCurves}})
 #' }
 #'
+#' The function \link{cnorm}
 #' For an easy start, you can use the graphical user interface by typing \code{cNORM.GUI()} on the console.
 #' Example datasets with large cohorts are available for demonstration purposes ('elfe',
 #' 'ppvt', 'CDC', 'life' and 'mortality' sample data from the references). Use
-#' \code{data <- prepareData(elfe)} or \code{data <- prepareData(ppvt)} to load and prepare
-#' example data for the modeling. Use  \code{vignette(cNORM-Demo)} for a walk through on
+#' \code{model <- cnorm(raw = elfe$raw, group = elfe$group)} to get a first impression.
+#' Use  \code{vignette(cNORM-Demo)} for a walk through on
 #' conducting  the modeling and \url{https://www.psychometrica.de/cNorm_en.html} for a
 #' comprehensive tutorial.
 #'
@@ -47,6 +48,8 @@
 #'   \item CDC (2012). National Health and Nutrition Examination Survey: Questionnaires, Datasets
 #'   and Related Documentation. available: https://wwwn.cdc.gov/nchs/nhanes/OtherNhanesData.aspx.
 #'   date of retrieval: 25/08/2018
+#'   \item Harrel, F. (2020). Hmisc: Harrell Miscellaneous (v. 4.4-1). available https://CRAN.R-project.org/package=Hmisc
+#'   (code for weighted ranking adapted from wtd.rank & wtd.table by courtesy of Frank Harrell)
 #'   \item Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to
 #'   the norming problem. Assessment, Online first, 1-14. doi: 10.1177/1073191116656437
 #'   \item Lenhard, A., Lenhard, W., Segerer, R. & Suggate, S. (2015). Peabody Picture Vocabulary
@@ -66,42 +69,31 @@
 #' @seealso cNORM.GUI
 #' @examples
 #' # Model internal 'elfe' dataset with the default k = 4 regression on T scores
-#' data.elfe <- prepareData(elfe)
-#' model.elfe <- bestModel(data.elfe)
-#' plotPercentiles(data.elfe, model.elfe)
+#' result <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
 #' # Show model fit of models with progressing number of predictors
-#' printSubset(model.elfe)
-#' plotSubset(model.elfe)
+#' print(results)
+#' plot(results, "subset")
 #'
 #' # Plot manifest and predicted values, plot series of percentile charts
-#' plotRaw(data.elfe, model.elfe)
+#' plotRaw(results)
 #' \dontrun{
-#' plotPercentileSeries(data.elfe, model.elfe)
+#' plot(results, "series", start = 3, end = 9)
 #' }
 #'
 #' # Additional tests: Check model assumptions
-#' checkConsistency(model.elfe)
-#' plotDerivative(model.elfe)
+#' checkConsistency(results)
+#' plot(results, "derivative")
 #'
 #' # Generate norm tables; predict values, here: grade 3.75 from T score 25
 #' # to 75 and within the raw value range of this specific test (0 to 28)
-#' normTable <- normTable(3.75, model.elfe, minNorm=25, maxNorm=75, step=0.5)
-#' rawTable <- rawTable(3.75, model.elfe, minRaw = 0, maxRaw = 28, minNorm=25,
+#' normTable <- normTable(3.75, results, minNorm=25, maxNorm=75, step=0.5)
+#' rawTable <- rawTable(3.75, results, minRaw = 0, maxRaw = 28, minNorm=25,
 #'                      maxNorm=75)
 #'
 #' # Predict a specific norm score
 #' score <- predictNorm(raw = 21, A = 3.75,
-#'                           model = model.elfe, minNorm=25, maxNorm=75)
-#'
-#' # Semi-parametric modeling with Box Cox power transformation for grade 3.75
-#' bcParameters <- boxcox(model.elfe, 3.75)
-#' # Print L, M and S
-#' bcParameters$lambdaBC
-#' bcParameters$meanBC
-#' bcParameters$sdBC
-#' # Plot density function of box cox versus regression model
-#' plotBoxCox(model.elfe, bcParameters, type=2)
+#'                           model = results, minNorm=25, maxNorm=75)
 NULL
 
 
@@ -131,4 +123,132 @@ cNORM.GUI <- function(launch.browser=TRUE){
 
   shiny::runApp(system.file('shiny', package='cNORM'),
                 launch.browser=TRUE)
+}
+
+#' Continuous Norming
+#'
+#' Conducts continuous norming in one step and returns an object including ranked raw data and the continuous norming
+#' model. Please consult the function description ' of 'rankByGroup', 'rankBySlidingWindow' and 'bestModel' for specifics
+#' of the steps in the data preparation and modelling process. In addition to the raw scores, either provide
+#' \itemize{
+#'  \item{a numeric vector for the grouping information (group)}
+#'  \item{a numeric vector for both grouping and age (group, age)}
+#'  \item{a numeric age vector and the width of the sliding window (age, width)}
+#' }
+#' for the ranking of the raw scores. You can
+#' adjust the grade of smoothing of the regression modell by setting the k and terms parameter. In general,
+#' increasing k to more than 4 and the number of terms lead to a higher fit, while lower values lead to more
+#' smoothing.
+#' @param raw Numeric vector of raw scores
+#' @param group Numeric vector of grouping variable, e. g. grade
+#' @param age Numeric vector with chronological age, please additionally specify width of window
+#' @param width Size of the moving window in case an age vector is used
+#' @param scale type of norm scale, either T (default), IQ, z or percentile (= no
+#' transformation); a double vector with the mean and standard deviation can as well,
+#' be provided f. e. c(10, 3) for Wechsler scale index points
+#' @param method Ranking method in case of bindings, please provide an index,
+#' choosing from the following methods: 1 = Blom (1958), 2 = Tukey (1949),
+#' 3 = Van der Warden (1952), 4 = Rankit (default), 5 = Levenbach (1953),
+#' 6 = Filliben (1975), 7 = Yu & Huang (2001)
+#' @param descend ranking order (default descent = FALSE): inverses the
+#' ranking order with higher raw scores getting lower norm scores; relevant
+#' for example when norming error scores, where lower scores mean higher
+#' performance
+#' @param weights Vector or variable name in the dataset with weights to compensate imbalances due to insufficient norm
+#' data stratification. All weights have to be numerical and positive. The code to compute weighted percentiles originates from the
+#' Hmisc package (functions) wtd.rank and wtd.table) and is provided by the courtesy of Frank Harrell. Please note, that this
+#' feature is currently EXPERIMENTAL!
+#' @param terms Selection criterion for model building. The best fitting model with
+#' this number of terms is used
+#' @param R2 Adjusted R square as a stopping criterion for the model building
+#' (default R2 = 0.99)
+#' @param k The power constant. Higher values result in more detailed approximations
+#' but have the danger of over-fit (default = 4, max = 6)
+#'
+#' @return cnorm object including the ranked raw data and the regression model
+#' @seealso rankByGroup, rankBySlidingWindow, computePowers, bestModel
+#' @examples
+#'
+#' # Using this function with the example dataset 'elfe'
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
+#'
+#' # return norm tables including 90% confidence intervals for a
+#' # test with a reliability of r = .85; table are set to mean of quartal
+#' # in grade 3 (children completed 2 years of schooling)
+#' normTable(c(2.125, 2.375, 2.625, 2.875), cnorm.elfe, CI = .90, reliability = .95)
+#'
+#' # ... or instead of raw scores for norm scores, the other way round
+#' rawTable(c(2.125, 2.375, 2.625, 2.875), cnorm.elfe, CI = .90, reliability = .95)
+#'
+#' @export
+#' @references
+#' \enumerate{
+#'   \item Gary, S. & Lenhard, W. (2021). In norming we trust. Diagnostica.
+#'   \item Harrel, F. (2020). Hmisc: Harrell Miscellaneous (v. 4.4-1). available https://CRAN.R-project.org/package=Hmisc
+#'   (code for weighted ranking adapted from wtd.rank & wtd.table by courtesy of Frank Harrell)
+#'   \item Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to the norming problem. Assessment, Online first, 1-14. doi:10.1177/1073191116656437
+#'   \item Lenhard, A., Lenhard, W., Gary, S. (2018). Continuous Norming (cNORM). The Comprehensive R Network, Package cNORM, available: https://CRAN.R-project.org/package=cNORM
+#'   \item Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. doi:10.1371/journal.pone.0222279
+#'   \item Lenhard, W., & Lenhard, A. (2020). Improvement of Norm Score Quality via Regression-Based Continuous Norming. Educational and Psychological Measurement(Online First), 1-33. https://doi.org/10.1177/0013164420928457
+
+
+#' }
+cnorm <- function(raw = NULL,
+                  group = NULL,
+                  age = NULL,
+                  width = NA,
+                  weights = NULL,
+                  scale = "T",
+                  method = 4,
+                  descend = FALSE,
+                  k = 4,
+                  terms = 0,
+                  R2 = NULL){
+
+  if(is.numeric(raw)&&is.numeric(group)){
+    if(length(raw)!=length(group)){
+      stop("Please provide numeric vectors of equal length for raw score and group data.")
+    }
+
+    if(is.numeric(age)&&!is.na(width)){
+      if(length(raw)!=length(age)){
+        stop("Please provide numeric vectors of equal length for raw score and group data.")
+      }
+
+      message("Ranking data with sliding window ...")
+      data <- rankBySlidingWindow(raw=raw, age=age, scale=scale, weights=weights, descend = descend, width = width, method = method)
+      data <- computePowers(data, k = k)
+    }else{
+      data <- rankByGroup(raw=raw, group=group, scale=scale, weights=weights, descend = descend, method = method)
+    }
+    if(is.numeric(age)){
+      if(length(raw)!=length(age)){
+        warning("Length of the age vector does not match the raw score vector, ignoring age information.")
+        data <- computePowers(data, k = k)
+      }else{
+        data$age <- age
+        data <- computePowers(data, k = k, age = age)
+      }
+    }else{
+      data <- computePowers(data, k = k)
+    }
+  }
+
+  # if no grouping variable is given
+  else if(is.numeric(raw)&&is.numeric(age)&&!is.na(width)){
+    if(length(raw)!=length(age)){
+      stop("Please provide numeric vectors of equal length for raw score and group data.")
+    }
+
+    message("Ranking data with sliding window ...")
+    data <- rankBySlidingWindow(raw=raw, age=age, scale=scale, weights=weights, descend = descend, width = width, method = method)
+    data <- computePowers(data, k = k)
+  }else{
+    stop("Please provide a numerical vector for the raw scores and either a vector for grouping and/or age of the same length. If you use an age vector only, please specify the width of the window.")
+  }
+
+  model <- bestModel(data, R2=R2, terms=terms, weights = weights)
+  result <- list(data = data, model = model)
+  class(result) <- "cnorm"
+  return(result)
 }

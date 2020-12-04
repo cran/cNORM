@@ -4,10 +4,10 @@
 \alias{plotSubset}
 \title{Evaluate information criteria for regression model}
 \usage{
-plotSubset(model, type = 1, index = FALSE)
+plotSubset(model, type = 0, index = FALSE)
 }
 \arguments{
-\item{model}{The regression model from the bestModel function}
+\item{model}{The regression model from the bestModel function or a cnorm object}
 
 \item{type}{Type of chart with 0 = adjusted R2 by number of predictors,
 1 = log transformed Mallow's Cp by adjusted R2, 2 = Bayesian Information
@@ -31,10 +31,21 @@ negative. The R2 cutoff that was specified in the bestModel function is
 displayed as a dashed line.
 }
 \examples{
-normData <- prepareData()
-m <- bestModel(data = normData)
-plotSubset(m)
+# Compute model with example data and plot information function
+cnorm.model <- cnorm(raw = elfe$raw, group = elfe$group)
+plotSubset(cnorm.model)
 }
 \seealso{
 bestModel, plotPercentiles, printSubset
+
+Other plot: 
+\code{\link{plot.cnorm}()},
+\code{\link{plotDensity}()},
+\code{\link{plotDerivative}()},
+\code{\link{plotNormCurves}()},
+\code{\link{plotNorm}()},
+\code{\link{plotPercentileSeries}()},
+\code{\link{plotPercentiles}()},
+\code{\link{plotRaw}()}
 }
+\concept{plot}

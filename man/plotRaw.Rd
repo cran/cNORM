@@ -7,9 +7,9 @@
 plotRaw(data, model, group = NULL, raw = NULL, type = 0)
 }
 \arguments{
-\item{data}{The raw data within a data.frame}
+\item{data}{The raw data within a data.frame or cnorm object}
 
-\item{model}{The regression model}
+\item{model}{The regression model (optional)}
 
 \item{group}{The grouping variable}
 
@@ -25,8 +25,19 @@ of the modeling process. The scores should not deviate too far from
 regression line.
 }
 \examples{
-# Load example data set, compute model and plot results
-normData <- prepareData()
-m <- bestModel(data = normData)
-plotRaw(normData, m, group="group")
+# Compute model with example dataset and plot results
+result <- cnorm(raw = elfe$raw, group = elfe$group)
+plotRaw(result)
 }
+\seealso{
+Other plot: 
+\code{\link{plot.cnorm}()},
+\code{\link{plotDensity}()},
+\code{\link{plotDerivative}()},
+\code{\link{plotNormCurves}()},
+\code{\link{plotNorm}()},
+\code{\link{plotPercentileSeries}()},
+\code{\link{plotPercentiles}()},
+\code{\link{plotSubset}()}
+}
+\concept{plot}

@@ -5,9 +5,10 @@
 \title{Determine the norm scores of the participants in each subsample}
 \usage{
 rankByGroup(
-  data,
+  data = NULL,
   group = "group",
   raw = "raw",
+  weights = NULL,
   method = 4,
   scale = "T",
   descend = FALSE,
@@ -16,12 +17,18 @@ rankByGroup(
 )
 }
 \arguments{
-\item{data}{data.frame with norm sample data}
+\item{data}{data.frame with norm sample data. If no data.frame is provided, the raw score
+and group vectors are directly used}
 
-\item{group}{name of the grouping variable (default 'group'), e. g. grade, setting
+\item{group}{name of the grouping variable (default 'group')  or numeric vector, e. g. grade, setting
 group to FALSE cancels grouping (data is treated as one group)}
 
-\item{raw}{name of the raw value variable (default 'raw')}
+\item{raw}{name of the raw value variable (default 'raw') or numeric vector}
+
+\item{weights}{Vector or variable name in the dataset with weights to compensate imbalances due to insufficient norm
+data stratification. All weights have to be numerical and positive. The code to compute weighted percentiles originates from the
+Hmisc package (functions) wtd.rank and wtd.table) and is provided by the courtesy of Frank Harrell. Please note, that this
+feature is currently EXPERIMENTAL!}
 
 \item{method}{Ranking method in case of bindings, please provide an index,
 choosing from the following methods: 1 = Blom (1958), 2 = Tukey (1949),
@@ -71,19 +78,25 @@ beforehand and model them separately.
 }
 
 \examples{
-# Transformation with default parameters: RandIt and converting to T scores
-data.elfe <- rankByGroup(elfe, group = "group")
+# Transformation with default parameters: RankIt and converting to T scores
+data.elfe <- rankByGroup(elfe, group = "group") # using a data frame with vector names
+data.elfe2 <- rankByGroup(raw=elfe$raw, group=elfe$group) # use vectors for raw score and group
 
 # Transformation into Wechsler scores with Yu & Huang (2001) ranking procedure
-data.elfe <- rankByGroup(elfe, group = "group", method = 7, scale = c(10, 3))
+data.elfe <- rankByGroup(raw = elfe$raw, group = elfe$group, method = 7, scale = c(10, 3))
 
-# cNORM can as well be used for conventional norming
-# The group variable has to be set to NULL when ranking the group in this case
-d <- rankByGroup(elfe, raw = "raw", group = FALSE)
+# cNORM can as well be used for conventional norming, in case no group is given
+d <- rankByGroup(raw = elfe$raw)
 d <- computePowers(d)
 m <- bestModel(d)
 rawTable(0, model = m) # please use an arbitrary value for age when generating the tables
 }
 \seealso{
 rankBySlidingWindow, computePowers
+
+Other prepare: 
+\code{\link{computePowers}()},
+\code{\link{prepareData}()},
+\code{\link{rankBySlidingWindow}()}
 }
+\concept{prepare}

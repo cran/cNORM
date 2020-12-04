@@ -20,7 +20,7 @@ checkConsistency(
 )
 }
 \arguments{
-\item{model}{The model from the bestModel function}
+\item{model}{The model from the bestModel function or a cnorm object}
 
 \item{minAge}{Age to start with checking}
 
@@ -54,7 +54,7 @@ Boolean, indicating model violations (TRUE) or no problems (FALSE)
 }
 \description{
 While abilities increase and decline over age, within one age group, the
-norm scores always have to show a linear increase with increasing raw
+norm scores always have to show a linear increase or decrease with increasing raw
 scores. Violations of this assumption are a strong indication for problems
 in modeling the relationship between raw and norm scores. There are
 several reasons, why this might occur:
@@ -73,11 +73,23 @@ several reasons, why this might occur:
  be handled with caution.
 }
 \examples{
-normData <- prepareData()
-m <- bestModel(normData)
-modelViolations <- checkConsistency(m,
+result <- cnorm(raw = elfe$raw, group = elfe$group)
+modelViolations <- checkConsistency(result,
   minAge = 2, maxAge = 5, stepAge = 0.1,
   minNorm = 25, maxNorm = 75, minRaw = 0, maxRaw = 28, stepNorm = 1
 )
-plotDerivative(m, , minAge = 2, maxAge = 5, minNorm = 25, maxNorm = 75)
+plotDerivative(result, minAge = 2, maxAge = 5, minNorm = 25, maxNorm = 75)
 }
+\seealso{
+Other model: 
+\code{\link{bestModel}()},
+\code{\link{cnorm.cv}()},
+\code{\link{derive}()},
+\code{\link{modelSummary}()},
+\code{\link{print.cnorm}()},
+\code{\link{printSubset}()},
+\code{\link{rangeCheck}()},
+\code{\link{regressionFunction}()},
+\code{\link{summary.cnorm}()}
+}
+\concept{model}

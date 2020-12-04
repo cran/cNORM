@@ -21,7 +21,7 @@ normTable(
 \arguments{
 \item{A}{the age as single value or a vector of age values}
 
-\item{model}{The regression model}
+\item{model}{The regression model or a cnorm object}
 
 \item{minNorm}{The lower bound of the norm score range}
 
@@ -54,22 +54,30 @@ of .6. As a consequence, specifying a rang of T = 25 to T = 75 would cover 98.4 
 the population. Please be careful when extrapolating vertically (at the lower and
 upper end of the age specific distribution). Depending on the size of your standardization
 sample, extreme values with T < 20 or T > 80 might lead to inconsistent results. In case a confidence coefficient
-(CI) and the reliability is specified, confidence intervalls are computed as well, including a correction
+(CI) and the reliability is specified, confidence intervals are computed as well, including a correction
 for regression to the mean.
 }
 \examples{
-normData <- prepareData()
-m <- bestModel(data = normData)
+# Generate cnorm object from example data
+cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 
 # create single norm table
-norms <- normTable(3.5, m, minNorm = 25, maxNorm = 75, step = 0.5)
+norms <- normTable(3.5, cnorm.elfe, minNorm = 25, maxNorm = 75, step = 0.5)
 
 # create list of norm tables
-norms <- normTable(c(2.5, 3.5, 4.5), m,
+norms <- normTable(c(2.5, 3.5, 4.5), cnorm.elfe,
   minNorm = 25, maxNorm = 75,
   step = 1, minRaw = 0, maxRaw = 26
 )
 }
 \seealso{
 rawTable
+
+Other predict: 
+\code{\link{derivationTable}()},
+\code{\link{getNormCurve}()},
+\code{\link{predictNorm}()},
+\code{\link{predictRaw}()},
+\code{\link{rawTable}()}
 }
+\concept{predict}

@@ -5,16 +5,17 @@
 \title{Check for horizontal and vertical extrapolation}
 \usage{
 rangeCheck(
-  model,
+  object,
   minAge = NULL,
   maxAge = NULL,
   minNorm = NULL,
   maxNorm = NULL,
-  digits = 3
+  digits = 3,
+  ...
 )
 }
 \arguments{
-\item{model}{The regression model}
+\item{object}{The regression model or a cnorm object}
 
 \item{minAge}{The lower age bound}
 
@@ -25,6 +26,8 @@ rangeCheck(
 \item{maxNorm}{The upper norm value bound}
 
 \item{digits}{The precision for rounding the norm and age data}
+
+\item{...}{additional parameters}
 }
 \value{
 the report
@@ -35,7 +38,20 @@ the original range) or vertically (extreme norm scores) might lead to inconsiste
 results. The function generates a message, indicating extrapolation and the range of the original data.
 }
 \examples{
-normData <- prepareData()
+normData <- prepareData(elfe)
 m <- bestModel(normData)
-print(rangeCheck(m))
+rangeCheck(m)
 }
+\seealso{
+Other model: 
+\code{\link{bestModel}()},
+\code{\link{checkConsistency}()},
+\code{\link{cnorm.cv}()},
+\code{\link{derive}()},
+\code{\link{modelSummary}()},
+\code{\link{print.cnorm}()},
+\code{\link{printSubset}()},
+\code{\link{regressionFunction}()},
+\code{\link{summary.cnorm}()}
+}
+\concept{model}

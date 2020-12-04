@@ -37,13 +37,12 @@ Please report errors. Suggestions for improvement are always welcome!
 
 ## Example
 
-Conducting the analysis consists of four steps:
-1.  Data preparation
-1.  Establishing the regression model and selecting the parameters
+Conducting the analysis consists of the following steps:
+1.  Data preparation und establishing the regression model
 1.  Validating the model
 1.  Generating norm tables and plotting the results
 
-cNORM offers functions for all of these steps, helps in selecting the best fitting models and in generating the norm tables.
+cNORM offers functions for selecting the best fitting models and in generating the norm tables.
 
 ```{r example}
 ## Basic example code for modeling the sample dataset
@@ -54,44 +53,43 @@ library(cNORM)
 # please use cNORM on the console.
 cNORM.GUI()
 
-# If you prefer the console, you can use the syntax as well
-# Rank data within group and compute powers and interactions for the internal dataset 'elfe'
-data.elfe <- prepareData(elfe)
-
-# Find best fitting regression model
-model.elfe <- bestModel(data.elfe)
+# If you prefer the console, you can use the syntax as well: Rank data within
+# group and compute powers and interactions for the internal dataset 'elfe' and compute model.
+# The resulting object includes the ranked via object$data and model via object$model.
+cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 
 # Plot R2 of different model solutions in dependence of the number of predictors
-plotSubset(model.elfe, type=0)        # plot R2
-plotSubset(model.elfe, type=3)        # plot MSE
+plot(cnorm.elfe, "subset", type=0)        # plot R2
+plot(cnorm.elfe, "subset", type=3)        # plot MSE
 
-# NOTE! At this point, you usually select a good fitting model and rerun the bestModel function
+# NOTE! At this point, you usually select a good fitting model and rerun the process.
 # with a fixed number of terms, e. g. four. Try avoid models with a high number of terms:
-model.elfe <- bestModel(data.elfe, terms = 4)
+cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group, terms = 4)
 
 #  Visual inspection of the percentile curves of the fitted model
-plotPercentiles(data.elfe, model.elfe)
+plot(cnorm.elfe, "percentiles")
 
 # Visual inspection of the observed and fitted raw and norm scores
-plotRaw(data.elfe, model.elfe)
-plotNorm(data.elfe, model.elfe)
+plot(cnorm.elfe, "norm")
+plot(cnorm.elfe, "raw")
 
 # In order to check, how other models perform, plot series of percentile plots with ascending
-# number of predictors up to 14 predictors.
-plotPercentileSeries(data.elfe, model.elfe, end=14)
+# number of predictors, in this example up to 14 predictors.
+plot(cnorm.elfe, "series", end=14)
 
 # Cross validation of number of terms with 20% of the data for validation and 80% training.
-# Due to the time intensity, max terms is restricted to 10; 3 repetitions
-cnorm.cv(data.elfe, max=10, repetitions=3)
+# Due to the time intensity, max terms is restricted to 10 in this example; 3 repetitions
+cnorm.cv(cnorm.elfe$data, max=10, repetitions=3)
 
 # Cross validation with pre-specified terms, e. g. of an already existing model
-cnorm.cv(data.elfe, model.elfe$terms, repetitions=30)
+cnorm.cv(cnorm.elfe, repetitions=3)
 
-# Print norm table (for grade 3, 3.2, 3.4, 3.6) with T scores from T = 25 to T = 75
-normTable(c(3, 3.2, 3.4, 3.6), model.elfe, minNorm = 25, maxNorm = 75, step = 1)
+# Print norm table (for grade 3, 3.2, 3.4, 3.6)
+normTable(c(3, 3.2, 3.4, 3.6), cnorm.elfe)
 
-# The other way round: Print raw table (for grade 3)
-rawTable(3, model.elfe)
+# The other way round: Print raw table (for grade 3) together with 90% confidence intervalls
+# for a test with a reliability of .94
+rawTable(3, cnorm.elfe, CI = .9, reliability = .94)
 
 # cNORM can as well be used for conventional norming
 # In this case, the group variable has to be set to FALSE when ranking the data.
@@ -122,10 +120,10 @@ The package includes data from two large test norming projects, namely ELFE 1-6 
 cNORM is licensed under GNU Affero General Public License v3 (AGPL-3.0). This means that copyrighted parts of cNORM can be used free of charge for commercial and non-commercial purposes that run under this same license, retain the copyright notice, provide their source code and correctly cite cNORM. Copyright protection includes, for example, the reproduction and distribution of source code or parts of the source code of cNORM or of graphics created with cNORM. The integration of the package into a server environment in order to access the functionality of the software (e.g. for online delivery of norm scores) is also subject to this license. However, a regression function determined with cNORM is not subject to copyright protection and may be used freely without preconditions. If you want to apply cNORM in a way that is not compatible with the terms of the AGPL 3.0 license, please do not hesitate to contact us to negotiate individual conditions. If you want to use cNORM for scientific publications, we would also ask you to quote the source.
 
 ## References
+*   Gary, S. & Lenhard, W. (2021). In norming we trust. Diagnostica.
 *   Lenhard, A., Lenhard, W., Segerer, R. & Suggate, S. (2015). Peabody Picture Vocabulary Test - Revision IV (Deutsche Adaption). Frankfurt a. M./Germany: Pearson Assessment.
 *   Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to the norming problem. Assessment, Online first, 1-14. doi:10.1177/1073191116656437
 *   Lenhard, A., Lenhard, W., Gary, S. (2018). Continuous Norming (cNORM). The Comprehensive R Network, Package cNORM, available: https://CRAN.R-project.org/package=cNORM
 *   Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. doi:10.1371/journal.pone.0222279
 *   Lenhard, W., & Lenhard, A. (2020). Improvement of Norm Score Quality via Regression-Based Continuous Norming. Educational and Psychological Measurement(Online First), 1-33. https://doi.org/10.1177/0013164420928457
-
 

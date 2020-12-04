@@ -7,7 +7,7 @@
 derive(model, order = 1, covariate = NULL)
 }
 \arguments{
-\item{model}{The regression model}
+\item{model}{The regression model or a cnorm object}
 
 \item{order}{The degree of the derivate, default: 1}
 
@@ -24,7 +24,20 @@ distribution features as f. e. bottom and ceiling effects, non-progressive norm 
 age group or in general #' intersecting percentile curves.
 }
 \examples{
-normData <- prepareData()
+normData <- prepareData(elfe)
 m <- bestModel(normData)
 derivedCoefficients <- derive(m)
 }
+\seealso{
+Other model: 
+\code{\link{bestModel}()},
+\code{\link{checkConsistency}()},
+\code{\link{cnorm.cv}()},
+\code{\link{modelSummary}()},
+\code{\link{print.cnorm}()},
+\code{\link{printSubset}()},
+\code{\link{rangeCheck}()},
+\code{\link{regressionFunction}()},
+\code{\link{summary.cnorm}()}
+}
+\concept{model}

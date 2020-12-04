@@ -21,7 +21,7 @@ rawTable(
 \arguments{
 \item{A}{the age, either single value or vector with age values}
 
-\item{model}{The regression model}
+\item{model}{The regression model or a cnorm object}
 
 \item{minRaw}{The lower bound of the raw score range}
 
@@ -52,21 +52,29 @@ A table with raw scores and the according norm scores for a specific age based o
 model is generated. This way, the inverse function of the regression model is solved numerically with
 brute force. Please specify the range of raw values, you want to cover. With higher precision
 and smaller stepping, this function becomes computational intensive. In case a confidence coefficient
-(CI) and the reliability is specified, confidence intervalls are computed as well, including a correction
+(CI) and the reliability is specified, confidence intervals are computed as well, including a correction
 for regression to the mean.
 }
 \examples{
-normData <- prepareData()
-m <- bestModel(data = normData)
-# generate a norm table for the raw value range from 0 to 28 for month 7 of grade 3
-table <- rawTable(3 + 7 / 12, m, minRaw = 0, maxRaw = 28)
+# Generate cnorm object from example data
+cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
+# generate a norm table for the raw value range from 0 to 28 for the time point month 7 of grade 3
+table <- rawTable(3 + 7 / 12, cnorm.elfe, minRaw = 0, maxRaw = 28)
 
 # generate several raw tables
-table <- rawTable(c(2.5, 3.5, 4.5), m, minRaw = 0, maxRaw = 28)
+table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28)
 
-# additionally compute confidence intervalls
-table <- rawTable(c(2.5, 3.5, 4.5), m, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
+# additionally compute confidence intervals
+table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
 }
 \seealso{
 normTable
+
+Other predict: 
+\code{\link{derivationTable}()},
+\code{\link{getNormCurve}()},
+\code{\link{normTable}()},
+\code{\link{predictNorm}()},
+\code{\link{predictRaw}()}
 }
+\concept{predict}

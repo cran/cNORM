@@ -16,7 +16,7 @@ plotNormCurves(
 )
 }
 \arguments{
-\item{model}{The model from the bestModel function}
+\item{model}{The model from the bestModel function or a cnorm object}
 
 \item{normList}{Vector with norm scores to display}
 
@@ -39,9 +39,8 @@ the specific value here.}
 The function plots the norm curves based on the regression model.
 Please check the function for inconsistent curves: The different
 curves should not intersect. Violations of this assumption are a strong
-indication for problems
-in modeling the relationship between raw and norm scores. There are
-several reasons, why this might occur:
+indication for violations of model assumptions in modeling the relationship between raw
+and norm scores. There are several reasons, why this might occur:
 \enumerate{
   \item Vertical extrapolation: Choosing extreme norm scores, e. g. scores
   -3 <= x and x >= 3 In order to model these extreme scores, a large sample
@@ -59,10 +58,21 @@ checkConsistency and derivationPlot can be used to further inspect the model.
 }
 \examples{
 # Load example data set, compute model and plot results
-normData <- prepareData()
+normData <- prepareData(elfe)
 m <- bestModel(data = normData)
 plotNormCurves(m, minAge=2, maxAge=5)
 }
 \seealso{
 checkConsistency, derivationPlot, plotPercentiles
+
+Other plot: 
+\code{\link{plot.cnorm}()},
+\code{\link{plotDensity}()},
+\code{\link{plotDerivative}()},
+\code{\link{plotNorm}()},
+\code{\link{plotPercentileSeries}()},
+\code{\link{plotPercentiles}()},
+\code{\link{plotRaw}()},
+\code{\link{plotSubset}()}
 }
+\concept{plot}

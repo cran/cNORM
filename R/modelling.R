@@ -47,8 +47,10 @@
 #' resp. list of predictors, are ignored without further notice and thus do not show up in
 #' the final result. Additionally, all other functions like norm table generation and plotting
 #' are so far not yet prepared to handle covariates.
-#' @param weights Optional vector with weights for the single cases. All weights have to be positive.
-#' This is currently an experimental feature.
+#' @param weights Optional vector with weights for the single cases. By default, if data has been
+#' weighting in ranking, these weights are reused here as well. Please set to FALSE to deactivate
+#' this behavior. All weights have to be positive.
+#' This is currently an EXPERIMENTAL feature and will probably be deprecated in a future release.
 #' @param plot If set to TRUE (default), the percentile plot of the model is shown
 #' @return The model meeting the R2 criteria with coefficients and variable selection
 #' in model$coefficients. Use \code{plotSubset(model)} and
@@ -56,7 +58,7 @@
 #' @examples
 #' \dontrun{
 #' # Standard example with sample data
-#' normData <- prepareData()
+#' normData <- prepareData(elfe)
 #' model <- bestModel(normData)
 #' plotSubset(model)
 #' plotPercentiles(normData, model)
@@ -90,6 +92,7 @@
 #' }
 #' @seealso plotSubset, plotPercentiles, plotPercentileSeries, checkConsistency
 #' @export
+#' @family model
 bestModel <- function(data,
                       raw = NULL,
                       R2 = NULL,
@@ -103,6 +106,10 @@ bestModel <- function(data,
   # retrieve attributes
   if (is.null(raw)) {
     raw <- attr(data, "raw")
+  }
+
+  if (is.null(weights)) {
+    weights <- attr(data, "weights")
   }
 
   if (is.null(k)) {
@@ -203,7 +210,7 @@ bestModel <- function(data,
   }
 
   subsets <- regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big, weights = weights)
-  results <- summary(subsets)
+  results <- base::summary(subsets)
   results$numberOfTerms <- as.numeric(rowSums(results$which)-1)
 
   i <- 1
@@ -314,13 +321,14 @@ bestModel <- function(data,
   }
 
   if (terms > 15) {
-    message("\nThe model includes a high number of terms. Simpler models are usually more robust. Cross validation with 'cnorm.cv' or an inspection of information functions with 'plotSubset' might help to identify a balanced number of terms. Consider fixing this parameter to a smaller number.")
+    message("\nThe model includes a high number of terms. Simpler models are usually more robust. Cross validation with 'cv(model$data)' or an inspection of information functions with 'plot.subset' might help to identify a balanced number of terms. Consider fixing this parameter to a smaller number.")
   }
 
-  message("\nUse 'printSubset(model)' to get detailed information on the different solutions, 'plotSubset(model)' to inspect model fit, 'plotPercentiles(data, model)' to visualize percentile curves and 'summary(model)' for statistics on the regression model.")
+  message("\nUse 'printSubset(model)' to get detailed information on the different solutions, 'plotPercentiles(model) to display percentile plot, plotSubset(model)' to inspect model fit.")
 
-  if(plot&&attr(data, "useAge"))
+  if(plot&&attr(data, "useAge")&&(attributes(data)$group %in% colnames(data))){
     plotPercentiles(data, bestformula)
+  }
 
   return(bestformula)
 }
@@ -331,32 +339,39 @@ bestModel <- function(data,
 #' After conducting the model fitting procedure on the data set, the best fitting
 #' model has to be chosen. The print function shows the R2 and other information
 #' on the different best fitting models with increasing number of predictors.
-#' @param model The model from the 'bestModel' function
-#'
+#' @param x The model from the 'bestModel' function or a cnorm object
+#' @param ... additional parameters
 #' @return A table with information criteria
 #' @export
 #'
 #' @examples
-#' model <- bestModel(prepareData())
-#' printSubset(model)
-printSubset <- function(model) {
+#' # Generate cnorm object from example data
+#' result <- cnorm(raw = elfe$raw, group = elfe$group)
+#' printSubset(result)
+#' @family model
+printSubset <- function(x, ...) {
+  if(class(x)=="cnorm"){
+    x <- x$model
+  }
+
   table <-
     do.call(rbind, Map(data.frame,
-      R2 = model$subsets$rsq,
-      R2adj = model$subsets$adjr2,
-      RSS = model$subsets$rss,
-      RMSE = sqrt(model$subsets$rss / length(model$fitted.values)),
-      Cp = model$subsets$cp,
-      BIC = model$subsets$bic,
-      Terms = model$subsets$numberOfTerms
+      R2 = x$subsets$rsq,
+      R2adj = x$subsets$adjr2,
+      RSS = x$subsets$rss,
+      RMSE = sqrt(x$subsets$rss / length(x$fitted.values)),
+      Cp = x$subsets$cp,
+      BIC = x$subsets$bic,
+      Terms = x$subsets$numberOfTerms
     ))
+  invisible(x)
   return(table)
 }
 
 #' Check the consistency of the norm data model
 #'
 #' While abilities increase and decline over age, within one age group, the
-#' norm scores always have to show a linear increase with increasing raw
+#' norm scores always have to show a linear increase or decrease with increasing raw
 #' scores. Violations of this assumption are a strong indication for problems
 #' in modeling the relationship between raw and norm scores. There are
 #' several reasons, why this might occur:
@@ -374,7 +389,7 @@ printSubset <- function(model) {
 #'  certain degree outside the original sample, but it should in general
 #'  be handled with caution.
 #'
-#' @param model The model from the bestModel function
+#' @param model The model from the bestModel function or a cnorm object
 #' @param minAge Age to start with checking
 #' @param maxAge Upper end of the age check
 #' @param stepAge Stepping parameter for the age check, usually 1 or 0.1; lower
@@ -393,14 +408,14 @@ printSubset <- function(model) {
 #' the specific value here.
 #' @return Boolean, indicating model violations (TRUE) or no problems (FALSE)
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(normData)
-#' modelViolations <- checkConsistency(m,
+#' result <- cnorm(raw = elfe$raw, group = elfe$group)
+#' modelViolations <- checkConsistency(result,
 #'   minAge = 2, maxAge = 5, stepAge = 0.1,
 #'   minNorm = 25, maxNorm = 75, minRaw = 0, maxRaw = 28, stepNorm = 1
 #' )
-#' plotDerivative(m, , minAge = 2, maxAge = 5, minNorm = 25, maxNorm = 75)
+#' plotDerivative(result, minAge = 2, maxAge = 5, minNorm = 25, maxNorm = 75)
 #' @export
+#' @family model
 checkConsistency <- function(model,
                              minAge = NULL,
                              maxAge = NULL,
@@ -413,6 +428,9 @@ checkConsistency <- function(model,
                              warn = FALSE,
                              silent = FALSE,
                              covariate = NULL) {
+  if(class(model)=="cnorm"){
+    model <- model$model
+  }
 
   if(!is.null(covariate)&&is.null(model$covariate)){
     warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
@@ -496,19 +514,24 @@ checkConsistency <- function(model,
 #' The method builds the regression function for the regression model,
 #' including the beta weights.
 #' It can be used to predict the raw scores based on age and location.
-#' @param model The regression model from the bestModel function
+#' @param model The regression model from the bestModel function or a cnorm object
 #' @param raw The name of the raw value variable (default 'raw')
 #' @param digits Number of digits for formatting the coefficients
 #' @return The regression formula as a string
 #'
 #' @examples
-#' normData <- prepareData()
-#' model <- bestModel(normData)
-#' regressionFunction(model)
+#' result <- cnorm(raw = elfe$raw, group = elfe$group)
+#' regressionFunction(result)
 #' @export
+#' @family model
 regressionFunction <- function(model, raw = NULL, digits = NULL) {
+  if(class(model)=="cnorm"){
+    raw <- "raw"
+    model <- model$model
+  }else{
   if (is.null(raw)) {
     raw <- model$raw
+  }
   }
 
   i <- 2
@@ -540,17 +563,21 @@ regressionFunction <- function(model, raw = NULL, digits = NULL) {
 #' derivative as the default. This is useful for finding violations of model assumptions and problematic
 #' distribution features as f. e. bottom and ceiling effects, non-progressive norm scores within an
 #' age group or in general #' intersecting percentile curves.
-#' @param model The regression model
+#' @param model The regression model or a cnorm object
 #' @param order The degree of the derivate, default: 1
 #' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
 #' the specific value here.
 #' @return The derived coefficients
 #' @examples
-#' normData <- prepareData()
+#' normData <- prepareData(elfe)
 #' m <- bestModel(normData)
 #' derivedCoefficients <- derive(m)
 #' @export
+#' @family model
 derive <- function(model, order = 1, covariate = NULL) {
+  if(class(model)=="cnorm"){
+    model <- model$model
+  }
 
   if(!is.null(covariate)&&is.null(model$covariate)){
     warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
@@ -603,34 +630,55 @@ derive <- function(model, order = 1, covariate = NULL) {
   return(coeff)
 }
 
+#' Prints the results and regression function of a cnorm model
+#'
+#' @param object A regression model or cnorm object
+#' @param ... additional parameters
+#' @return A report on the regression function, weights, R2 and RMSE
+#' @export
+#' @family model
+modelSummary <- function(object, ...){
+  if(class(object)=="cnorm"){
+    object <- object$model
+  }
+
+  cat(object$report, sep = "\n")
+}
+
 #' Check for horizontal and vertical extrapolation
 #'
 #' Regression model only work in a specific range and extrapolation horizontally (outside
 #' the original range) or vertically (extreme norm scores) might lead to inconsistent
 #' results. The function generates a message, indicating extrapolation and the range of the original data.
-#' @param model The regression model
+#' @param object The regression model or a cnorm object
 #' @param minAge The lower age bound
 #' @param maxAge The upper age bound
 #' @param minNorm The lower norm value bound
 #' @param maxNorm The upper norm value bound
 #' @param digits The precision for rounding the norm and age data
+#' @param ... additional parameters
 #' @return the report
 #' @export
 #' @examples
-#' normData <- prepareData()
+#' normData <- prepareData(elfe)
 #' m <- bestModel(normData)
-#' print(rangeCheck(m))
-rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxNorm = NULL, digits = 3) {
-  summary <- paste0("The original data for the regression model spanned from age ", round(model$minA1, digits), " to ", round(model$maxA1, digits), ", with a norm score range from ", round(model$minL1, digits), " to ", round(model$maxL1, digits), ". The raw scores range from ", model$minRaw, " to ", model$maxRaw, ".")
-  if (model$descend) {
+#' rangeCheck(m)
+#' @family model
+rangeCheck <- function(object, minAge = NULL, maxAge = NULL, minNorm = NULL, maxNorm = NULL, digits = 3, ...) {
+  if(class(object)=="cnorm"){
+    object <- object$model
+  }
+
+  summary <- paste0("The original data for the regression model spanned from age ", round(object$minA1, digits), " to ", round(object$maxA1, digits), ", with a norm score range from ", round(object$minL1, digits), " to ", round(object$maxL1, digits), ". The raw scores range from ", object$minRaw, " to ", object$maxRaw, ".")
+  if (object$descend) {
     summary <- paste0(summary, " The ranking was done in descending order.")
   }
   reportOnly <- (is.null(minAge) || is.null(maxAge) || is.null(minNorm) || is.null(maxNorm))
-  if (!reportOnly && (minAge < model$minA1 || maxAge > model$maxA1) && (minNorm < model$minL1 || maxNorm > model$maxL1)) {
+  if (!reportOnly && (minAge < object$minA1 || maxAge > object$maxA1) && (minNorm < object$minL1 || maxNorm > object$maxL1)) {
     summary <- paste("Horizontal and vertical extrapolation detected. Be careful using age groups and extreme norm scores outside the original sample.", summary, sep = "\n")
-  } else if (!reportOnly && (minAge < model$minA1 || maxAge > model$maxA1)) {
+  } else if (!reportOnly && (minAge < object$minA1 || maxAge > object$maxA1)) {
     summary <- paste("Horizontal extrapolation detected. Be careful using age groups outside the original sample.", summary, sep = "\n")
-  } else if (!reportOnly && (minNorm < model$minL1 || maxNorm > model$maxL1)) {
+  } else if (!reportOnly && (minNorm < object$minL1 || maxNorm > object$maxL1)) {
     summary <- paste("Vertical extrapolation detected. Be careful using extreme norm scores exceeding the scores of the original sample.", summary, sep = "\n")
   }
 
@@ -651,10 +699,11 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' the cv = "full" option, the ranking is done for the test and validation dataset
 #' separately (always based on T scores), resulting in a complete cross validation. In
 #' order to only validate the modeling, you as well can use a pre-ranked data set with
-#' prepareData() already applied. In this case, the training and validation data is
+#' prepareData(elfe) already applied. In this case, the training and validation data is
 #' drawn from the already ranked data and the scores for the validation set should improve.
 #' It is however no independent test, as the ranking between both samples is interlinked.
-#' In the output, you will get RMSE for the raw score models, norm score R2 and delta R2 and the crossfit.
+#' In the output, you will get RMSE for the raw score models, norm score R2 and delta R2, the crossfit
+#' and the norm score SE sensu Oosterhuis, van der Ark, & Sijtsma (2016).
 #' For assessing, if a model over-fits the data and to what extent, we need cross-validation. We assumed
 #' that an overfitting occurred when a model captures more variance of the observed norm scores of the
 #' training sample compared to the captured variance of the norm scores of the validation sample. The
@@ -671,8 +720,10 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' avoid a number of terms with a high overfit (e. g. crossfit > 1.1).
 #' }
 #'
-#' @param data data frame of norm sample with ranking, powers and interaction of L and A
+#' @param data data frame of norm sample with ranking, powers and interaction of L and A or a cnorm object
 #' @param formula prespecified formula, e. g. from an existing regression model; min and max functions will be ignored
+#' In case a cnorm object is used, this functions automatically draws on the formula of the inbuilt regression
+#' function
 #' @param repetitions number of repetitions for cross validation
 #' @param norms determine norm score crossfit and R2 (if set to TRUE). The option is
 #' computationally intensive and duration increases with sample size, number of
@@ -689,7 +740,7 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' @param raw Name of the raw variable
 #' @param age Name of the age variable
 #' @param group Name of the grouping variable
-#' @return table with results per term number, including RMSE for raw scores in training, validationand complete
+#' @return table with results per term number, including RMSE for raw scores in training, validation and complete
 #' sample, R2 for the norm scores and the crossfit measure (1 = ideal, <1 = underfit, >1 = overfit)
 #' @export
 #' @examples
@@ -700,10 +751,16 @@ rangeCheck <- function(model, minAge = NULL, maxAge = NULL, minNorm = NULL, maxN
 #' # cross validate prespecified formula
 #' # here, we will use the formula from a model to cross validate it and to retrieve norm RMSE
 #' # own regression functions can of course be used as well
-#' # data <- prepareData(elfe)
-#' # model <- bestModel(data)
-#' # cnorm.cv(data, formula = model$terms, repetitions = 5)
-cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
+#' # result <- cnorm(raw = efe$raw, group = elfe$group)
+#' # cnorm.cv(result, repetitions = 5)
+#' @references Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
+#' @family model
+cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
+
+  if(class(data)=="cnorm"){
+    formula <- data$model$terms
+    data <- data$data
+  }
 
   if(is.na(pCutoff)){
     if(nrow(data)<10000)
@@ -790,6 +847,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
   delta <- rep(NA, max)
   crossfit <- rep(0, max)
   norm.rmse <- rep(0, max)
+  norm.se <- rep(0, max)
   norm.rmse.min <- rep(0, max)
 
   # draw test and training data several times ('repetitions' parameter), model data and store MSE
@@ -873,6 +931,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
         r2.train[i] <- r2.train[i] + (cor(train$normValue, train$T, use = "pairwise.complete.obs")^2)
         r2.test[i] <- r2.test[i] + (cor(test$normValue, test$T, use = "pairwise.complete.obs")^2)
         norm.rmse[i] <- norm.rmse[i] + sqrt(mean((test$T - test$normValue)^2, na.rm = TRUE))
+        norm.se[i] <- norm.se[i] + sum(sqrt((test$T - test$normValue)^2))/(length(!is.na(test$T))-2)
         }
     }
   }
@@ -897,6 +956,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
       r2.train[i] <- r2.train[i] / repetitions
       r2.test[i] <- r2.test[i] / repetitions
       norm.rmse[i] <- norm.rmse[i] / repetitions
+      norm.se[i] <- norm.se[i] / repetitions
 
       if (i > min) {
         delta[i] <- r2.test[i] - r2.test[i - 1]
@@ -927,23 +987,23 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
   } else {
     par(mfrow = c(1, 1))
   }
-  tab <- data.frame(RMSE.raw.train = train.errors, RMSE.raw.test = val.errors, RMSE.raw.complete = complete.errors, R2.norm.train = r2.train, R2.norm.test = r2.test, Delta.R2.test = delta, Crossfit = r2.train / r2.test, RMSE.norm.test = norm.rmse)
+  tab <- data.frame(RMSE.raw.train = train.errors, RMSE.raw.test = val.errors, RMSE.raw.complete = complete.errors, R2.norm.train = r2.train, R2.norm.test = r2.test, Delta.R2.test = delta, Crossfit = r2.train / r2.test, RMSE.norm.test = norm.rmse, SE.norm.test = norm.se)
 
   if(is.null(formula)){
   # plot RMSE
-  plot(val.errors, pch = 19, type = "b", col = "blue", main = "Raw Score RMSE", ylab = "Root MSE", xlab = "Number of terms", ylim = c(min(train.errors, na.rm = TRUE), max(val.errors, na.rm = TRUE)))
+  graphics::plot(val.errors, pch = 19, type = "b", col = "blue", main = "Raw Score RMSE", ylab = "Root MSE", xlab = "Number of terms", ylim = c(min(train.errors, na.rm = TRUE), max(val.errors, na.rm = TRUE)))
   points(complete.errors, pch = 19, type = "b", col = "black")
   points(train.errors, pch = 19, type = "b", col = "red")
   legend("topright", legend = c("Training", "Validation", "Complete"), col = c("red", "blue", "black"), pch = 19)
 
   if (norms) {
     # plot R2
-    plot(r2.train, pch = 19, type = "b", col = "red", main = "Norm Score R2", ylab = "R Square", xlab = "Number of terms", ylim = c(min(r2.test, na.rm = TRUE), 1))
+    graphics::plot(r2.train, pch = 19, type = "b", col = "red", main = "Norm Score R2", ylab = "R Square", xlab = "Number of terms", ylim = c(min(r2.test, na.rm = TRUE), 1))
     points(r2.test, pch = 19, type = "b", col = "blue")
     legend("bottomright", legend = c("Training", "Validation"), col = c("red", "blue"), pch = 19)
 
     # plot CROSSFIT
-    plot(tab$Crossfit, pch = 19, type = "b", col = "black", main = "Norm Score CROSSFIT", ylab = "Crossfit", xlab = "Number of terms", ylim = c(min(c(tab$Crossfit, .88), na.rm = TRUE), max(c(tab$Crossfit, 1.12), na.rm = TRUE)))
+    graphics::plot(tab$Crossfit, pch = 19, type = "b", col = "black", main = "Norm Score CROSSFIT", ylab = "Crossfit", xlab = "Number of terms", ylim = c(min(c(tab$Crossfit, .88), na.rm = TRUE), max(c(tab$Crossfit, 1.12), na.rm = TRUE)))
     abline(h = 1, col = 3, lty = 2)
     abline(h = .9, col = 2, lty = 3)
     text(max, .89, adj = c(1, 1), "underfit", col = 2, cex = .75)
@@ -951,7 +1011,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
     text(max, 1.11, adj = c(1, 0), "overfit", col = 2, cex = .75)
 
     # plot delta r2 test
-    plot(tab$Delta.R2.test, pch = 19, type = "b", col = "black", main = "Norm Score Delta R2 in Validation", ylab = "Delta R2", xlab = "Number of terms", ylim = c(min(tab$Delta.R2.test, na.rm = TRUE), max(tab$Delta.R2.test, na.rm = TRUE)))
+    graphics::plot(tab$Delta.R2.test, pch = 19, type = "b", col = "black", main = "Norm Score Delta R2 in Validation", ylab = "Delta R2", xlab = "Number of terms", ylim = c(min(tab$Delta.R2.test, na.rm = TRUE), max(tab$Delta.R2.test, na.rm = TRUE)))
     abline(h = 0, col = 3, lty = 2)
   }else{
     tab$R2.norm.train <- NULL
@@ -985,10 +1045,48 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 1, norms = TRUE, min = 
     cat("\n")
     cat("\n")
 
-    cat("Repeated cross validation with prespecified formula yielded the following results:\n")
+    cat(paste0("Repeated cross validation with prespecified formula and ", repetitions, " repetitions yielded the following results:\n"))
     cat("\n")
     tab$Delta.R2.test <- NULL
     return(tab[complete.cases(tab), ])
   }
 
+
+
 }
+
+
+
+#' Calculates the standard error (SE) of the norm scores
+#'
+#' @param model a cnorm object
+#'
+#' @return The standard error (SE) of the norm scores sensu Oosterhuis et al. (2016)
+#' @export
+#'
+#' @references Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
+  getNormScoreSE <- function(model){
+    if(!class(model)=="cnorm"){
+      stop("Please provide cnorm object as the model parameter")
+    }
+
+    data <- model$data
+    model <- model$model
+    minNorm <- model$minL1
+    maxNorm <- model$maxL1
+    d <- data
+    raw <- data[[model$raw]]
+    age <- data[[model$age]]
+    if(!is.null(model$covariate))
+      covariate <- data[[attr(data, "covariate")]]
+    else
+      covariate <- NULL
+
+    d$fitted <- predictNorm(raw, age, model, minNorm = minNorm, maxNorm = maxNorm, covariate = covariate)
+
+    d$diff <- d$fitted - data$normValue
+    d <- d[!is.na(d$fitted), ]
+    d <- d[!is.na(d$diff), ]
+
+    return(sum(sqrt(d$diff^2))/(nrow(d)-2))
+  }

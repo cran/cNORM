@@ -5,7 +5,7 @@
 #' age, while keeping the norm value constant. This way, e. g. academic performance or intelligence development
 #' of a specific ability is shown.
 #' @param norm The specific norm score, e. g. T value
-#' @param model The model from the regression modeling
+#' @param model The model from the regression modeling or a cnorm object
 #' @param minAge Age to start from
 #' @param maxAge Age to stop at
 #' @param step Stepping parameter for the precision when retrieving of the values, lower
@@ -16,9 +16,10 @@
 #' the specific value here.
 #' @return data.frame of the variables raw, age and norm
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(data = normData)
-#' getNormCurve(35, m)
+#' # Generate cnorm object from example data
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
+#' getNormCurve(35, cnorm.elfe)
+#' @family predict
 #' @export
 getNormCurve <-
   function(norm,
@@ -29,6 +30,11 @@ getNormCurve <-
              minRaw = NULL,
              maxRaw = NULL,
            covariate = NULL) {
+
+    if(class(model)=="cnorm"){
+      model <- model$model
+    }
+
     if(!is.null(covariate)&&is.null(model$covariate)){
       warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
       covariate = NULL
@@ -91,7 +97,7 @@ getNormCurve <-
 #' You than have to provide a prepared data frame with the according input variables.
 #' @param norm The norm score, e. g. a specific T score or a vector of scores
 #' @param age The age value or a vector of scores
-#' @param coefficients The coefficients from the regression model
+#' @param coefficients The coefficients from the regression model or a cnorm model
 #' @param minRaw Minimum score for the results; can be used for clipping unrealistic outcomes,
 #' usually set to the lower bound of the range of values of the test (default: 0)
 #' @param maxRaw Maximum score for the results; can be used for clipping unrealistic outcomes
@@ -101,15 +107,20 @@ getNormCurve <-
 #' @return the predicted raw score or a data.frame of scores in case, lists of norm scores or age is used
 #' @examples
 #' # Prediction of single scores
-#' normData <- prepareData()
+#' normData <- prepareData(elfe)
 #' m <- bestModel(data = normData)
 #' predictRaw(35, 3.5, m$coefficients)
+#'
+#' # using a cnorm object
+#' result <- cnorm(raw = elfe$raw, group = elfe$group)
+#' predictRaw(35, 3.5, result)
 #'
 #' # Fitting complete data sets
 #' fitted.values <- predict(m)
 #'
 #' # break up contribution of each predictor variable
 #' fitted.partial <- predict(m, type = "terms")
+#' @family predict
 #' @export
 predictRaw <-
   function(norm,
@@ -119,7 +130,12 @@ predictRaw <-
              maxRaw = Inf,
            covariate = NULL) {
 
+    if(class(coefficients)=="cnorm"){
+      coefficients <- coefficients$model$coefficients
+    }
+
     score.matrix <- matrix(nrow = length(norm), ncol = length(age), dimnames = list(norm, age))
+
 
     for(no in 1:nrow(score.matrix)){
     # first intercept
@@ -185,10 +201,10 @@ predictRaw <-
 #' the population. Please be careful when extrapolating vertically (at the lower and
 #' upper end of the age specific distribution). Depending on the size of your standardization
 #' sample, extreme values with T < 20 or T > 80 might lead to inconsistent results. In case a confidence coefficient
-#' (CI) and the reliability is specified, confidence intervalls are computed as well, including a correction
+#' (CI) and the reliability is specified, confidence intervals are computed as well, including a correction
 #' for regression to the mean.
 #' @param A the age as single value or a vector of age values
-#' @param model The regression model
+#' @param model The regression model or a cnorm object
 #' @param minNorm The lower bound of the norm score range
 #' @param maxNorm The upper bound of the norm score range
 #' @param minRaw clipping parameter for the lower bound of raw scores
@@ -203,17 +219,18 @@ predictRaw <-
 #' value or a list #' of norm tables if vector of A values was provided
 #' @seealso rawTable
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(data = normData)
+#' # Generate cnorm object from example data
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
 #' # create single norm table
-#' norms <- normTable(3.5, m, minNorm = 25, maxNorm = 75, step = 0.5)
+#' norms <- normTable(3.5, cnorm.elfe, minNorm = 25, maxNorm = 75, step = 0.5)
 #'
 #' # create list of norm tables
-#' norms <- normTable(c(2.5, 3.5, 4.5), m,
+#' norms <- normTable(c(2.5, 3.5, 4.5), cnorm.elfe,
 #'   minNorm = 25, maxNorm = 75,
 #'   step = 1, minRaw = 0, maxRaw = 26
 #' )
+#' @family predict
 #' @export
 normTable <- function(A,
                       model,
@@ -225,6 +242,10 @@ normTable <- function(A,
                       monotonuous = TRUE,
                       CI = .9,
                       reliability = NULL) {
+
+  if(class(model)=="cnorm"){
+    model <- model$model
+  }
 
   if(!is.null(covariate)&&is.null(model$covariate)){
     warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
@@ -258,11 +279,11 @@ normTable <- function(A,
   }
 
   if (is.null(minNorm)||is.na(minNorm)){
-    minNorm <- model$scaleM - 2 * model$scaleSD
+    minNorm <- model$scaleM - 2.5 * model$scaleSD
   }
 
   if (is.null(maxNorm)||is.na(maxNorm)){
-    maxNorm <- model$scaleM + 2 * model$scaleSD
+    maxNorm <- model$scaleM + 2.5 * model$scaleSD
   }
 
   # in case it still fails
@@ -353,10 +374,10 @@ normTable <- function(A,
 #' model is generated. This way, the inverse function of the regression model is solved numerically with
 #' brute force. Please specify the range of raw values, you want to cover. With higher precision
 #' and smaller stepping, this function becomes computational intensive. In case a confidence coefficient
-#' (CI) and the reliability is specified, confidence intervalls are computed as well, including a correction
+#' (CI) and the reliability is specified, confidence intervals are computed as well, including a correction
 #' for regression to the mean.
 #' @param A the age, either single value or vector with age values
-#' @param model The regression model
+#' @param model The regression model or a cnorm object
 #' @param minRaw The lower bound of the raw score range
 #' @param maxRaw The upper bound of the raw score range
 #' @param minNorm Clipping parameter for the lower bound of norm scores (default 25)
@@ -371,16 +392,17 @@ normTable <- function(A,
 #' of norm tables if vector of A values was provided
 #' @seealso normTable
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(data = normData)
-#' # generate a norm table for the raw value range from 0 to 28 for month 7 of grade 3
-#' table <- rawTable(3 + 7 / 12, m, minRaw = 0, maxRaw = 28)
+#' # Generate cnorm object from example data
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
+#' # generate a norm table for the raw value range from 0 to 28 for the time point month 7 of grade 3
+#' table <- rawTable(3 + 7 / 12, cnorm.elfe, minRaw = 0, maxRaw = 28)
 #'
 #' # generate several raw tables
-#' table <- rawTable(c(2.5, 3.5, 4.5), m, minRaw = 0, maxRaw = 28)
+#' table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28)
 #'
-#' # additionally compute confidence intervalls
-#' table <- rawTable(c(2.5, 3.5, 4.5), m, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
+#' # additionally compute confidence intervals
+#' table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
+#' @family predict
 #' @export
 rawTable <- function(A,
                      model,
@@ -392,6 +414,10 @@ rawTable <- function(A,
                      monotonuous = TRUE,
                      CI = .9,
                      reliability = NULL) {
+
+  if(class(model)=="cnorm"){
+    model <- model$model
+  }
 
   if(!is.null(covariate)&&is.null(model$covariate)){
     warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
@@ -524,7 +550,7 @@ rawTable <- function(A,
 #' In order to check model assumptions, a table of the first order derivative of the model
 #' coefficients is created.
 #' @param A the age
-#' @param model The regression model
+#' @param model The regression model or a cnorm object
 #' @param minNorm The lower bound of the norm value range
 #' @param maxNorm The upper bound of the norm value range
 #' @param step Stepping parameter with lower values indicating higher precision
@@ -534,9 +560,13 @@ rawTable <- function(A,
 #' derived regression function
 #' @seealso plotDerivative, derive
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(data = normData)
-#' d <- derivationTable(6, m, step = 0.5)
+#' # Generate cnorm object from example data
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
+#'
+#' # retrieve function for time point 6
+#' d <- derivationTable(6, cnorm.elfe, step = 0.5)
+#'
+#' @family predict
 #' @export
 derivationTable <-
   function(A,
@@ -544,6 +574,10 @@ derivationTable <-
              minNorm = NULL,
              maxNorm = NULL,
              step = 0.1, covariate = NULL) {
+
+    if(class(model)=="cnorm"){
+      model <- model$model
+    }
 
     if(!is.null(covariate)&&is.null(model$covariate)){
       warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
@@ -586,7 +620,7 @@ derivationTable <-
 #' the closest fitting norm score for a raw score is returned.
 #' @param raw The raw value, either single numeric or list of values
 #' @param A the age, either single numeric or list of values
-#' @param model The regression model
+#' @param model The regression model or a cnorm object
 #' @param minNorm The lower bound of the norm score range
 #' @param maxNorm The upper bound of the norm score range
 #' @param force Try to resolve missing norm scores in case of inconsistent models
@@ -594,13 +628,13 @@ derivationTable <-
 #' the specific value here.
 #' @return The predicted norm score for a raw score, either single value or list of results
 #' @examples
-#' normData <- prepareData()
-#' m <- bestModel(data = normData)
+#' # Generate cnorm object from example data
+#' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
 #' # return norm value for raw value 21 for grade 2, month 9
-#' # Use 'as.list(normData$raw)' and 'as.list(normData$group)' for raw scores
-#' # and age to calculate predicted norm values for original data.
-#' specificNormValue <- predictNorm(raw = 21, A = 2.75, model = m, minNorm = 25, maxNorm = 75)
+#' specificNormValue <- predictNorm(raw = 21, A = 2.75, cnorm.elfe)
+#'
+#' @family predict
 #' @export
 predictNorm <-
   function(raw,
@@ -608,9 +642,22 @@ predictNorm <-
              model,
              minNorm = NULL,
              maxNorm = NULL, force = FALSE, covariate = NULL) {
-    if (is.null(minNorm) || is.null(maxNorm)) {
-      stop("ERROR: Please specify minimum and maximum norm score")
+    if(class(model)=="cnorm"){
+      if(is.null(minNorm)){
+        minNorm <- attributes(model$data)$scaleMean - (attributes(model$data)$scaleMean * 2.5)
+      }
+
+      if(is.null(maxNorm)){
+        maxNorm <- attributes(model$data)$scaleMean + (attributes(model$data)$scaleMean * 2.5)
+      }
+
+      model <- model$model
+    }  else{
+      if (is.null(minNorm) || is.null(maxNorm)) {
+        stop("ERROR: Please specify minimum and maximum norm score")
+      }
     }
+
 
     if(!is.null(covariate)&&is.null(model$covariate)){
       warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")

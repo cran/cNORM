@@ -3,7 +3,41 @@ This file documents the development of the package as well as open issues or poi
 
 
 
-### Version in 1.2.4 (in progress)
+### Version in 2.0.0 (release candidate)
+Date: 2020.12.04
+Version 2.0.0 features many fundamental improvements both relating to the procedure but as well to the
+package itself. It introduces weighted percentiles and thus helps in correcting violations of 
+representativeness in the norm sample. There is a new main function 'cnorm()' that returns a
+cnorm object. Most functions now accept this cnorm object and do not require separate data objects and
+statistical models. And finally S3 methods plot(), summary() and print() have been introduced.
+
+
+Changes:
+
+*    Preparing for next major release with complete redesign of S3 method structure and weighting
+*    New function cnorm() that does all the data preparation and modelling in one step
+     It returns a cnorm object, which can be used in all model check, plotting and prediction functions
+*    New S3 functions: print, plot, summary
+*    Vignette revised
+*    All functions have been extended to accept a cnorm object instead of data and / or model
+*    prepareData, rankByGroup and rankBySlidingWindow no have the option to provide a
+     weighting parameter to compensate for imbalances. The percentiles are weighted
+     accordingly. The weighted ranking is based on an adaption of wtd.rank of the Hmisc
+     package, provided by the courtesy of Frank Harrell
+*    bestModel automatically uses the weighting parameter from the ranking (if applied)
+*    prepareData, rankByGroup and rankBySlidingWindow can now directly handle vectors
+     instead of a data frame, e. g.
+     rankByGroup(raw = elfe$raw, group = elfe$group)
+*    If no group is provided and only a raw vector is present e.g. ranByGroup(raw=elfe$raw),
+     traditional ranking of a single group is done
+*    Power parameter k added to prepareData
+*    New convenience function modelSummary
+*    New method getNormScoreSE added: Compute SE for regression based norm scores sensu Oosterhuis
+     van der Ark & Sijtsma (2016)
+
+
+
+### Version in 1.2.4 (release)
 Date: 2020.10.14
 
 
@@ -31,7 +65,7 @@ Changes:
 *    correction for monotonicity in rawTable and normTable (now default)
 *    predictRaw can now return matrices for list of norm x age
 *    new dataset added on the basis of the EPM paper
-*    Bug in plotPercentiles fixed for datasets with decending ranking order
+*    Bug in plotPercentiles fixed for datasets with descending ranking order
 *    'descend' parameter added to prepareData
 *    rawTable can now return matrices
 
@@ -269,7 +303,7 @@ Date: 2018.10.26
 
 Changes:
 
-*   Final polishing finished; realising first major version
+*   Final polishing finished; releasing first major version
 
 
 
