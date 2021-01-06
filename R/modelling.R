@@ -108,8 +108,13 @@ bestModel <- function(data,
     raw <- attr(data, "raw")
   }
 
-  if (is.null(weights)) {
-    weights <- attr(data, "weights")
+  if (!is.null(weights)) {
+    if(is.numeric(weights)&&length(weights)==nrow(data)){
+      data$weights <- weights
+      attr(data, "weights") <- "weights"
+    }else{
+      weights <- NULL
+    }
   }
 
   if (is.null(k)) {
@@ -209,6 +214,13 @@ bestModel <- function(data,
     index <- NULL
   }
 
+
+  # rename variable, otherwise it would be automatically used
+  if(is.null(weights)&&!is.null(data$weights)){
+    data$weights.old <- data$weights
+    data$weights <- NULL
+  }
+
   subsets <- regsubsets(lmX, data = data, nbest = 1, nvmax = nvmax, force.in = index, really.big = big, weights = weights)
   results <- base::summary(subsets)
   results$numberOfTerms <- as.numeric(rowSums(results$which)-1)
@@ -260,13 +272,10 @@ bestModel <- function(data,
 
   report[3] <- paste0("Final regression model: ", text)
 
-  if(is.null(weights)){
-    bestformula <- lm(text, as.data.frame(data))
-  }else{
-    d <- as.data.frame(data)
-    d$weights <- weights
-    bestformula <- lm(text, d, weights = d$weights)
-  }
+  if(is.null(attr(data, "weights")))
+    bestformula <- lm(text, data)
+  else
+    bestformula <- lm(text, data, weights = data$weights)
 
   if(!is.null(attr(data, "covariate"))){
     if(length(grep("COV", names(bestformula$coefficients)))==0)
@@ -732,7 +741,7 @@ rangeCheck <- function(object, minAge = NULL, maxAge = NULL, minNorm = NULL, max
 #' @param max Maximum number of terms in model up to 2*k + k^2
 #' @param cv If set to full (default), the data is split into training and validation data and ranked afterwards,
 #' otherwise, a pre ranked dataset has to be provided, which is then split into train and validation (and thus
-#' only the modelling, but not the ranking is independent)
+#' only the modeling, but not the ranking is independent)
 #' @param pCutoff The function checks the stratification for unbalanced data sampling.
 #' It performs a t-test per group. pCutoff specifies the p-value per group that the test result
 #' has to reach at least. To minimize beta error, the value is set to .2 per default
@@ -778,6 +787,10 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
     stop("This function is currently not ready for including covariates.")
   }
 
+  if(!is.null(attr(data, "weights"))){
+    message("Cross validation is conducted without weighting.")
+  }
+
   d <- data
 
   if (is.na(raw) || is.na(group) || is.na(age)) {
@@ -785,6 +798,8 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
     age <- attr(d, "age")
     group <- attr(d, "group")
   }
+
+
 
   if (is.na(raw) || is.na(group) || is.na(age)) {
     stop("Variables raw, age and group neither available as function parameters nor as attributes from data object. Please provide according information.")
@@ -931,7 +946,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
         r2.train[i] <- r2.train[i] + (cor(train$normValue, train$T, use = "pairwise.complete.obs")^2)
         r2.test[i] <- r2.test[i] + (cor(test$normValue, test$T, use = "pairwise.complete.obs")^2)
         norm.rmse[i] <- norm.rmse[i] + sqrt(mean((test$T - test$normValue)^2, na.rm = TRUE))
-        norm.se[i] <- norm.se[i] + sum(sqrt((test$T - test$normValue)^2))/(length(!is.na(test$T))-2)
+        norm.se[i] <- norm.se[i] + sum(sqrt((test$T - test$normValue)^2), na.rm = TRUE)/(length(!is.na(test$T))-2)
         }
     }
   }
@@ -1085,8 +1100,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
     d$fitted <- predictNorm(raw, age, model, minNorm = minNorm, maxNorm = maxNorm, covariate = covariate)
 
     d$diff <- d$fitted - data$normValue
-    d <- d[!is.na(d$fitted), ]
     d <- d[!is.na(d$diff), ]
 
-    return(sum(sqrt(d$diff^2))/(nrow(d)-2))
+    return(sum(sqrt(d$diff^2))/(nrow(d)-2), na.rm = TRUE)
   }

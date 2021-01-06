@@ -38,10 +38,11 @@
 #' @param age the continuous explanatory variable; by default set to "group"
 #' @param width if a width is provided, the function switches to rankBySlidingWindow to determine the
 #' observed raw scores, otherwise, ranking is done by group (default)
-#' @param weights Vector or variable name in the dataset with weights to compensate imbalances due to insufficient norm
-#' data stratification. All weights have to be numerical and positive. The code to compute weighted percentiles originates from the
-#' Hmisc package (functions) wtd.rank and wtd.table) and is provided by the courtesy of Frank Harrell. Please note, that this
-#' feature is currently EXPERIMENTAL!
+#' @param weights Vector or variable name in the dataset with weights for each individual case. It can be used
+#' to compensate for moderate imbalances due to insufficient norm data stratification. Weights should be numerical
+#' and positive.
+#' Please note, that this feature is currently EXPERIMENTAL and subject to ongoing work! Precision of weighting increases
+#' with sample size. On the other hand, in large samples, it is easy to stratificate and then weighting is not needed anymore.
 #' @param scale type of norm scale, either T (default), IQ, z or percentile (= no
 #' transformation); a double vector with the mean and standard deviation can as well,
 #' be provided f. e. c(10, 3) for Wechsler scale index point
@@ -174,10 +175,11 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
 #' @param group name of the grouping variable (default 'group')  or numeric vector, e. g. grade, setting
 #' group to FALSE cancels grouping (data is treated as one group)
 #' @param raw name of the raw value variable (default 'raw') or numeric vector
-#' @param weights Vector or variable name in the dataset with weights to compensate imbalances due to insufficient norm
-#' data stratification. All weights have to be numerical and positive. The code to compute weighted percentiles originates from the
-#' Hmisc package (functions) wtd.rank and wtd.table) and is provided by the courtesy of Frank Harrell. Please note, that this
-#' feature is currently EXPERIMENTAL!
+#' @param weights Vector or variable name in the dataset with weights for each individual case. It can be used
+#' to compensate for moderate imbalances due to insufficient norm data stratification. Weights should be numerical
+#' and positive.
+#' Please note, that this feature is currently EXPERIMENTAL and subject to ongoing work! Precision of weighting increases
+#' with sample size. On the other hand, in large samples, it is easy to stratificate and then weighting is not needed anymore.
 #' @param method Ranking method in case of bindings, please provide an index,
 #' choosing from the following methods: 1 = Blom (1958), 2 = Tukey (1949),
 #' 3 = Van der Warden (1952), 4 = Rankit (default), 5 = Levenbach (1953),
@@ -194,6 +196,8 @@ prepareData <- function(data = NULL, group = "group", raw = "raw", age = "group"
 #' @param covariate Include a binary covariate into the preparation and subsequently modeling,
 #' either by specifying the variable name or including the variable itself. BEWARE!
 #' Not all subsequent functions are already prepared for it.  It is an experimental feature.
+#' @param na.rm remove values, where the percentiles could not be estimated,
+#' most likely happens in the context of weighting
 #' @return the dataset with the percentiles and norm scales per group
 #'
 #' @examples
@@ -220,7 +224,9 @@ rankByGroup <-
            method = 4,
            scale = "T",
            descend = FALSE,
-           descriptives = TRUE, covariate = NULL) {
+           descriptives = TRUE,
+           covariate = NULL,
+           na.rm = TRUE) {
 
     # experimental code to include covariates
     # covariate <- NULL
@@ -243,16 +249,26 @@ rankByGroup <-
     if (is.numeric(group) && (length(group) == nrow(d))) {
       d$group <- group
       group <- "group"
+    }else if(is.character(group)){
+      d$group <- d[, group]
+      group <- "group"
     }
 
     if (is.numeric(raw) && (length(raw) == nrow(d))) {
       d$raw <- raw
       raw <- "raw"
+    }else if(is.character(raw)){
+      d$raw <- d[, raw]
+      raw <- "raw"
     }
     }
 
+
     weighting <- NULL
     if(!is.null(weights)){
+        # message("Weighting is currently not working in rankByGroup. Proceeding without weighting.")
+        # weights <- NULL
+
       if(is.character(weights)){
 
         if(!(weights %in% colnames(d))){
@@ -262,7 +278,7 @@ rankByGroup <-
           weighting <- d[, weights]
         }
         }else{
-          if(length(weights)!=nrow(data)){
+          if(length(weights)!=nrow(d)){
             warning("Length of vector with weights has to match the number of cases in the dataset. Proceeding without weighting.")
 
           }else{
@@ -271,6 +287,7 @@ rankByGroup <-
             weights <- "weights"
           }
         }
+
       }
 
     if (is.numeric(covariate) && (length(covariate) == nrow(d))) {
@@ -320,18 +337,17 @@ rankByGroup <-
     numerator <- c(-3.75, -1 / 3, 0, -0.5, -1 / 3, -0.3175, -0.326)
     denominator <- c(0.25, 1 / 3, 1, 0, 0.4, 0.365, 0.348)
 
+    sign = 1
+    if (descend)
+      sign = -1
+
     if (method < 1 || method > length(numerator)) {
       message("Method parameter out of range, setting to RankIt")
     }
 
     if (is.null(covariate)) {
       if (typeof(group) == "logical" && !group) {
-        if (descend) {
-          d$percentile <- (wr(-1 * (d[, raw]), weights = weighting) + numerator[method]) / (length(d[, raw]) + denominator[method])
-        } else {
-          d$percentile <- (wr(d[, raw], weights = weighting) + numerator[method]) / (length(d[, raw]) + denominator[method])
-        }
-
+        d$percentile <- (weighted.rank(sign * (d[, raw]), weights = weighting) + numerator[method]) / (length(d[, raw]) + denominator[method])
         if (descriptives) {
           d$n <- length(d[, raw])
           d$m <- mean(d[, raw])
@@ -339,15 +355,11 @@ rankByGroup <-
           d$sd <- sd(d[, raw])
         }
       } else {
-        if (descend) {
-          d$percentile <- ave(d[, raw], d[, group], FUN = function(x) {
-            (wr(-x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
-          })
-        } else {
-          d$percentile <- ave(d[, raw], d[, group], FUN = function(x) {
-            (wr(x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
-          })
-        }
+        d <- d[order(d$group), ]
+        d$percentile <- unlist(by(d, d$group, function(x) {
+            (weighted.rank(sign * x$raw, weights = x$weights) + numerator[method]) / (nrow(x) + denominator[method])
+          }))
+
         if (descriptives) {
           d$n <- ave(d[, raw], d[, group], FUN = function(x) {
             length(x)
@@ -372,16 +384,11 @@ rankByGroup <-
       warning("Using covariates is an EXPERIMENTAL feature in this package currently.")
 
       if (typeof(group) == "logical" && !group) {
-        if (descend) {
-          if (descend) {
+
             d$percentile <- ave(d[, raw], d[, covariate], FUN = function(x) {
-              (wr(-x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
+              (weighted.rank(sign * x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
             })
-          } else {
-            d$percentile <- ave(d[, raw], d[, group], d[, covariate], FUN = function(x) {
-              (wr(x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
-            })
-          }
+
           if (descriptives) {
             d$n <- ave(d[, raw], d[, covariate], FUN = function(x) {
               length(x)
@@ -396,17 +403,13 @@ rankByGroup <-
               sd(x)
             })
           }
-        }
       } else {
-        if (descend) {
+          # TODO weighting and covariates. Switch to unlist(by(..))
+          warning("Currently, it is not possible to use both covariates and weights. Ignoring weights in ranking.")
           d$percentile <- ave(d[, raw], d[, group], d[, covariate], FUN = function(x) {
-            (wr(-x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
+            (rank(sign * x) + numerator[method]) / (length(x) + denominator[method])
           })
-        } else {
-          d$percentile <- ave(d[, raw], d[, group], d[, group], d[, covariate], FUN = function(x) {
-            (wr(x, weights = weighting) + numerator[method]) / (length(x) + denominator[method])
-          })
-        }
+
         if (descriptives) {
           d$n <- ave(d[, raw], d[, group], d[, covariate], FUN = function(x) {
             length(x)
@@ -422,8 +425,6 @@ rankByGroup <-
           })
         }
       }
-
-
     }
 
     scaleM <- NA
@@ -467,8 +468,16 @@ rankByGroup <-
     attr(d, "width") <- NA
     attr(d, "weights") <- weights
 
+    if(na.rm){
+      naPerc <- sum(is.na(d$percentile))
+      if(naPerc>0){
+        message(paste0("Could not determine manifest percentile for ", naPerc, " cases in weighted ranking. These will be dropped."))
+        d <- d[!is.na(d$percentile), ]
+      }
+    }
+
     if (descriptives && min(d$n) < 30) {
-      warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the grouping variable. The confidence of the norm scores is low in that part of the scale. Consider redividing the cases over the grouping variable. In cases of disorganized percentile curves after modelling, it might help to reduce the 'k' parameter."))
+      warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the grouping variable. The confidence of the norm scores is low in that part of the scale. Consider redividing the cases over the grouping variable. In cases of disorganized percentile curves after modeling, it might help to reduce the 'k' parameter."))
     }
 
     return(d)
@@ -510,10 +519,11 @@ rankByGroup <-
 #' powers of age and the interactions
 #' @param raw name of the raw value variable (default 'raw')
 #' @param width the width of the sliding window
-#' @param weights Vector or variable name in the dataset with weights to compensate imbalances due to insufficient norm
-#' data stratification. All weights have to be numerical and positive. The code to compute weighted percentiles originates from the
-#' Hmisc package (functions) wtd.rank and wtd.table) and is provided by the courtesy of Frank Harrell. Please note, that this
-#' feature is currently EXPERIMENTAL!
+#' @param weights Vector or variable name in the dataset with weights for each individual case. It can be used
+#' to compensate for moderate imbalances due to insufficient norm data stratification. Weights should be numerical
+#' and positive.
+#' Please note, that this feature is currently EXPERIMENTAL and subject to ongoing work! Precision of weighting increases
+#' with sample size. On the other hand, in large samples, it is easy to stratificate and then weighting is not needed anymore.
 #' @param method Ranking method in case of bindings, please provide an index,
 #' choosing from the following methods: 1 = Blom (1958), 2 = Tukey (1949),
 #' 3 = Van der Warden (1952), 4 = Rankit (default), 5 = Levenbach (1953),
@@ -536,6 +546,8 @@ rankByGroup <-
 #' @param covariate Include a binary covariate into the preparation and subsequently modeling,
 #' either by specifying the variable name or including the variable itself. BEWARE!
 #' Not all subsequent functions are already prepared for it.  It is an experimental feature.
+#' @param na.rm remove values, where the percentiles could not be estimated,
+#' most likely happens in the context of weighting
 #' @return the dataset with the individual percentiles and norm scores
 #'
 #' @examples
@@ -561,7 +573,9 @@ rankBySlidingWindow <- function(data = NULL,
                                 descend = FALSE,
                                 descriptives = TRUE,
                                 nGroup = 0,
-                                group = NA, covariate = NULL) {
+                                group = NA,
+                                covariate = NULL,
+                                na.rm = TRUE) {
 
   # experimental code to include covariates
   # covariate <- NULL
@@ -588,6 +602,7 @@ rankBySlidingWindow <- function(data = NULL,
 
   weighting <- NULL
   if(!is.null(weights)){
+
     if(is.character(weights)){
 
       if(!(weights %in% colnames(d))){
@@ -694,11 +709,13 @@ rankBySlidingWindow <- function(data = NULL,
   }
     nObs <- nrow(observations)
 
+    sign <- 1
     if (descend) {
-      observations$percentile <- (wr(-observations[, raw], weights = observations[, weights]) + numerator[method]) / (nObs + denominator[method])
-    } else {
-      observations$percentile <- (wr(observations[, raw], weights = observations[, weights]) + numerator[method]) / (nObs + denominator[method])
+      sign <- -1
     }
+
+    observations$percentile <- (weighted.rank(sign * observations[, raw], weights = observations[, weights]) + numerator[method]) / (nObs + denominator[method])
+
     # get percentile for raw value in sliding window subsample
     d$percentile[[i]] <- tail(observations$percentile[which(observations[, raw] == r)], n = 1)
     if (descriptives) {
@@ -757,6 +774,16 @@ rankBySlidingWindow <- function(data = NULL,
   attr(d, "normValue") <- "normValue"
   attr(d, "group") <- "group"
   attr(d, "weights") <- weights
+
+
+
+  if(na.rm){
+    naPerc <- sum(is.na(d$percentile))
+    if(naPerc>0){
+      message(paste0("Could not determine manifest percentile for ", naPerc, " cases in weighted ranking. These will be dropped."))
+      d <- d[!is.na(d$percentile), ]
+    }
+  }
 
   if (descriptives && min(d$n) < 30) {
     warning(paste0("The dataset includes cases, whose percentile depends on less than 30 cases (minimum is ", min(d$n), "). Please check the distribution of the cases over the explanatory variable and have a look at the extreme upper and lower boundary. Increasing the width parameter might help."))
@@ -978,104 +1005,3 @@ computePowers <-
 
     return(d)
   }
-
-
-simulate.weighting <- function(n1, m1, sd1, weight1, n2, m2, sd2, weight2){
-  group1 <- data.frame(group=rep(1, length.out = n1), raw=rnorm(n1, mean=m1, sd=sd1), weights=rep(weight1, length.out = n1))
-  group2 <- data.frame(group=rep(2, length.out = n2), raw=rnorm(n2, mean=m2, sd=sd2), weights=rep(weight2, length.out = n2))
-
-  total.rep <- rbind(group1[1:(n1*weight1),], group2[1:(n2*weight2),])
-  total.rep <- total.rep[sample(nrow(total.rep)),]
-  total.rep$percentileReal <- rankByGroup(total.rep, group = FALSE, raw = total.rep$raw)$percentile
-
-  total <- rbind(group1, group2)
-  total <- total[sample(nrow(total)),]
-  total <- total[1:nrow(total.rep),]
-  total$percentileUnweighted <- rankByGroup(total, group = FALSE, raw = total$raw)$percentile
-  total$percentileWeighted <- rankByGroup(total, group = FALSE, raw = total$raw, weights = total$weights)$percentile
-
-
-  total <- total[order(total$raw),]
-  total.rep <- total.rep[order(total.rep$raw),]
-
-
-  graphics::plot(total.rep$raw, total.rep$percentileReal, type = "l", lty = 1, main = "Simulated effects of weighted ranking", ylab = "Percentile", xlab = "Raw score")
-  points(total$raw, total$percentileWeighted, type = "l", lty = 1, col="blue")
-  points(total$raw, total$percentileUnweighted, type = "l", lty = 1, col="red")
-  legend("bottomright", legend = c("Real percentile", "Weighted", "Unweighted"), col = c("black", "blue", "red"), pch = 19)
-
-}
-
-# adapted from wtd.rank, package Hmisc
-wr <- function(x, weights=NULL){
-  if(! length(weights))
-    return(rank(x))
-
-  tab <- wt(x, weights, na.rm=TRUE)
-  freqs <- tab$sum.of.weights
-  r <- cumsum(freqs) - .5*(freqs-1)
-  return(approx(tab$x, r, xout=x)$y)
-}
-
-# adapted from wtd.table, package Hmisc
-wt <- function(x, weights=NULL, type=c('list','table'), na.rm=TRUE){
-  type <- match.arg(type)
-  if(! length(weights))
-    weights <- rep(1, length(x))
-
-  ax <- attributes(x)
-  ax$names <- NULL
-
-  if(is.character(x)) x <- as.factor(x)
-  lev <- levels(x)
-  x <- unclass(x)
-
-  if(na.rm) {
-    s <- ! is.na(x + weights)
-    x <- x[s, drop=FALSE]    ## drop is for factor class
-    weights <- weights[s]
-  }
-
-  n <- length(x)
-  weights <- weights * length(x) / sum(weights)
-
-  i <- order(x)  # R does not preserve levels here
-  x <- x[i]; weights <- weights[i]
-
-  if(anyDuplicated(x)) {  ## diff(x) == 0 faster but doesn't handle Inf
-    weights <- tapply(weights, x, sum)
-    if(length(lev)) {
-      levused <- lev[sort(unique(x))]
-      if((length(weights) > length(levused)) &&
-         any(is.na(weights)))
-        weights <- weights[! is.na(weights)]
-
-      if(length(weights) != length(levused))
-        stop('program logic error')
-
-      names(weights) <- levused
-    }
-
-    if(! length(names(weights)))
-      stop('program logic error')
-
-    if(type=='table')
-      return(weights)
-
-    x <- as.numeric(names(weights))
-    names(weights) <- NULL
-    return(list(x=x, sum.of.weights=weights))
-  }
-
-  xx <- x
-
-  if(type=='list')
-    list(x=if(length(lev))lev[x]
-         else xx,
-         sum.of.weights=weights)
-  else {
-    names(weights) <- if(length(lev)) lev[x]
-    else xx
-    weights
-  }
-}
