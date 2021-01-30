@@ -463,6 +463,11 @@ plotPercentiles <- function(data,
     group <- attr(data, "group")
   }
 
+  if(is.null(data[[group]])){
+    data$group <- getGroups(data[, attributes(data)$age])
+    group <- "group"
+  }
+
   if (is.null(minAge)) {
     minAge <- model$minA1
   }
@@ -525,6 +530,10 @@ plotPercentiles <- function(data,
     xyFunction <- paste(xyFunction, group, sep = " ~ ")
 
   w <- attributes(data)$weights
+  data[, group] <- round(data[, group], digits=3)
+  AGEP <- unique(data[, group])
+
+  # get actual percentiles
   if(!is.null(attr(data, "descend"))&&attr(data, "descend")){
     percentile.actual <- as.data.frame(do.call("rbind", lapply(split(data, data[, group]), function(df){weighted.quantile(df[, raw], probs = 1 - percentiles, weights = df$w)})))
   }else{
@@ -532,50 +541,32 @@ plotPercentiles <- function(data,
   }
   percentile.actual$group <- as.numeric(rownames(percentile.actual))
   colnames(percentile.actual) <- c(NAMES, c(group))
+  rownames(percentile.actual) <- AGEP
 
-  # build finer grained grouping variable for prediction
-  AGEP <- unique(data[, group])
-  lines <- length(AGEP)
-
-  for (m in 1:lines - 1) {
-    share <- (AGEP[m + 1] - AGEP[m]) / 5
-    additional <- c(share + AGEP[m], 2 * share + AGEP[m], 3 * share + AGEP[m], 4 * share + AGEP[m])
-    AGEP <- c(AGEP, additional)
-  }
-
-
-  # fitt predicted percentiles
+  # build finer grained grouping variable for prediction and fit predicted percentiles
+  share <- seq(from = model$minA1, to = model$maxA1, length.out = 100)
+  AGEP <- c(AGEP, share)
   percentile.fitted <- data.frame(matrix(NA,
-    nrow = length(AGEP),
-    ncol = length(T) + 1
+                                         nrow = length(AGEP),
+                                         ncol = length(T)
   ))
-  percentile.fitted[, 1] <- AGEP
-  colnames(percentile.fitted) <- c(c(group), NAMESP)
 
-  i <- 1
-  while (i <= length(AGEP)) {
-    j <- 1
-
-    while (j <= length(T)) {
-      percentile.fitted[i, j + 1] <- predictRaw(
-        T[[j]],
-        AGEP[[i]],
-        model$coefficients,
-        minRaw, maxRaw
-      )
-
-      j <- j + 1
-    }
-    i <- i + 1
+  for(i in 1:length(AGEP)){
+    percentile.fitted[i, ] <- predictRaw(T, AGEP[[i]], model$coefficients, minRaw = minRaw, maxRaw = maxRaw)
   }
+
+  percentile.fitted$group <- AGEP
+  percentile.fitted <- percentile.fitted[!duplicated(percentile.fitted$group), ]
+  colnames(percentile.fitted) <- c(NAMESP, c(group))
+  rownames(percentile.fitted) <- percentile.fitted$group
 
   # Merge actual and predicted scores and plot them show lines
   # for predicted scores and dots for actual scores
   percentile <- merge(percentile.actual, percentile.fitted,
-    by = group, all.y = TRUE
+    by = group, all = TRUE
   )
 
-  END <- 5 / 6
+  END <- .8
   COL1 <- rainbow(length(percentiles), end = END)
   COL2 <- c(rainbow(length(percentiles), end = END), rainbow(length(percentiles), end = END))
 
@@ -665,7 +656,7 @@ plotDensity <- function(model,
   }
 
   if (is.null(group)&&model$useAge) {
-    group <- c(model$minA1, (model$maxA1 + model$minA1) / 2, model$maxA1)
+    group <- round(seq(from = model$minA1, to = model$maxA1, length.out = 4), digits = 3)
   }else if(!model$useAge){
     group <- c(1)
   }
@@ -1129,7 +1120,8 @@ plotDerivative <- function(model,
 #'
 #' @param x a cnorm object
 #' @param y the type of plot as a string, can be one of
-#' 'raw', 'norm', 'curves', 'percentiles', 'series', 'subset', or 'derivative'
+#' 'raw' (1), 'norm' (2), 'curves' (3), 'percentiles' (4), 'series' (5), 'subset' (6),
+#' or 'derivative' (7), either as a string or the according index
 #' @param ... additional parameters for the specific plotting function
 #'
 #' @export
@@ -1139,24 +1131,24 @@ plotCnorm <- function(x, y, ...){
     return()
   }
 
-  if(y == "raw"){
+  if(y == "raw" || y == 1){
     plotRaw(x, ...)
-  }else if(y == "norm"){
+  }else if(y == "norm" || y == 2){
     plotNorm(x, ...)
-  }else if(y == "curves"){
+  }else if(y == "curves" || y == 3){
     plotNormCurves(x, ...)
-  }else if(y == "percentiles"){
+  }else if(y == "percentiles" || y == 4){
     plotPercentiles(x, ...)
-  }else if(y == "density"){
+  }else if(y == "density" || y == 5){
     plotDensity(x, ...)
-  }else if(y == "series"){
+  }else if(y == "series" || y == 6){
     plotPercentileSeries(x, ...)
-  }else if(y == "subset"){
+  }else if(y == "subset" || y == 7){
     plotSubset(x, ...)
-  }else if(y == "derivative"){
+  }else if(y == "derivative" || y == 8){
     plotDerivative(x, ...)
   }else{
-    message("Please provide the type of plot as a string for parameter y, which can be 'raw', 'norm', 'curves', 'percentiles', 'series', 'subset', or 'derivative'.")
-    return()
+    plotPercentiles(x, ...)
+    message("Please provide the type of plot as a string for parameter y, which can be 'raw', 'norm', 'curves', 'percentiles', 'series', 'subset', 'derivative' or the according index.")
   }
 }

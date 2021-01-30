@@ -3,6 +3,19 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 2.0.2 (release candidate)
+Date: 2021.01.30
+
+
+Changes:
+
+*    Fixed bug in rankBySlidingWindow due to ranking
+*    New function for building groups and assign group means: getGroups
+*    display errors fixed in plotPercentiles, function optimized
+*    Fixed regression: Clipping of minRaw and maxRaw in predictRaw
+
+
+
 ### Version in 2.0.1 (release candidate)
 Date: 2021.01.05
 

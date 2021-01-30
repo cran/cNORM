@@ -294,14 +294,12 @@ bestModel <- function(data,
 
   # add information for horizontal and vertical extrapolation
   if (attr(data, "useAge")){
-    bestformula$minA1 <- min(data$A1)
-    bestformula$maxA1 <- max(data$A1)
     bestformula$useAge <- TRUE
   }else{
-    bestformula$minA1 <- 1
-    bestformula$maxA1 <- 1
     bestformula$useAge <- FALSE
   }
+  bestformula$minA1 <- min(data$A1)
+  bestformula$maxA1 <- max(data$A1)
   bestformula$minL1 <- min(data$L1)
   bestformula$maxL1 <- max(data$L1)
   bestformula$minRaw <- min(data[, raw])
@@ -335,7 +333,7 @@ bestModel <- function(data,
 
   message("\nUse 'printSubset(model)' to get detailed information on the different solutions, 'plotPercentiles(model) to display percentile plot, plotSubset(model)' to inspect model fit.")
 
-  if(plot&&attr(data, "useAge")&&(attributes(data)$group %in% colnames(data))){
+  if(plot&&attr(data, "useAge")){
     plotPercentiles(data, bestformula)
   }
 

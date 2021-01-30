@@ -66,6 +66,7 @@
 #' @name cNORM
 #' @seealso cNORM.GUI
 #' @examples
+#' \dontrun{
 #' # Model internal 'elfe' dataset with the default k = 4 regression on T scores
 #' result <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
@@ -74,10 +75,9 @@
 #' plot(results, "subset")
 #'
 #' # Plot manifest and predicted values, plot series of percentile charts
-#' plotRaw(results)
-#' \dontrun{
+#' plot(results, "raw")
 #' plot(results, "series", start = 3, end = 9)
-#' }
+#'
 #'
 #' # Additional tests: Check model assumptions
 #' checkConsistency(results)
@@ -92,6 +92,7 @@
 #' # Predict a specific norm score
 #' score <- predictNorm(raw = 21, A = 3.75,
 #'                           model = results, minNorm=25, maxNorm=75)
+#' }
 NULL
 
 
@@ -167,7 +168,7 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' @return cnorm object including the ranked raw data and the regression model
 #' @seealso rankByGroup, rankBySlidingWindow, computePowers, bestModel
 #' @examples
-#'
+#' \dontrun{
 #' # Using this function with the example dataset 'elfe'
 #' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
@@ -185,10 +186,14 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' # and consequently, females will get the double weight. This procedure can be used
 #' # to correct imbalances in the dataset, but it is still experimental. Please use
 #' # positive, non-zero numerics, preferably integers for this:
-#' \dontrun{
 #' cnorm.ppvt <- cnorm(raw = ppvt$raw, group = ppvt$group, weight = ppvt$sex)
-#' }
 #'
+#' # Using a continuous age variable instead of distinct groups, using a sliding window for
+#' # percentile estimation. Please specify continuos variable for age and the sliding window
+#' # size.
+#'
+#' cnorm.ppvt.continuous <- cnorm(raw = ppvt$raw, age = ppvt$age, width=1)
+#' }
 #' @export
 #' @references
 #' \enumerate{

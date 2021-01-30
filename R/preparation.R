@@ -62,7 +62,9 @@
 #' data.elfe <- prepareData(raw=elfe$raw, group=elfe$group)
 #'
 #' # variable names can be specified as well, here with the BMI data included in the package
+#' \dontrun{
 #' data.bmi <- prepareData(CDC, group = "group", raw = "bmi", age = "age")
+#' }
 #'
 #' # modeling with only one group with the 'elfe' dataset as an example
 #' # this results in conventional norming
@@ -714,7 +716,10 @@ rankBySlidingWindow <- function(data = NULL,
       sign <- -1
     }
 
-    observations$percentile <- (weighted.rank(sign * observations[, raw], weights = observations[, weights]) + numerator[method]) / (nObs + denominator[method])
+    if(is.null(weights))
+      observations$percentile <- (rank(sign * observations[, raw]) + numerator[method]) / (nObs + denominator[method])
+    else
+      observations$percentile <- (weighted.rank(sign * observations[, raw], weights = observations[, weights]) + numerator[method]) / (nObs + denominator[method])
 
     # get percentile for raw value in sliding window subsample
     d$percentile[[i]] <- tail(observations$percentile[which(observations[, raw] == r)], n = 1)
