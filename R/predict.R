@@ -653,11 +653,11 @@ predictNorm <-
              maxNorm = NULL, force = FALSE, covariate = NULL) {
     if(class(model)=="cnorm"){
       if(is.null(minNorm)){
-        minNorm <- attributes(model$data)$scaleMean - (attributes(model$data)$scaleMean * 2.5)
+        minNorm <- attributes(model$data)$scaleMean - (attributes(model$data)$scaleSD * 2.5)
       }
 
       if(is.null(maxNorm)){
-        maxNorm <- attributes(model$data)$scaleMean + (attributes(model$data)$scaleMean * 2.5)
+        maxNorm <- attributes(model$data)$scaleMean + (attributes(model$data)$scaleSD * 2.5)
       }
 
       model <- model$model
@@ -735,18 +735,6 @@ predictNorm <-
 
       # project values on original data
       values <- values[match(hash, normTable$hash)]
-
-      # n <- length(raw)
-      # values <- rep(NA, n)
-      #
-      # # iterate through cases
-      # for (i in 1:n) {
-      #   v <- predictNormByRoots(raw[[i]], A[[i]], model, minNorm, maxNorm)
-      #   if (length(v) == 0) {
-      #     v <- NA
-      #   }
-      #   values[[i]] <- v
-      # }
 
       return(values)
     } else {

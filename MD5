@@ -1,12 +1,12 @@
-609e4ec881598a7cba7603f3d4e20740 *DESCRIPTION
+dd2b35c65e23aea0b8ae9504910f1dc3 *DESCRIPTION
 4c2e960511fce0e516f8ac2e8f5f3d50 *NAMESPACE
-185551491cc15b5f4f2faacbe8074b20 *NEWS.md
+e63e0755e1ad9d684482ac283e1d6d7a *NEWS.md
 38ef21a37642f36671c754f63b67a87f *R/cNORM.R
 3dd021715aab8b53f85c4cd92d302603 *R/data.R
-61cb69f1a6cd09c2aaa3a2cb0b4c0d78 *R/modelling.R
+6fc6f335e69ff86d6f49fef10d86960e *R/modelling.R
 af636e8538d3a3dc5fa14baa7847d318 *R/plot.R
-4220a80ee1fc9bc1603327b4e15f158e *R/predict.R
-3f527bd576d9a42c779bbfcdea8cc927 *R/preparation.R
+8845db46c3ef42c298633f7e0a2b4d00 *R/predict.R
+4e3b7180bd743f6d328537e24419fe75 *R/preparation.R
 6bf2310e4defa0f553ddff911ae0ddcb *R/roots.R
 ef133899f8979ffbd38e0bca3a6f2f55 *R/s3methods.R
 807b47dc61cda89a4055a8301171bd6c *R/utilities.R
@@ -22,8 +22,8 @@ d105deaa3e81bbfb41cf6e59852671ae *data/mortality.rda
 3e24631f079af6cfd165533f0304c14d *inst/CITATION
 5930d5a7b3a1ee19fe089f1896b9e539 *inst/doc/cNORM-Demo.R
 e8ae2f263cd05a8a0611887216b32933 *inst/doc/cNORM-Demo.Rmd
-374a625f46483b8cf60a604c3d2b55ac *inst/doc/cNORM-Demo.html
-20b0ac03913049452f1e42d5c30e47d3 *inst/shiny/server.R
+1c818327f8ab77dbdcfa9f041adf52d0 *inst/doc/cNORM-Demo.html
+b663bb78b9be5924dd4a06627ca57dca *inst/shiny/server.R
 41d6364d1204b96e8b6f31aefc9b6bb6 *inst/shiny/ui.R
 8c541e62254111ae0a4adb0dc2c88431 *inst/shiny/www/informationFunction.png
 d73b5281f3b1f2cc4666430d0bbcc5ae *inst/shiny/www/introduction.html
@@ -32,6 +32,7 @@ fbbfc0a8ab797c7e549643dd9acc15a2 *inst/shiny/www/plotNorm.png
 91bd09f87eb0b45040b00788774b4001 *inst/shiny/www/plotPercentiles.png
 5592d2f1f9972d46ab06a4b7eb9fbaba *man/CDC.Rd
 8c9b6049f19866f97d2a00a68780cb70 *man/bestModel.Rd
+e0b912e9d488705760504641530c1629 *man/buildFunction.Rd
 721bdaba9c9d1ba3cb1431a21f1838ee *man/cNORM.GUI.Rd
 074f549b0b0f92aaa7d9bce4ea84963d *man/cNORM.Rd
 ee9000c2ecd7b923730d4ba21db5cc46 *man/calcPolyInL.Rd
@@ -67,7 +68,7 @@ dd146e559d5bbb0ecb13764b3b637277 *man/plotRaw.Rd
 c2055463b4073af7f4ffffeb2e96d7ae *man/print.cnorm.Rd
 7b542dd8cf2d24fa0c1704cb805b7c8e *man/printSubset.Rd
 49b947062c8da7943c7417ccae158787 *man/rangeCheck.Rd
-44500e4f63bc07c0af8b37d118812acf *man/rankByGroup.Rd
+2ac284db301a6a7f7411130d1e262a02 *man/rankByGroup.Rd
 a12d7df78e4e13af4f9453fc487e8cdb *man/rankBySlidingWindow.Rd
 87189b12acc181d254bf5495acd9ebdb *man/rawTable.Rd
 949cafb1b71e57bb5c5f5771ffab377c *man/regressionFunction.Rd
