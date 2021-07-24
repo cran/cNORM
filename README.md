@@ -1,3 +1,6 @@
+[![CRAN_Status_Badge](https://www.r-pkg.org/badges/version/cNORM)](https://cran.r-project.org/package=cNORM)
+[![CRAN RStudio mirror downloads](https://cranlogs.r-pkg.org/badges/cNORM)](https://cran.r-project.org/package=cNORM)
+
 <img src="vignettes/logo.png" align=right style="border:0;">
 
 # cNorm
@@ -90,6 +93,9 @@ normTable(c(3, 3.2, 3.4, 3.6), cnorm.elfe)
 # The other way round: Print raw table (for grade 3) together with 90% confidence intervalls
 # for a test with a reliability of .94
 rawTable(3, cnorm.elfe, CI = .9, reliability = .94)
+
+# Get the predicted norm scores for a vector of raw scores and explanatory variable, e. g. age
+predicted <- predictNorm(elfe$raw, elfe$grop, cnorm.elfe)
 
 # cNORM can as well be used for conventional norming
 # In this case, the group variable has to be set to FALSE when ranking the data.

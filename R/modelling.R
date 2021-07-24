@@ -1037,17 +1037,24 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
 
 
 
-#' Calculates the standard error (SE) of the norm scores
+#' Calculates the standard error (SE) or root mean square error (RMSE) of the norm scores
+#' In case of large datasets, both results should be almost identical
 #'
 #' @param model a cnorm object
+#' @param type either '1' for the standard error senso Oosterhuis et al. (2016) or '2' for
+#'             the RMSE (default)
 #'
-#' @return The standard error (SE) of the norm scores sensu Oosterhuis et al. (2016)
+#' @return The standard error (SE) of the norm scores sensu Oosterhuis et al. (2016) or the RMSE
 #' @export
 #'
 #' @references Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
-  getNormScoreSE <- function(model){
+  getNormScoreSE <- function(model, type = 2){
     if(!class(model)=="cnorm"){
       stop("Please provide cnorm object as the model parameter")
+    }
+
+    if(type!=1 || type !=2){
+      type <- 2
     }
 
     data <- model$data
@@ -1064,10 +1071,14 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
 
     d$fitted <- predictNorm(raw, age, model, minNorm = minNorm, maxNorm = maxNorm, covariate = covariate)
 
-    d$diff <- d$fitted - data$normValue
-    d <- d[!is.na(d$diff), ]
+    diff <- d$fitted - data$normValue
+    diff <- diff[!is.na(diff)]
 
-    return(sum(sqrt(d$diff^2))/(nrow(d)-2), na.rm = TRUE)
+    #return(sqrt(mean(diff^2)))
+    if(type==1)
+      return(sqrt(sum(diff^2)/(length(diff)-2)))
+    else
+      return(sqrt(mean(diff^2)))
   }
 
 
