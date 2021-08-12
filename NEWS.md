@@ -3,6 +3,22 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 2.1.0 (release candidate)
+Date: 2021.08.10
+
+
+Changes:
+
+*    add remarks on decrease of age power parameter in computePowers when R2 is low
+*    add parameter for powers of a in computePowers, prepareData, bestModel and cnorm
+*    predictNorm is now able to handle NA
+*    count, how often terms had been selected in cnorm.cv
+*    pretty print option added to normTable and rawTable to collapse intervals and round
+     to meaningful precision
+*    Bug corrected in normTable when using age vector to compute series of norm tables     
+
+
+
 ### Version in 2.0.4 (release candidate)
 Date: 2021.07.24
 

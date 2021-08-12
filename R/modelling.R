@@ -30,7 +30,9 @@
 #' (default R2 = 0.99)
 #' @param k The power constant. Higher values result in more detailed approximations
 #' but have the danger of over-fit (default = 4, max = 6)
-#' @param predictors List of the names of predictor to use for the model selection.
+#' @param t the age power parameter (default NULL). If not set, cNORM automatically uses k. The age power parameter
+#' can be used to specify the k to produce rectangular matrices and specify the course of scores per independently from k
+#' @param predictors List of the names of predictors or regression formula to use for the model selection.
 #' The parameter overrides the 'k' parameter and it can be used to preselect the
 #' variables entering the regression, or even to add variables like sex, that are
 #' not part of the original model building. Please note, that adding other variables
@@ -97,6 +99,7 @@ bestModel <- function(data,
                       raw = NULL,
                       R2 = NULL,
                       k = NULL,
+                      t = NULL,
                       predictors = NULL,
                       terms = 0,
                       weights = NULL,
@@ -123,6 +126,17 @@ bestModel <- function(data,
     warning(paste0("k parameter exceeds the power degrees in the dataset. Setting to default of k = ", attr(data, "k")))
     k <- attr(data, "k")
   }
+
+
+
+  if (is.null(t)){
+    if(is.null(attr(data, "t"))){
+      t <- k
+    }else if(!is.null(attr(data, "t"))){
+      t <- attr(data, "t")
+    }
+  }
+
 
   # check variable range
   if (!is.null(R2)&&(R2 <= 0 || R2 >= 1)) {
@@ -152,7 +166,7 @@ bestModel <- function(data,
   if (is.null(predictors)) {
     useCOV <- !is.null(attr(data, "covariate"))
     useAge <- attr(data, "useAge")
-    lmX <- buildFunction(raw, k, useAge, useCOV)
+    lmX <- buildFunction(raw = raw, k = k, t = t, age = useAge, covariates = useCOV)
   }else {
      if (inherits(predictors, "formula")) {
        lmX <- predictors
@@ -162,7 +176,7 @@ bestModel <- function(data,
    }
 
   big <- FALSE
-  nvmax <- 2 * k + k * k + length(predictors)
+  nvmax <- (t * k)^2 - 1 + length(predictors)
 
   if (nvmax > 25) {
     big <- TRUE
@@ -279,6 +293,7 @@ bestModel <- function(data,
   bestformula$group <- attributes(data)$group
   bestformula$age <- attributes(data)$age
   bestformula$k <- attributes(data)$k
+  bestformula$A <- attributes(data)$A
   if(!is.null(attr(data, "covariate"))){
       bestformula$covariate <- attributes(data)$covariate
   }
@@ -774,7 +789,6 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
   if (is.na(scaleM) || cv == "full") {
     scaleM <- 50
   }
-
   scaleSD <- attr(d, "scaleSD")
   if (is.na(scaleSD) || cv == "full") {
     scaleSD <- 10
@@ -783,32 +797,23 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
   width <- attr(d, "width")
 
   k <- attr(d, "k")
-  if (is.na(k)) {
+  if (is.null(k)) {
     k <- 4
   }
 
-  n.models <- 2 * k + k * k
+  t <- attr(d, "t")
+  if (is.null(t)) {
+    t <- k
+  }
+
+  n.models <- (t*k)^2 - 1
   if (is.na(max) || max > n.models || max < 1) {
     max <- n.models
   }
 
   # set up regression formulas (from bestModel function)
   if(is.null(formula)){
-  if (k == 1) {
-    lmX <- formula(paste(raw, "L1 + A1 + L1A1", sep = " ~ "))
-  } else if (k == 2) {
-    lmX <-
-      formula(paste(raw, "L1 + L2 + A1 + A2 + L1A1 + L1A2 + L2A1 + L2A2", sep = " ~ "))
-  } else if (k == 3) {
-    lmX <- formula(paste(raw, "L1 + L2 + L3 + A1 + A2 + A3 + L1A1 + L1A2 + L1A3 + L2A1 + L2A2 + L2A3 + L3A1 + L3A2 + L3A3", sep = " ~ "))
-  } else if (k == 4) {
-    lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + A1 + A2 + A3 + A4 + L1A1 + L1A2 + L1A3 + L1A4 + L2A1 + L2A2 + L2A3 + L2A4 + L3A1 + L3A2 + L3A3 + L3A4 + L4A1 + L4A2 + L4A3 + L4A4", sep = " ~ "))
-  } else if (k == 5) {
-    lmX <- formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + A1 + A2 + A3 + A4 + A5 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5", sep = " ~ "))
-  } else if (k == 6) {
-    lmX <-
-      formula(paste(raw, "L1 + L2 + L3 + L4 + L5 + L6 + A1 + A2 + A3 + A4 + A5 + A6 + L1A1 + L1A2 + L1A3 + L1A4 + L1A5 + L1A6 + L2A1 + L2A2 + L2A3 + L2A4 + L2A5 + L2A6 + L3A1 + L3A2 + L3A3 + L3A4 + L3A5 + L3A6 + L4A1 + L4A2 + L4A3 + L4A4 + L4A5 + L4A6 + L5A1 + L5A2 + L5A3 + L5A4 + L5A5 + L5A6 + L6A1 + L6A2 + L6A3 + L6A4 + L6A5 + L6A6", sep = " ~ "))
-  }
+    lmX <- buildFunction(raw = raw, k = k, t = t, age = TRUE, covariates = FALSE)
   }else {
     lmX <- formula
     min <- length(formula)
@@ -829,6 +834,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
   norm.rmse <- rep(0, max)
   norm.se <- rep(0, max)
   norm.rmse.min <- rep(0, max)
+  Terms <- c()
 
   # draw test and training data several times ('repetitions' parameter), model data and store MSE
   for (a in 1:repetitions) {
@@ -894,7 +900,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
       model$maxRaw <- max(train[, raw])
       model$scaleM <- scaleM
       model$scaleSD <- scaleSD
-
+      Terms <- c(Terms, attr(model$terms,"term.labels"))
 
       # predict values in test data
       test.fitted <- predict.lm(model, test)
@@ -1001,6 +1007,10 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
     tab$RMSE.norm.test <- NULL
   }
 
+  cat("\n")
+  cat("Occurance of selected terms, sorted by frequency:\n")
+  print(sort(table(Terms), decreasing=T))
+
   FirstNegative <- which(tab$Delta.R2.test <= 0)[1]
   suggest <- FirstNegative - 1
 
@@ -1086,18 +1096,26 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
 #' Build regression function for bestModel
 #'
 #' @param raw name of the raw score variable
-#' @param k the power degree
+#' @param k the power degree for location
+#' @param t the power degree for age
 #' @param age use age
 #' @param covariates use covariates
 #'
 #' @return reression function
-  buildFunction <- function(raw, k, age, covariates){
+  buildFunction <- function(raw, k, t, age, covariates){
     f <- paste0(raw, " ~ ")
     if(age){
-      for(i in 1:k){
-        f <- paste0(f, paste0("L", i), " + ", paste0("A", i), " + ")
 
-        for(j in 1:k){
+      for(i in 1:k){
+        f <- paste0(f, paste0("L", i), " + ")
+      }
+
+      for(i in 1:t){
+        f <- paste0(f, paste0("A", i), " + ")
+      }
+
+      for(i in 1:k){
+        for(j in 1:t){
           f <- paste0(f, paste0("L", i), paste0("A", j), " + ")
         }
       }
