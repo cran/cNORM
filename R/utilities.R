@@ -1,31 +1,36 @@
 #' Weighted rank estimation
 #'
-#' Conducts weighted ranking on the basis of either the weighted Harrell-Davis quantile estimator
-#' or an adaption of the type 7 quantile estimator of the generic quantile function in the base
-#' package. Please provide a vector with raw values and an additional vector with the weight of each
+#' Conducts weighted ranking on the basis of sums of weights per unique raw score.
+#' Please provide a vector with raw values and an additional vector with the weight of each
 #' observation. In case the weight vector is NULL, a normal ranking is done. The vectors may not
 #' include NAs and the weights should be positive non-zero values.
 #'
 #' @param x A numerical vector
 #' @param weights A numerical vector with weights; should have the same length as x
-#' @param n Granularity for approximation
-#' @param type Type of estimator, can either be "Harrell-Davis" using a beta function to
-#' approximate the weighted percentiles (Harrell & Davis, 1982) or "Type7" (default; Hyndman & Fan, 1996), an adaption
-#' of the generic quantile function in R, including weighting. All code based on the work of Akinshin (2020).
-#' @references
-#' \enumerate{
-#'   \item Harrell, F.E. & Davis, C.E. (1982). A new distribution-free quantile estimator. Biometrika, 69(3), 635-640.
-#'   \item Hyndman, R. J. & Fan, Y. 1996. Sample quantiles in statistical packages, American Statistician 50, 361–365.
-#'   \item Akinshin, A. (2020). Weighted quantile estimators. https://aakinshin.net/posts/weighted-quantiles/
-#' }
-#' @return the weighted ranks
+#' @return the weighted absolute ranks
 #' @export
-weighted.rank <- function(x, weights=NULL, n = 1000, type="Type7"){
-  if(is.null(weights))
+weighted.rank <- function(x, weights=NULL){
+  if(is.null(weights)){
     return(rank(x))
+  }else{
+    # increase granularity for relative rank estimation
+    fact <- 1000000
 
-  probs <- seq(from = .5/n, to = (n - .5)/n, length.out = n)
-  suppressWarnings(return(approx(weighted.quantile(x, probs, weights = weights, type), probs, x)$y * length(x)))
+    # we use integers only and thus multiply to catch enough digits
+    w <- round((weights * fact), digits = 0)
+    average.rank <- rep(x = 1, times = length(x))
+
+    # for relative ranks, unique values are sufficient
+    u <- unique(x)
+
+    # compute rank sums for unique scores and assign to vector according to x
+    for(i in 1:length(u)){
+      average.rank[which(x == u[i])] <- (sum(w[x<u[i]]) + fact + sum(w[x<=u[i]]))/2
+    }
+
+    # return absolute weighted ranks
+    return(average.rank/sum(w)*length(x))
+  }
 }
 
 
@@ -37,31 +42,76 @@ weighted.rank <- function(x, weights=NULL, n = 1000, type="Type7"){
 #' the base package. Please provide a vector with raw values, the pobabilities for the quantiles and an
 #' additional vector with the weight of each observation. In case the weight vector is NULL, a normal
 #' quantile estimation is done. The vectors may not include NAs and the weights should be positive non-zero
-#' values.
+#' values. Please draw on the computeWeights() function for retrieving weights in post stratification.
 #'
 #' @param x A numerical vector
 #' @param probs Numerical vector of quantiles
-#' @param type Type of estimator, can either be "Harrell-Davis" using a beta function to
+#' @param type Type of estimator, can either be "inflation", "Harrell-Davis" using a beta function to
 #' approximate the weighted percentiles (Harrell & Davis, 1982) or "Type7" (default; Hyndman & Fan, 1996), an adaption
-#' of the generic quantile function in R, including weighting. All code based on the work of Akinshin (2020).
+#' of the generic quantile function in R, including weighting. The inflation procedure is essentially
+#' a numerical, non-parametric solution that gives the same results as Harrel-Davis. It requires less
+#' ressources with small datasets and always finds a solution (e. g. 1000 cases with
+#' weights between 1 and 10). If it becomes too resource intense, it switches to Harrell-Davis automatically.
+#' Harrel-Davis and Type7 code is  based on the work of Akinshin (2020).
 #' @param weights A numerical vector with weights; should have the same length as x
 #' @references
 #' \enumerate{
 #'   \item Harrell, F.E. & Davis, C.E. (1982). A new distribution-free quantile estimator. Biometrika, 69(3), 635-640.
-#'   \item Hyndman, R. J. & Fan, Y. 1996. Sample quantiles in statistical packages, American Statistician 50, 361–365.
+#'   \item Hyndman, R. J. & Fan, Y. (1996). Sample quantiles in statistical packages, American Statistician 50, 361–365.
 #'   \item Akinshin, A. (2020). Weighted quantile estimators. https://aakinshin.net/posts/weighted-quantiles/
 #' }
+#' @seealso weighted.quantile.inflation, weighted.quantile.harrell.davis, weighted.quantile.type7
 #' @return the weighted quantiles
 #' @export
-weighted.quantile <- function(x, probs, weights = NULL, type="Type7"){
+weighted.quantile <- function(x, probs, weights = NULL, type="Harrell-Davis"){
   if(is.null(weights)){
     return(quantile(x, probs))
   }else if(type=="Harrell-Davis"){
     return(weighted.quantile.harrell.davis(x, probs, weights))
+  }else if(type=="inflation"){
+    return(weighted.quantile.inflation(x, probs, weights))
   }else{
     return(weighted.quantile.type7(x, probs, weights))
   }
 }
+
+#' Weighted quantile estimator through case inflation
+#'
+#' Applies weighted ranking numerically by inflating cases according to weight. This function
+#' will be resource intensive, if inflated cases get too high and in this cases, it switches
+#' to the parametric Harrell-Davis estimator.
+#'
+#' @param x A numerical vector
+#' @param probs Numerical vector of quantiles
+#' @param weights A numerical vector with weights; should have the same length as x.
+#' @param degree power parameter for case inflation (default = 3, equaling factor 1000)
+#' If no weights are provided (NULL), it falls back to the base quantile function, type 7
+#' @param cutoff stop criterion for the sum of standardized weights to switch to Harrell-Davis,
+#' default = 1000000
+#' @return the quantiles
+#' @export
+weighted.quantile.inflation <- function(x, probs, weights = NULL, degree = 3, cutoff = 10000000) {
+  if(is.null(weights)){
+    return(quantile(x, probs = probs))
+  }
+
+  data <- x
+  w <- round(weights / min(weights) * (10^degree), digits = 0)
+
+  # switch to Harrell Davis, if computations gets to resource intensive
+  if(sum(w) > cutoff){
+    print("Inflation too intense - switching to parametric Harrel-Davis estimator")
+    return(weighted.quantile.harrell.davis(x, probs, weights))
+  }else{
+  # expand
+  for(i in 1:length(x)){
+    data <- c(data, rep(data[i], w[i]))
+  }
+  return(quantile(data, probs = probs))
+  }
+}
+
+
 
 #' Weighted Harrell-Davis quantile estimator
 #'
@@ -74,6 +124,7 @@ weighted.quantile <- function(x, probs, weights = NULL, type="Type7"){
 #' If no weights are provided (NULL), it falls back to the base quantile function, type 7
 #'
 #' @return the quantiles
+#' @export
 weighted.quantile.harrell.davis <- function(x, probs, weights = NULL) {
   if(is.null(weights)){
     return(quantile(x, probs = probs))
@@ -97,6 +148,7 @@ weighted.quantile.harrell.davis <- function(x, probs, weights = NULL) {
 #' If no weights are provided (NULL), it falls back to the base quantile function, type 7
 #'
 #' @return the quantiles
+#' @export
 weighted.quantile.type7 <- function(x, probs, weights = NULL) {
   if(is.null(weights)){
     return(quantile(x, probs = probs))

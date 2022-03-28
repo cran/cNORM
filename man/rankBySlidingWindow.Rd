@@ -30,9 +30,7 @@ powers of age and the interactions}
 
 \item{weights}{Vector or variable name in the dataset with weights for each individual case. It can be used
 to compensate for moderate imbalances due to insufficient norm data stratification. Weights should be numerical
-and positive.
-Please note, that this feature is currently EXPERIMENTAL and subject to ongoing work! Precision of weighting increases
-with sample size. On the other hand, in large samples, it is easy to stratificate and then weighting is not needed anymore.}
+and positive. It can be resource intense when applied to the sliding window. Please use the 'computeWeights' function for this purpose.}
 
 \item{width}{the width of the sliding window}
 
@@ -114,7 +112,7 @@ mean(data.elfe$normValue - data.elfe2$normValue)
 }
 }
 \seealso{
-rankByGroup, computePowers
+rankByGroup, computePowers, computeWeights, weighted.rank, weighted.quantile
 
 Other prepare: 
 \code{\link{computePowers}()},

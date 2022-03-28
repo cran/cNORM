@@ -51,8 +51,8 @@
 #' are so far not yet prepared to handle covariates.
 #' @param weights Optional vector with weights for the single cases. By default, if data has been
 #' weighting in ranking, these weights are reused here as well. Please set to FALSE to deactivate
-#' this behavior. All weights have to be positive.
-#' This is currently an EXPERIMENTAL feature and will probably be deprecated in a future release.
+#' this behavior. All weights have to be positive and no missings are allowed. Otherwise
+#' the weights will be ignored.
 #' @param plot If set to TRUE (default), the percentile plot of the model is shown
 #' @return The model meeting the R2 criteria with coefficients and variable selection
 #' in model$coefficients. Use \code{plotSubset(model)} and
@@ -301,6 +301,9 @@ bestModel <- function(data,
   # Print output
   report[4] <- paste0("Regression function: ", regressionFunction(bestformula, digits = 10))
   report[5] <- paste0("Raw Score RMSE = ", round(rmse, digits = 5))
+  if(!is.null(weights)){
+    report[6] <- paste0("Post stratification was applied. The weights range from ", round(min(weights), digits=3), " to ", round(max(weights), digits=3), ".")
+  }
 
   bestformula$report <- report
   cat(report, sep = "\n")
@@ -339,7 +342,7 @@ bestModel <- function(data,
 #' printSubset(result)
 #' @family model
 printSubset <- function(x, ...) {
-  if(class(x)=="cnorm"){
+  if(inherits(x, "cnorm")){
     x <- x$model
   }
 
@@ -417,7 +420,7 @@ checkConsistency <- function(model,
                              warn = FALSE,
                              silent = FALSE,
                              covariate = NULL) {
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
   }
 
@@ -514,7 +517,7 @@ checkConsistency <- function(model,
 #' @export
 #' @family model
 regressionFunction <- function(model, raw = NULL, digits = NULL) {
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     raw <- "raw"
     model <- model$model
   }else{
@@ -564,7 +567,7 @@ regressionFunction <- function(model, raw = NULL, digits = NULL) {
 #' @export
 #' @family model
 derive <- function(model, order = 1, covariate = NULL) {
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
   }
 
@@ -627,7 +630,7 @@ derive <- function(model, order = 1, covariate = NULL) {
 #' @export
 #' @family model
 modelSummary <- function(object, ...){
-  if(class(object)=="cnorm"){
+  if(inherits(object, "cnorm")){
     object <- object$model
   }
 
@@ -654,7 +657,7 @@ modelSummary <- function(object, ...){
 #' rangeCheck(m)
 #' @family model
 rangeCheck <- function(object, minAge = NULL, maxAge = NULL, minNorm = NULL, maxNorm = NULL, digits = 3, ...) {
-  if(class(object)=="cnorm"){
+  if(inherits(object, "cnorm")){
     object <- object$model
   }
 
@@ -746,7 +749,7 @@ rangeCheck <- function(object, minAge = NULL, maxAge = NULL, minNorm = NULL, max
 #' @family model
 cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 1, max = 12, cv = "full", pCutoff = NA, width = NA, raw = NA, group = NA, age = NA) {
 
-  if(class(data)=="cnorm"){
+  if(inherits(data, "cnorm")){
     formula <- data$model$terms
     data <- data$data
   }
@@ -1059,7 +1062,7 @@ cnorm.cv <- function(data, formula = NULL, repetitions = 5, norms = TRUE, min = 
 #'
 #' @references Oosterhuis, H. E. M., van der Ark, L. A., & Sijtsma, K. (2016). Sample Size Requirements for Traditional and Regression-Based Norms. Assessment, 23(2), 191–202. https://doi.org/10.1177/1073191115580638
   getNormScoreSE <- function(model, type = 2){
-    if(!class(model)=="cnorm"){
+    if(!inherits(model, "cnorm")){
       stop("Please provide cnorm object as the model parameter")
     }
 

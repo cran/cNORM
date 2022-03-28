@@ -14,9 +14,10 @@ Conventional methods for producing test norms are often plagued with "jumps" or 
 cNORM addresses these problems and also has the added advantage of not requiring
 assumptions about the distribution of the raw data: The standard scores are established from
 raw data by modeling the latter ones as a function  of both percentile scores and an
-explanatory variable (e.g., age) through [Taylor polynomials](https://www.psychometrica.de/cNorm_math_en.html). The method minimizes
-bias arising from sampling and measurement error, while handling marked deviations from
-normality – such as are commonplace in clinical samples. Contrary to parametric approaches, it does not rely on distribution assumptions of the initial norm data and is thus a very robust approach in generating norm tables.
+explanatory variable (e.g., age) through [Taylor polynomials](https://www.psychometrica.de/cNorm_math_en.html). 
+The method minimizes bias arising from sampling and measurement error, while handling marked deviations from
+normality – such as are commonplace in clinical samples. It includes procedures for post stratification of norm
+samples to overcome bias in data collection and to mitigate violations of representativeness. Contrary to parametric approaches, it does not rely on distribution assumptions of the initial norm data and is thus a very robust approach in generating norm tables.
 
 The rationale of the approach is model the relationship between location / norm score, age and raw score via multiple regression and to fit a 3-dimensional hyperplane. This hyperplane is used to close all gaps and to compute continuous norm scores:
 
@@ -29,9 +30,11 @@ cNORM can be installed via
 install.packages("cNORM", dependencies = TRUE)
 ```
 
-Additionally, you can [download a precompiled version](https://www.psychometrica.de/cNorm_installation_en.html) or access the github development version via
+Additionally, you can [download a precompiled version](https://github.com/WLenhard/cNORM/releases) or access the github development version via
 ```{r example}
 install.packages("devtools")
+library(devtools)
+
 devtools::install_github("WLenhard/cNORM")
 library(cNORM)
 ```
@@ -48,6 +51,7 @@ Conducting the analysis consists of the following steps:
 cNORM offers functions for selecting the best fitting models and in generating the norm tables.
 
 ```{r example}
+## In a nutshell:
 ## Basic example code for modeling the sample dataset
 library(cNORM)
 
@@ -69,12 +73,21 @@ plot(cnorm.elfe, "subset", type=3)        # plot MSE
 # with a fixed number of terms, e. g. four. Try avoid models with a high number of terms:
 cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group, terms = 4)
 
+# Per default, the power parameter is set to 4. You can choose a value up to 6, but higher
+# values can lead to overfit. In most cases, 4 is fine or the value can be reduced to 3 by
+# specifying the k prarameter (e. g., k = 3). If you do not want to have a square matrix of
+# powers as depicted above, you can specify the age trajectory via parameter t. In the 
+# following example, the distribution per age is modeled with power parameter k = 3 (= cubic), 
+# while for the age, there is only a quadratic trajectory (-> 't = 2').
+cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group, k = 3, t = 2)
+
 #  Visual inspection of the percentile curves of the fitted model
 plot(cnorm.elfe, "percentiles")
 
 # Visual inspection of the observed and fitted raw and norm scores
 plot(cnorm.elfe, "norm")
 plot(cnorm.elfe, "raw")
+plot(cnorm.elfe, "raw", group = "group") # show fit per grouping variable
 
 # In order to check, how other models perform, plot series of percentile plots with ascending
 # number of predictors, in this example up to 14 predictors.
@@ -104,6 +117,22 @@ d <- computePowers(d)
 m <- bestModel(d)
 rawTable(0, model = m) # please use an arbitrary value for age when generating the tables
 
+
+# In case of unbalanced datasets, deviating from the census, the norm data
+# can be weighted by the means of raking / post stratification. Please generate
+# the weights with the computeWeights() function and pass them as the weights
+# parameter. For computing the weights, please specify a data.frame with the
+# population margins (further information is available in the computeWeights
+# function). A demonstration based on sex and migration status in vocabulary
+# development (ppvt dataset):
+margins <- data.frame(variables = c("sex", "sex",
+                                    "migration", "migration"),
+                      levels = c(1, 2, 0, 1),
+                      share = c(.52, .48, .7, .3))
+weights <- computeWeights(ppvt, margins)
+model <- cnorm(raw = ppvt$raw, group=ppvt$group, weights = weights)
+
+
 # start vignette for a complete walk through
 vignette("cNORM-Demo", package = "cNORM")
 ```
@@ -120,7 +149,7 @@ In this example, a Taylor polynomial with power k = 4 was computed in order to m
 The predicted progression over age are displayed as lines and the manifest data as dots. Only three predictors were necessary to almost perfectly model the norm sample data with adjusted R2.
 
 ## Sample Data
-The package includes data from two large test norming projects, namely ELFE 1-6 (Lenhard & Schneider, 2006) and German adaption of the PPVT4 (A. Lenhard, Lenhard, Suggate & Seegerer, 2015), which can be used to run the analysis. Furthermore, large samples from the Center of Disease Control (CDC) on growth curves in childhood and adolescence (for computing Body Mass Index 'BMI' curves), life expectancy at birth and mortality per country from 1960 to 2017 (available from The World Bank). Type `?elfe`, `?ppvt`, `?CDC`, '?epm', `?mortality` or `?life` to display information on the data sets.
+The package includes data from two large test norming projects, namely ELFE 1-6 (Lenhard & Schneider, 2006) and German adaption of the PPVT4 (A. Lenhard, Lenhard, Suggate & Seegerer, 2015), which can be used to run the analysis. Furthermore, large samples from the Center of Disease Control (CDC) on growth curves in childhood and adolescence (for computing Body Mass Index 'BMI' curves), life expectancy at birth and mortality per country from 1960 to 2017 (available from The World Bank). Type `?elfe`, `?ppvt`, `?CDC`, `?epm`, `?mortality` or `?life` to display information on the data sets.
 
 ## Terms of use / License
 cNORM is licensed under GNU Affero General Public License v3 (AGPL-3.0). This means that copyrighted parts of cNORM can be used free of charge for commercial and non-commercial purposes that run under this same license, retain the copyright notice, provide their source code and correctly cite cNORM. Copyright protection includes, for example, the reproduction and distribution of source code or parts of the source code of cNORM or of graphics created with cNORM. The integration of the package into a server environment in order to access the functionality of the software (e.g. for online delivery of norm scores) is also subject to this license. However, a regression function determined with cNORM is not subject to copyright protection and may be used freely without preconditions. If you want to apply cNORM in a way that is not compatible with the terms of the AGPL 3.0 license, please do not hesitate to contact us to negotiate individual conditions. If you want to use cNORM for scientific publications, we would also ask you to quote the source.

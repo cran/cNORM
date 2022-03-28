@@ -48,6 +48,12 @@
 #'   \item CDC (2012). National Health and Nutrition Examination Survey: Questionnaires, Datasets
 #'   and Related Documentation. available: https://wwwn.cdc.gov/nchs/nhanes/.
 #'   date of retrieval: 25/08/2018
+#'   \item Lenhard, W., & Lenhard, A. (2021). Improvement of Norm Score Quality via Regression-Based
+#'   Continuous Norming. Educational and Psychological Measurement, 81(2), 229–261.
+#'   doi: 10.1177/0013164420928457
+#'   \item Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests:
+#'   A simulation study of parametric and semi-parametric approaches.
+#'   PLoS ONE, 14(9),  e0222279. doi: 10.1371/journal.pone.0222279
 #'   \item Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to
 #'   the norming problem. Assessment, Online first, 1-14. doi: 10.1177/1073191116656437
 #'   \item Lenhard, A., Lenhard, W., Segerer, R. & Suggate, S. (2015). Peabody Picture Vocabulary
@@ -131,13 +137,13 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' of the steps in the data preparation and modeling process. In addition to the raw scores, either provide
 #' \itemize{
 #'  \item{a numeric vector for the grouping information (group)}
-#'  \item{a numeric vector for both grouping and age (group, age)}
 #'  \item{a numeric age vector and the width of the sliding window (age, width)}
 #' }
 #' for the ranking of the raw scores. You can
 #' adjust the grade of smoothing of the regression model by setting the k and terms parameter. In general,
 #' increasing k to more than 4 and the number of terms lead to a higher fit, while lower values lead to more
-#' smoothing.
+#' smoothing. The power parameter for the age trajectory can be specified independently
+#' by 't'.
 #' @param raw Numeric vector of raw scores
 #' @param group Numeric vector of grouping variable, e. g. grade
 #' @param age Numeric vector with chronological age, please additionally specify width of window
@@ -156,8 +162,6 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' @param weights Vector or variable name in the dataset with weights for each individual case. It can be used
 #' to compensate for moderate imbalances due to insufficient norm data stratification. Weights should be numerical
 #' and positive.
-#' Please note, that this feature is currently EXPERIMENTAL and subject to ongoing work! Precision of weighting increases
-#' with sample size. On the other hand, in large samples, it is easy to stratificate and then weighting is not needed anymore.
 #' @param terms Selection criterion for model building. The best fitting model with
 #' this number of terms is used
 #' @param R2 Adjusted R square as a stopping criterion for the model building
@@ -172,6 +176,7 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' @examples
 #' \dontrun{
 #' # Using this function with the example dataset 'elfe'
+#' # You can use the 'getGroups()' function to set up grouping variable.
 #' cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 #'
 #' # return norm tables including 90% confidence intervals for a
@@ -183,23 +188,31 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' rawTable(c(2.125, 2.375, 2.625, 2.875), cnorm.elfe, CI = .90, reliability = .95)
 #'
 #'
-#' # Not really a plausible scenario, but just for demonstration purposes, we will
-#' # use the PPVT dataset and sex as the weighting variable (1 = male, 2 = female),
-#' # and consequently, females will get the double weight. This procedure can be used
-#' # to correct imbalances in the dataset, but it is still experimental. Please use
-#' # positive, non-zero numerics, preferably integers for this:
-#' cnorm.ppvt <- cnorm(raw = ppvt$raw, group = ppvt$group, weight = ppvt$sex)
-#'
 #' # Using a continuous age variable instead of distinct groups, using a sliding window for
 #' # percentile estimation. Please specify continuos variable for age and the sliding window
 #' # size.
-#'
 #' cnorm.ppvt.continuous <- cnorm(raw = ppvt$raw, age = ppvt$age, width=1)
+#'
+#'
+#' # In case of unbalanced datasets, deviating from the census, the norm data
+#' # can be weighted by the means of raking / post stratification. Please generate
+#' # the weights with the computeWeights() function and pass them as the weights
+#' # parameter. For computing the weights, please specify a data.frame with the
+#' # population margins (further information is available in the computeWeights
+#' # function). A demonstration based on sex and migration status in vocabulary
+#' # development (ppvt dataset):
+#' margins <- data.frame(variables = c("sex", "sex",
+#'                                     "migration", "migration"),
+#'                       levels = c(1, 2, 0, 1),
+#'                       share = c(.52, .48, .7, .3))
+#' weights <- computeWeights(ppvt, margins)
+#' model <- cnorm(raw = ppvt$raw, group=ppvt$group, weights = weights)
 #' }
 #' @export
 #' @references
 #' \enumerate{
 #'   \item Gary, S. & Lenhard, W. (2021). In norming we trust. Diagnostica.
+#'   \item Gary, S., Lenhard, W. & Lenhard, A. (2021). Modelling Norm Scores with the cNORM Package in R. Psych, 3(3), 501-521. https://doi.org/10.3390/psych3030033
 #'   \item Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to the norming problem. Assessment, Online first, 1-14. doi:10.1177/1073191116656437
 #'   \item Lenhard, A., Lenhard, W., Gary, S. (2018). Continuous Norming (cNORM). The Comprehensive R Network, Package cNORM, available: https://CRAN.R-project.org/package=cNORM
 #'   \item Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. doi:10.1371/journal.pone.0222279
@@ -220,10 +233,6 @@ cnorm <- function(raw = NULL,
                   terms = 0,
                   R2 = NULL){
 
-  if(!is.null(weights)){
-    warning("Weighting is still an experimental feature. It is currently not yet encouraged to use it.")
-  }
-
   if(is.numeric(raw)&&is.numeric(group)){
     if(length(raw)!=length(group)){
       stop("Please provide numeric vectors of equal length for raw score and group data.")
@@ -234,12 +243,37 @@ cnorm <- function(raw = NULL,
         stop("Please provide numeric vectors of equal length for raw score and group data.")
       }
 
+      if(is.null(weights))
+        data <- data.frame(raw = raw, age = age)
+      else
+        data <- data.frame(raw = raw, age = age, weights = weights)
+
+      # removing missing cases
+      data <- data[complete.cases(data), ]
+
       message("Ranking data with sliding window ...")
-      data <- rankBySlidingWindow(raw=raw, age=age, scale=scale, weights=weights, descend = descend, width = width, method = method)
-      data <- computePowers(data, k = k, t = t)
+      data <- rankBySlidingWindow(raw=data$raw, age=data$age, scale=scale, weights=data$weights, descend = descend, width = width, method = method)
+
+      # again remove missing cases; might occur due to weighting
+      data <- data[complete.cases(data), ]
     }else{
-      data <- rankByGroup(raw=raw, group=group, scale=scale, weights=weights, descend = descend, method = method)
+
+      if(is.null(weights))
+        data <- data.frame(raw = raw, group = group)
+      else
+        data <- data.frame(raw = raw, group = group, weights = weights)
+
+      # removing missing cases
+      data <- data[complete.cases(data), ]
+
+      # model with rank by group
+      data <- rankByGroup(raw=data$raw, group=data$group, scale=scale, weights=data$weights, descend = descend, method = method)
+
+      # again remove missing cases; might occur due to weighting
+      data <- data[complete.cases(data), ]
+
     }
+
     if(is.numeric(age)){
       if(length(raw)!=length(age)){
         warning("Length of the age vector does not match the raw score vector, ignoring age information.")
@@ -259,14 +293,22 @@ cnorm <- function(raw = NULL,
       stop("Please provide numeric vectors of equal length for raw score and group data.")
     }
 
+    if(is.null(weights))
+      data <- data.frame(raw = raw, age = age)
+    else
+      data <- data.frame(raw = raw, age = age, weights = weights)
+
+    # removing missing cases
+    data <- data[complete.cases(data), ]
+
     message("Ranking data with sliding window ...")
-    data <- rankBySlidingWindow(raw=raw, age=age, scale=scale, weights=weights, descend = descend, width = width, method = method)
+    data <- rankBySlidingWindow(raw=data$raw, age=data$age, scale=scale, weights=data$weights, descend = descend, width = width, method = method)
     data <- computePowers(data, k = k, t = t)
   }else{
     stop("Please provide a numerical vector for the raw scores and either a vector for grouping and/or age of the same length. If you use an age vector only, please specify the width of the window.")
   }
 
-  model <- bestModel(data, R2=R2, terms=terms, weights = weights)
+  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights)
   result <- list(data = data, model = model)
   class(result) <- "cnorm"
   return(result)

@@ -3,7 +3,46 @@ This file documents the development of the package as well as open issues or poi
 
 
 
-### Version in 2.1.0 (release candidate)
+### Version in 3.0.0 (Release candidate)
+Date: 2022.03.28
+
+
+Changes:
+
+*    Major version: Includes weighting functions to overcome biased norm samples,
+     by providing marginal means factor levels of stratification variables in the 
+     population as a data frame
+     New function: computeWeights()
+*    Newly developed, highly performant and biasless weighted ranking procedure
+*    New vignette: 'WeightedRanking'
+*    Modelling returns info on range of weights if post stratification is used
+*    automatically remove  cases with missings in 'cnorm' function
+*    ppvt dataset exchanged with unstratified sample with additional background
+     variables (migration, region, sex)
+*    Documentation updated
+*    Author sequence changed. Alex is now first and corresponding author. Please
+     direct questions to lenhard@psychometrica.de
+*    minor changes: if(class(x) == "cnorm") exchanged with if(inherts(x, "cnorm"))
+     throughout package
+
+
+
+
+### Version in 2.1.1
+Date: 2021.10.13
+
+
+Changes:
+
+*    normList parameter in plotNormCurves not working in non T score scales fixed 
+*    lower CI not reported correctly in normTable and rawTable corrected
+*    documentation in normTable and rawTable extended
+*    internal prettyPrint function corrected; now it displays interval in the middle of the tables
+     correctly in rawTable and normTable function
+
+
+
+### Version in 2.1.0
 Date: 2021.08.10
 
 
@@ -19,7 +58,7 @@ Changes:
 
 
 
-### Version in 2.0.4 (release candidate)
+### Version in 2.0.4
 Date: 2021.07.24
 
 

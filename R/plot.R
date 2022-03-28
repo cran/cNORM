@@ -18,7 +18,7 @@
 #' @family plot
 plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 
-  if(class(data)=="cnorm"){
+  if(inherits(data, "cnorm")){
     model <- data$model
     data <- data$data
   }
@@ -131,7 +131,7 @@ plotRaw <- function(data, model, group = NULL, raw = NULL, type = 0) {
 #' @export
 #' @family plot
 plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, type = 0) {
-  if(class(data)=="cnorm"){
+  if(inherits(data, "cnorm")){
     model <- data$model
     data <- data$data
   }
@@ -273,7 +273,7 @@ plotNorm <- function(data, model, group = "", minNorm = NULL, maxNorm = NULL, ty
 #' plotNormCurves(m, minAge=2, maxAge=5)
 #' @export
 #' @family plot
-plotNormCurves <- function(model, normList = c(30, 40, 50, 60, 70),
+plotNormCurves <- function(model, normList = NULL,
                            minAge = NULL,
                            maxAge = NULL,
                            step = 0.1,
@@ -281,8 +281,13 @@ plotNormCurves <- function(model, normList = c(30, 40, 50, 60, 70),
                            maxRaw = NULL,
                            covariate = NULL) {
 
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
+  }
+
+  if(is.null(normList)){
+    normList <- c(-2, -1, 0, 1, 2)
+    normList <- normList*model$scaleSD + model$scaleM
   }
 
   if(!is.null(covariate)&&is.null(model$covariate)){
@@ -419,7 +424,7 @@ plotPercentiles <- function(data,
                             type = 7,
                             title = NULL, covariate = NULL) {
 
-  if(class(data)=="cnorm"){
+  if(inherits(data, "cnorm")){
     model <- data$model
     data <- data$data
   }
@@ -626,7 +631,7 @@ plotDensity <- function(model,
                         maxNorm = NULL,
                         group = NULL, covariate = NULL) {
 
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
   }
 
@@ -734,7 +739,7 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
                                  percentiles = c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975),
                                  type = 7,
                                  filename = NULL) {
-  if(class(data)=="cnorm"){
+  if(inherits(data, "cnorm")){
     model <- data$model
     d <- data$data
   }else{
@@ -858,7 +863,7 @@ plotPercentileSeries <- function(data, model, start = 1, end = NULL, group = NUL
 #' @family plot
 plotSubset <- function(model, type = 0, index = FALSE) {
 
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
   }
 
@@ -1014,7 +1019,7 @@ plotDerivative <- function(model,
                            stepNorm = 1,
                            order = 1) {
 
-  if(class(model)=="cnorm"){
+  if(inherits(model, "cnorm")){
     model <- model$model
   }
 
@@ -1124,7 +1129,7 @@ plotDerivative <- function(model,
 #'
 #' @export
 plotCnorm <- function(x, y, ...){
-  if(!class(x)=="cnorm"||!is.character(y)){
+  if(!inherits(x, "cnorm")||!is.character(y)){
     message("Please provide a cnorm object as parameter x and the type of plot as a string for parameter y, which can be 'raw', 'norm', 'curves', 'percentiles', 'series', 'subset', or 'derivative'.")
     return()
   }
