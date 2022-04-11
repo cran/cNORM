@@ -6,7 +6,7 @@ knitr::opts_chunk$set(
 
 ## -----------------------------------------------------------------------------
 library(cNORM)
-# Displays the first lines of the data of the example dataset 'elfe
+# Displays the first lines of the data of the example dataset 'elfe'
 head(elfe)
 
 ## -----------------------------------------------------------------------------
@@ -24,28 +24,28 @@ model <- cnorm(raw=elfe$raw, group=elfe$group)
 printSubset(model)
 
 ## ----fig1, fig.height = 4, fig.width = 7--------------------------------------
-plotSubset(model, type = 0) 
+plot(model, "subset", type = 0) 
 
 ## ----fig2, fig.height = 4, fig.width = 7--------------------------------------
-plotSubset(model, type = 1) 
+plot(model, "subset", type = 1) 
 
 ## ----fig3, fig.height = 4, fig.width = 7--------------------------------------
 # Plots the fitted and the manifest percentiles
-# modelling already  displays the plot; you can call it
+# modeling already  displays the plot; you can call it
 # directly with plot(results) as well
-plotPercentiles(model)
+plot(model, "percentiles")
 
 
 ## ----fig4, fig.height = 4, fig.width = 7--------------------------------------
-plotRaw(model)
+plot(model, "raw")
 
 ## ----fig5, fig.height = 4, fig.width = 7--------------------------------------
-plotDerivative(model, minAge=1, maxAge=6, minNorm=20, maxNorm=80)
+plot(model, "derivative", minAge=1, maxAge=6, minNorm=20, maxNorm=80)
 # if parameters on age an norm are not specified, cnorm plots within
 # the ranges of the current dataset
 
 ## ----fig6, fig.height = 4, fig.width = 7--------------------------------------
-plotNormCurves(model, normList = c(30, 40, 50, 60, 70), minAge = 2, maxAge = 5, step = 0.1, minRaw = 0, maxRaw = 28)
+plot(model, "curves", normList = c(30, 40, 50, 60, 70), minAge = 2, maxAge = 5, step = 0.1, minRaw = 0, maxRaw = 28)
 
 ## -----------------------------------------------------------------------------
 predictNorm(15, 4.7, model, minNorm = 25, maxNorm = 75)

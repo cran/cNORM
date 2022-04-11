@@ -12,7 +12,7 @@
 
 <meta name="author" content="Sebastian Gary, Wolfgang Lenhard, Alexandra Lenhard" />
 
-<meta name="date" content="2022-03-28" />
+<meta name="date" content="2022-04-11" />
 
 <title>Weighted regression-based norming</title>
 
@@ -141,7 +141,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <h1 class="title toc-ignore">Weighted regression-based norming</h1>
 <h4 class="author">Sebastian Gary, Wolfgang Lenhard, Alexandra Lenhard</h4>
-<h4 class="date">2022-03-28</h4>
+<h4 class="date">2022-04-11</h4>
 
 
 
@@ -158,7 +158,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 <div id="integration-of-raking-weights-in-regression-based-norming-in-cnorm" class="section level3">
 <h3>Integration of raking weights in regression-based norming in cNORM</h3>
-<p>The integration of raking weights in <em>cNORM</em> is accomplished in three steps. * Computation and standardization of raking weights * Initial ranking of test raw scores using standardized raking weights with weighted percentile estimation * Regression-based norming with standardized regression weights</p>
+<p>The integration of raking weights in <em>cNORM</em> is accomplished in three steps.</p>
+<ul>
+<li>Computation and standardization of raking weights</li>
+<li>Initial ranking of test raw scores using standardized raking weights with weighted percentile estimation</li>
+<li>Regression-based norming with standardized regression weights</li>
+</ul>
 <div id="step-1-computation-and-standardization-of-raking-weights" class="section level4">
 <h4>Step 1: Computation and standardization of raking weights</h4>
 <p>Raking weights are computed regarding the proportions of the SVs in the target population and the actual norm sample. Afterwards, the resulting raking weights are standardized by dividing every weight by the smallest resulting raking weight, i.e., the smallest weight is set to 1.0, while the ratio between one weight and each other remains the same. Consequently, underrepresented cases in the sample are weighted with a factor larger 1.0. To compute the weights, please provide a data frame with three columns to specify the population marginals. The first column specifies the stratification variable, the second the factor level of the stratification variable and the third the proportion for the representative population. The function ‘computeWeights()’ is used to retrieve the weights. The original data and the marginals have to be passed as function parameters.</p>
@@ -210,10 +215,24 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Final regression model: raw ~ L2 + L1A1 + L1A2 + L2A1 + L2A3 + L4A1</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Regression function: raw ~ -92.16983481 + (0.0195782225*L2) + (1.327109958*L1A1) + (-0.03851643094*L1A2) + (-0.01236535515*L2A1) + (1.320696396e-05*L2A3) + (3.158314092e-07*L4A1)</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Raw Score RMSE = 3.60335</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Post stratification was applied. The weights range from 1 to 1.415.</span></span></code></pre></div>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Post stratification was applied. The weights range from 1 to 1.415 (m = 1.116, sd = 0.182).</span></span></code></pre></div>
 <p>Moreover, the percentile plot reveals no hints on model violation, like intersecting percentile curves. It reaches a high multiple R2 with only few terms.</p>
 <pre><code>plot(norm.model, &quot;subset&quot;)
 plot(norm.model, &quot;norm&quot;)</code></pre>
+</div>
+<div id="caveats-and-recommendation-for-use" class="section level3">
+<h3>Caveats and recommendation for use</h3>
+<p>We extensively simulated biased distributions and assessed, if our approach can mitigate the effects of unrepresentative samples. cNORM itself already corrects for several types of sampling eror, namely if deviations occur in specific age groups or if joint probabilities of stratification variables are unbalanced (while preserving the marginals). Weighted Continuous Norming as well works very well in most, but not all use cases. Please note the following:</p>
+<ul>
+<li>Non-representativeness in most cases leads to (moderately) increased error of the normed scores. It is - of course - always better to ensure the highest feasible degree of representativeness in the data collection.</li>
+<li>The data collection should be as random as possible.</li>
+<li>In most but not in all cases, Weighted Continuous Norming reduces negative effects of non-representative norm samples. If the mean of the standardized weights exceeds a value of <span class="math inline">\(m_{weights}=2\)</span>, this is an indication to rather not use weighting.<br />
+</li>
+<li>With cNORM, representativeness need not necessarily be established in every single age group. If the marginals are more or less correct, weighting is unnecessary.</li>
+<li>Only use stratification for variables with considerable influence on the dependent variable.</li>
+<li>If available, the probabilities of cross-classifications of the stratification variables can be used. You can recode several variables into one and directly specify the according population marginals (especially in combination with the next point).</li>
+<li>Avoid too many stratification variables with many fine-grained levels. This leads to high weights in specific subgroups. Rather combine different levels of stratification variables, if the according subgroups do not differ in the outcome variable.</li>
+</ul>
 </div>
 </div>
 <div id="references" class="section level2">
