@@ -12,11 +12,23 @@
 
 <meta name="author" content="Sebastian Gary, Wolfgang Lenhard, Alexandra Lenhard" />
 
-<meta name="date" content="2022-04-11" />
+<meta name="date" content="2022-06-12" />
 
 <title>Weighted regression-based norming</title>
 
-<script src="data:application/javascript;base64,Ly8gUGFuZG9jIDIuOSBhZGRzIGF0dHJpYnV0ZXMgb24gYm90aCBoZWFkZXIgYW5kIGRpdi4gV2UgcmVtb3ZlIHRoZSBmb3JtZXIgKHRvCi8vIGJlIGNvbXBhdGlibGUgd2l0aCB0aGUgYmVoYXZpb3Igb2YgUGFuZG9jIDwgMi44KS4KZG9jdW1lbnQuYWRkRXZlbnRMaXN0ZW5lcignRE9NQ29udGVudExvYWRlZCcsIGZ1bmN0aW9uKGUpIHsKICB2YXIgaHMgPSBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCJkaXYuc2VjdGlvbltjbGFzcyo9J2xldmVsJ10gPiA6Zmlyc3QtY2hpbGQiKTsKICB2YXIgaSwgaCwgYTsKICBmb3IgKGkgPSAwOyBpIDwgaHMubGVuZ3RoOyBpKyspIHsKICAgIGggPSBoc1tpXTsKICAgIGlmICghL15oWzEtNl0kL2kudGVzdChoLnRhZ05hbWUpKSBjb250aW51ZTsgIC8vIGl0IHNob3VsZCBiZSBhIGhlYWRlciBoMS1oNgogICAgYSA9IGguYXR0cmlidXRlczsKICAgIHdoaWxlIChhLmxlbmd0aCA+IDApIGgucmVtb3ZlQXR0cmlidXRlKGFbMF0ubmFtZSk7CiAgfQp9KTsK"></script>
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
 
 <style type="text/css">
   code{white-space: pre-wrap;}
@@ -127,7 +139,187 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 
-<link rel="stylesheet" href="data:text/css,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" type="text/css" />
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
 
 
 
@@ -140,46 +332,132 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 
 <h1 class="title toc-ignore">Weighted regression-based norming</h1>
-<h4 class="author">Sebastian Gary, Wolfgang Lenhard, Alexandra Lenhard</h4>
-<h4 class="date">2022-04-11</h4>
+<h4 class="author">Sebastian Gary, Wolfgang Lenhard, Alexandra
+Lenhard</h4>
+<h4 class="date">2022-06-12</h4>
 
 
 
 <div id="automatic-post-stratification-through-weighted-regression-based-norming-in-cnorm" class="section level2">
-<h2>Automatic post-stratification through weighted regression-based norming in cNORM</h2>
-<p>Representativeness of the norm sample is essential for the estimation of valid norm scores. To achieve this, random sampling is usually applied. But even if there are no systematic biases in data collection, the resulting sample might deviate from the population composition. The <em>cNORM</em> R package offers functionality to integrate sampling weights into the norming process and, therefore, to reduce negative effects of non-representative norm samples on the norm score quality. For this purpose, the so-called raking (= iterative proportional fitting) was integrated in <em>cNORM</em>, which allows post-stratifying the used norm sample with respect to one or more stratification variables (SVs) for given population marginals of the used SVs.</p>
+<h2>Automatic post-stratification through weighted regression-based
+norming in cNORM</h2>
+<p>Representativeness of the norm sample is essential for the estimation
+of valid norm scores. To achieve this, random sampling is usually
+applied. But even if there are no systematic biases in data collection,
+the resulting sample might deviate from the population composition. The
+<em>cNORM</em> R package offers functionality to integrate sampling
+weights into the norming process and, therefore, to reduce negative
+effects of non-representative norm samples on the norm score quality.
+For this purpose, the so-called raking (= iterative proportional
+fitting) was integrated in <em>cNORM</em>, which allows post-stratifying
+the used norm sample with respect to one or more stratification
+variables (SVs) for given population marginals of the used SVs.</p>
 <div id="problem-of-non-representative-norm-samples" class="section level3">
 <h3>Problem of non-representative norm samples</h3>
-<p>Non-representative norm samples, i.e., norm samples not representing the target population with respect to one or more relevant stratification variables (Kruskal &amp; Mosteller, 1979), can reduce the quality of norm scores of tests. This is especially true for SVs influencing a person’s true latent ability. For example, not considering parents’ educational background in estimating norm scores for an intelligence test for children may result in a general tendency of over- or underestimation of norm scores, and, therefore, in an over- or underestimation of a child’s true intelligence (Hernandez et al., 2017). Since norm scores are often used as criterion for far-reaching decisions, like school placement or in the diagnosis of learning disabilities (Gary &amp; Lenhard, 2021; Lenhard, Lenhard &amp; Gary, 2019; Lenhard &amp; Lenhard, 2021), biased norm scores can ultimately lead to disadvantages for the individuals being examined. Therefore, it’s necessary to use countermeasures, as for example sample weighting methods, to reduce the non-representativeness of norm samples.</p>
+<p>Non-representative norm samples, i.e., norm samples not representing
+the target population with respect to one or more relevant
+stratification variables (Kruskal &amp; Mosteller, 1979), can reduce the
+quality of norm scores of tests. This is especially true for SVs
+influencing a person’s true latent ability. For example, not considering
+parents’ educational background in estimating norm scores for an
+intelligence test for children may result in a general tendency of over-
+or underestimation of norm scores, and, therefore, in an over- or
+underestimation of a child’s true intelligence (Hernandez et al., 2017).
+Since norm scores are often used as criterion for far-reaching
+decisions, like school placement or in the diagnosis of learning
+disabilities (Gary &amp; Lenhard, 2021; Lenhard, Lenhard &amp; Gary,
+2019; Lenhard &amp; Lenhard, 2021), biased norm scores can ultimately
+lead to disadvantages for the individuals being examined. Therefore,
+it’s necessary to use countermeasures, as for example sample weighting
+methods, to reduce the non-representativeness of norm samples.</p>
 </div>
 <div id="post-stratification-through-iterative-proportional-fitting" class="section level3">
 <h3>Post-stratification through iterative proportional fitting</h3>
-<p>Raking, also called iterative proportional fitting, is a post-stratification approach targeted to enhance sample representativeness with respect to two or more stratification variables . For this purpose, sample weights are computed for every case in the norm sample based on the ratio between the proportion of the corresponding strata in the target population and the proportion in the actual norm sample (Lumley, 2011). The procedure can be described as an iterative post-stratification with respect to one variable in each step. For example, let’s assume a target population containing 49% female as well as 51% male persons, while the resulting norm sample contains 45% female and 55% male subjects. To enhance the representativeness of the norm sample with respect to the SV sex (female/male), every single female case would be weighted with <span class="math inline">\(w_{female}=\frac{49\%}{45\%}=1.09\)</span> and every single male case with <span class="math inline">\(w_{male}=\frac{55\%}{51\%}=0.93\)</span>. For stratifying a norm sample with respect to two or more variables, for example sex(female/male) and education(low/medium/high), the before described adaptation is applied several times regarding the marginals of one variable by time iteratively. For example, if the weights are adapted with respect to the variable sex first, the weights would be adapted regarding education in the second step. Since the weights no longer represent the population with respect to variable sex after the second step, the weights are computed to SV sex in the third step respectively to education in the fourth step and so on until the corresponding raking weights are converged. Finally, the resulting raking weights respectively the weighted norm sample represents the target population with respect to the marginal proportions of the used SVs. Each case is assigned with an according weight in a way that the proportions of the strata in the norm sample aligns with the composition of the representative population.</p>
+<p>Raking, also called iterative proportional fitting, is a
+post-stratification approach targeted to enhance sample
+representativeness with respect to two or more stratification variables
+. For this purpose, sample weights are computed for every case in the
+norm sample based on the ratio between the proportion of the
+corresponding strata in the target population and the proportion in the
+actual norm sample (Lumley, 2011). The procedure can be described as an
+iterative post-stratification with respect to one variable in each step.
+For example, let’s assume a target population containing 49% female as
+well as 51% male persons, while the resulting norm sample contains 45%
+female and 55% male subjects. To enhance the representativeness of the
+norm sample with respect to the SV sex (female/male), every single
+female case would be weighted with <span class="math inline">\(w_{female}=\frac{49\%}{45\%}=1.09\)</span> and
+every single male case with <span class="math inline">\(w_{male}=\frac{55\%}{51\%}=0.93\)</span>. For
+stratifying a norm sample with respect to two or more variables, for
+example sex(female/male) and education(low/medium/high), the before
+described adaptation is applied several times regarding the marginals of
+one variable by time iteratively. For example, if the weights are
+adapted with respect to the variable sex first, the weights would be
+adapted regarding education in the second step. Since the weights no
+longer represent the population with respect to variable sex after the
+second step, the weights are computed to SV sex in the third step
+respectively to education in the fourth step and so on until the
+corresponding raking weights are converged. Finally, the resulting
+raking weights respectively the weighted norm sample represents the
+target population with respect to the marginal proportions of the used
+SVs. Each case is assigned with an according weight in a way that the
+proportions of the strata in the norm sample aligns with the composition
+of the representative population.</p>
 </div>
 <div id="integration-of-raking-weights-in-regression-based-norming-in-cnorm" class="section level3">
-<h3>Integration of raking weights in regression-based norming in cNORM</h3>
-<p>The integration of raking weights in <em>cNORM</em> is accomplished in three steps.</p>
+<h3>Integration of raking weights in regression-based norming in
+cNORM</h3>
+<p>The integration of raking weights in <em>cNORM</em> is accomplished
+in three steps.</p>
 <ul>
 <li>Computation and standardization of raking weights</li>
-<li>Initial ranking of test raw scores using standardized raking weights with weighted percentile estimation</li>
+<li>Initial ranking of test raw scores using standardized raking weights
+with weighted percentile estimation</li>
 <li>Regression-based norming with standardized regression weights</li>
 </ul>
 <div id="step-1-computation-and-standardization-of-raking-weights" class="section level4">
 <h4>Step 1: Computation and standardization of raking weights</h4>
-<p>Raking weights are computed regarding the proportions of the SVs in the target population and the actual norm sample. Afterwards, the resulting raking weights are standardized by dividing every weight by the smallest resulting raking weight, i.e., the smallest weight is set to 1.0, while the ratio between one weight and each other remains the same. Consequently, underrepresented cases in the sample are weighted with a factor larger 1.0. To compute the weights, please provide a data frame with three columns to specify the population marginals. The first column specifies the stratification variable, the second the factor level of the stratification variable and the third the proportion for the representative population. The function ‘computeWeights()’ is used to retrieve the weights. The original data and the marginals have to be passed as function parameters.</p>
+<p>Raking weights are computed regarding the proportions of the SVs in
+the target population and the actual norm sample. Afterwards, the
+resulting raking weights are standardized by dividing every weight by
+the smallest resulting raking weight, i.e., the smallest weight is set
+to 1.0, while the ratio between one weight and each other remains the
+same. Consequently, underrepresented cases in the sample are weighted
+with a factor larger 1.0. To compute the weights, please provide a data
+frame with three columns to specify the population marginals. The first
+column specifies the stratification variable, the second the factor
+level of the stratification variable and the third the proportion for
+the representative population. The function ‘computeWeights()’ is used
+to retrieve the weights. The original data and the marginals have to be
+passed as function parameters.</p>
 </div>
 <div id="step-2-weighted-percentile-estimation" class="section level4">
 <h4>Step 2: Weighted percentile estimation</h4>
-<p>Secondly, the norm sample is ranked with respect to the raking weights using weighted percentile. This step is the actual start of the further regression-based norming approach and it is automatically applied in the ‘cnorm()’ function, as soon as weights are specified.</p>
+<p>Secondly, the norm sample is ranked with respect to the raking
+weights using weighted percentile. This step is the actual start of the
+further regression-based norming approach and it is automatically
+applied in the ‘cnorm()’ function, as soon as weights are specified.</p>
 </div>
 <div id="step-3-regression-based-norming-with-standardized-regression-weights" class="section level4">
-<h4>Step 3: Regression-based norming with standardized regression weights</h4>
-<p>Finally, the standardized raking weights are used in the weighted best-subset regression to obtain an adequate norm model. While the former steps can be seen as kind of data preparation, the computation of the regression-based norm model represents the actual norming process, since the resulting regression model is used for the actual mapping between achieved raw score and assigned norm score. By using the standardized raking weights in weighted regression, an overfit of the regression model with respect to overrepresented data points should be reduced. This third step is as well applied automatically when using the ‘cnorm()’ function.</p>
+<h4>Step 3: Regression-based norming with standardized regression
+weights</h4>
+<p>Finally, the standardized raking weights are used in the weighted
+best-subset regression to obtain an adequate norm model. While the
+former steps can be seen as kind of data preparation, the computation of
+the regression-based norm model represents the actual norming process,
+since the resulting regression model is used for the actual mapping
+between achieved raw score and assigned norm score. By using the
+standardized raking weights in weighted regression, an overfit of the
+regression model with respect to overrepresented data points should be
+reduced. This third step is as well applied automatically when using the
+‘cnorm()’ function.</p>
 </div>
 </div>
 <div id="example" class="section level3">
 <h3>Example</h3>
-<p>In the following, the usage of raking weights in regression-based norming with <em>cNORM</em> is illustrated in detail based the on a not representative norm sample for the German version of the <em>Peabody Picture Vocabulary Test</em> (PPVT-IV)</p>
+<p>In the following, the usage of raking weights in regression-based
+norming with <em>cNORM</em> is illustrated in detail based the on a not
+representative norm sample for the German version of the <em>Peabody
+Picture Vocabulary Test</em> (PPVT-IV)</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cNORM)</span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Assign data to object norm.data</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>norm.data <span class="ot">&lt;-</span> ppvt</span>
@@ -191,7 +469,11 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 2.8622   1         0  south  50 3.160655</span></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 5 2.8764   1         0  south  44 3.160655</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 6 2.9308   1         0   west  55 3.160655</span></span></code></pre></div>
-<p>For the post-stratification, we need population marginals for the relevant stratification variables as a data frame, with each level of each stratification variable in a row. The data frame must contain the names of the SVs (column 1), the single levels (column 2) and the corresponding proportion in the target population (column 3).</p>
+<p>For the post-stratification, we need population marginals for the
+relevant stratification variables as a data frame, with each level of
+each stratification variable in a row. The data frame must contain the
+names of the SVs (column 1), the single levels (column 2) and the
+corresponding proportion in the target population (column 3).</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate population marginals</span></span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>marginals <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">var =</span> <span class="fu">c</span>(<span class="st">&quot;sex&quot;</span>, <span class="st">&quot;sex&quot;</span>, <span class="st">&quot;migration&quot;</span>, <span class="st">&quot;migration&quot;</span>),</span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                             <span class="at">level =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">0</span>,<span class="dv">1</span>),</span>
@@ -202,13 +484,18 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 2       sex     2 0.49</span></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 3 migration     0 0.65</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; 4 migration     1 0.35</span></span></code></pre></div>
-<p>To caclulate raking weights, the cNORM’s ‘computeWeights()’ function is used, with the norm sample data and the population marginals as function parameters.</p>
+<p>To caclulate raking weights, the cNORM’s ‘computeWeights()’ function
+is used, with the norm sample data and the population marginals as
+function parameters.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>weights <span class="ot">&lt;-</span> <span class="fu">computeWeights</span>(<span class="at">data =</span> norm.data, <span class="at">population.margins =</span> marginals)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Raking converged normally after 3 iterations.</span></span></code></pre></div>
-<p>Using the ‘cnorm()’ function passing the raking weights by function parameter ‘weights’, the intial weighted ranking and the actual norming process is started.</p>
+<p>Using the ‘cnorm()’ function passing the raking weights by function
+parameter ‘weights’, the intial weighted ranking and the actual norming
+process is started.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>norm.model <span class="ot">&lt;-</span> <span class="fu">cnorm</span>(<span class="at">raw =</span> norm.data<span class="sc">$</span>raw, <span class="at">group =</span> norm.data<span class="sc">$</span>group,</span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                    <span class="at">weights =</span> weights)</span></code></pre></div>
-<p><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAqAAAAGACAMAAABFpiBcAAABI1BMVEUAAAAAADoAAFwAAGYAAP8ANIEAOjoAOmYAOpAAXKQAZpAAZrYAzP8A/2Y0AAA6AAA6ADo6AGY6OgA6Ojo6OmY6OpA6ZmY6ZpA6ZrY6kLY6kNtcADRcpOZmAABmADpmAGZmOgBmOjpmZgBmZmZmkJBmkLZmkNtmtrZmtttmtv9m/wCBNACBxeaQOgCQOjqQZgCQZjqQkDqQkGaQkLaQtpCQttuQtv+Q27aQ29uQ2/+kXACk5qS2ZgC2Zjq2ZpC2kDq2kGa2tma225C227a229u22/+2/7a2/9u2///F5ubMAP/bkDrbkGbbkJDbtmbbtpDbtrbb27bb29vb2//b/9vb///mxYHm5sXm5ub/AAD/tmb/zAD/25D/27b//7b//9v///8k9jNaAAAACXBIWXMAAA7DAAAOwwHHb6hkAAAgAElEQVR4nO2di38ct3HHh5UaKaFUJnbiOGzp2H0kplo5j8Zt1V6atIlTVZc6SVum1Ikm7///K7p47AJYAIMBdvewuJvvx6ZOdzhgBPw4eCwwgD3DrBiobQDDYEBtAxgGA2obwDAYUNsAhsGA2gYwDAbUNoBhMKC2AQyDAbUNYBgMqG2Aw8OX7wPAtz+/EX/ZwKPXM+RJzcak24Li218kv/DwEp7eOO8+/GuwtOzcMUQZsmS/eJ3gy/emlbAeoLYBNvcf68Z7IhqzukDh7FXqC55Cvvo4XFp27giyDEygQz1eFpawIqC2ARZddfeIaq8v0LB7QjOOlZadO6ngsECterwuK2FFQG0DLLqmO/u0q+/fXcjf/a4dfvUJwHdlR/Xbrs86Uy8fft69/PBGfuHsZx/Do49Vg+1ke5hPu5cX8ORzSzK/E57l26/UN/+pS/jkVSjdVr366ko4OV3GF+GMe4WILvVrnwqbO4R/i1vh5O7/Y74wmY0+7Q1WZfyH5UGt0nQ9Pvm8K+Gl/B1QJd9fiSpNVJhVyasBahtg6Gpb93p3F6pmFaIyt+ZlV9X9KEC9+/RL5Sk24kvWp4Mj6aWxM11r78akRsbptIREc77qy7gJZ6wVsul7VC1QzAond/8fc2My8z+VBnsCtZLpelQlPHz24f/sRwLFKsyq5PUAtQ0wdFV1rl/KSu0a4ukX+64yz+VHN+KlcqxfCAmr+u5S/HfXIud9E1ifdno8vxH+Qdd4l+wbN+abT74QPwPpegn94Ur8qcuIZKwU0r3xvZuvrpTR4ruIFW7u/j9mlNkXAYNlGdYY1Eo2qsehLo1A4xVmV/J6gNoGGEwVK++yUQ5VVHD30ZNfq49Utapm3upBlv6L8kjDp0PLWC7hD798Twhef7PL9nzvp3NGibqMSMaDQoQD+u6vdWaoFXbuoX+Mycz/1DLYCNRONqpHk98g0HiFWZW8IqC2AQZfoLLGxWvVT37tb25kqqGz2+oxQffetZKK9alyE86U4sfqs3NdgPI1fjpnnq3LiGTszaVlLqgVdu6Bf4yVmf+pco4jgdrJRvVoSh7GoGiF9ZW8IqC2AQani5cCfaqnB6/2X32savEf+oGkI1ChgqFD7T/tsxukIRrgyd//4WokUC9dLyE1XdBlRDLuZTL0qTIXzAon98A/xsrM/zQoUDvZqB5Nyf1AAakwq5JXBNQ2wOBPkgYP2v3x1U/fk72i+OXvv9HXt+ihfiJfW5/2rmjjdn33Y4F66UxnaZURyTjqQaNWOLkH/jGuBx19GvOgzmqSNUkSvwQhgQYrzKpkpJUODdQ2wEIvMz182S8z6bnm0EX/SE2Qz80XjKJVvdqfjkd/u34Ydxlob3eU6As0krE9Bt19+3MzBo1a4eQe+seYzPxPgwIdeczxMpP65g4cgQYrzFRyuq0OBtQ2wMJaYFZTYTHBlLN4ObMVXZBUw9mnYhVxqHuBWHrRU4zhUzV/3oDlQZ/eiFZzPaiXLijQSMbDLP5DIZbOBJUcscLNPfCPsTLzPrXcvzOLH5KN6/F6r2b+4p9tCzRUYXYlrweobYCNedQpRn/2OujPzShLL9xZE5i9bFXV7NanTgZ7q91GAh2nCws0nLG7DqrUbtZBQ1a4uYf+MSYz79PhNyq0DmoenQ71+OHemmpdpirMquT1ALUNcHj43SddDb3/ab9ZxDxJsnY/fPXjC/2uqW/TU5lP9w+/uICvferO4p98bpZY+m+N0wUFGs7YeZL0g716LtP9eiFWOLkH/zFDZt6nymBZxq+t0a9Vmv6XqupSi0Z3nVy/+6srV6DBClvjFhOobQDDYEBtAxgGA2obwDAYUNsAhsGA2gYwDAbUNoBhMKC2AQyDAbUNYBgMqG0Aw2BAbQMYBgNqG1CPzbCzbKMefQfTOFt7QqcoxfPBJ87jwf6h/5l+NPsJ/gBRnlqztgmLJ7LqzJz98lSB2gbUY9NvjJD7JUoF+nN/g4XZTSQ3ul3gWzB06qF8vXvjQ/flyQK1DajHRm/xUft9CgW6A/i0y+Ds0k3VI/dDP3qlt2AH2cLZ5/vfmiPsG3364tp5ebJAbQPq0Qn0fSmb7eDBxGYqfSjHPs4+HB1XAnV30PvC6z+Xqrz/5EJt6TO7Up1dbeqIhznoobYZydNx1svTBWobUI9OoB9cyK2/j36iBKqPCz29cY+zm6PjnkC7j77Rqfe7jkiHzze2kCMC1ccqh6TDwRR5lqN/uXxtrBWobUA9OoF++rKTwN3F01+A9lXqnPHoOLs5Ou4JtJdbcCBg9evmZeQM5ujklDxXZL08TI2sEahtQD3EmaeNPOpwuQVzOKmPGjEcJbKOjntj0Dt5fGoU7MAag5pYCrGB5Figql/vCz53jjOdIlDbgHoIge66xt/A9Ras453b0XF29+i4J9D+AJt50wj0XL371VX8qORYoGpmtNGue3h5skBtA+ohmr+Txw+vzl7tAMwBeXH60z7Obh0dDwnUD8TXC1QcrdSJzNdSXbw9aggOIE4MqG1APfpFHHWg0fOgw3H2wCn3AT2D8QT69ObhF70qHX0mJ0ki/Cecfe9H6rCReXmqQG0D6rHpQ8XJY83oGLRf5/EEqmcwm3EXr1evxPfu3f49sMyk5l3OWpJVpndy/bSA2gbUQwp0J2cyaq3Rn8UPQ0F9dNxfB5Xpfmdm+ALjftVqO+4BtyJ3uVCvPO/PxZqBOvpuXp4uUNuAevRRalQQr9E6qH2c3Rwd9wWq0znvWstM1hQrNpA0jzqHKBD9/N96ebJAbQPq0UeQUTI1T5LkiXTnOPtwdDwg0IdfXohQIPuAQIV4z4dgdtGZjnhmJTeL6O+JONB6fmW9PFWgtgFHxOaUx4pLAbUNOB7uLk55U8dSQG0DjoaHH/+gtgnHCNQ2gGEwoLYBDIMBtQ1gGAyobQDDYEBtAxgGA2obwDAYUNsAhsGA2gYwDAbUNoBhMKC2AQyDAbUNYBgMqG0Aw2BAbQMYBgNqG8AwGFDbAIbBgNoGMAwG1DaAYTCgtgEMgwG1DWAYDKhtAMNgQG0DGAYDahvAMBhQ2wCGwYDaBjAMBtQ2gGEwoLYBDIMBtQ1gGAyobUARUNuAQqC2AWXAiZZdDtQ2oBCobUAZcKJllwO1DSgEahtQBpxo2eVAbQMKgdoGlAEnWnY5UNuAQqC2AWXAiZZdDtQ2oBCobUAZcKJllwO1DSgEahtQBhxT2cAwJGoJdO4MQ9weopAFaNTuRcyGWZPNXu40Gm3oVu1mgebSaEO3ajcLNJdGG7pVu1mguTTa0K3azQLNpdGGbtVuFmgujTZ0q3azQHNptKFbtZsFmkujDd2q3SzQXBpt6FbtZoHm0mhDt2o3CzSXRhu6VbtZoLk02tCt2p1v9ps3ySRAy4mYjM7sGYZotKEbsdtTl2c2or83PalSgGYMMRmd2TMM0UZD+zRh9xv5n83YbCfFGxf9uZeHB9CsISajM3uGIZpo6AD17U57toC6br0UI0Wms/CBlCFZyejMnmGI+g1dRnW7fe8YShIU6MhPotkQimGBrpHadpNc25vHj98EGKVI5MGTpCZZ2u6ULuICjatx75vdCfgxWs7jx/jnAkimyElGZ/YMQ7BAg6R7VpMiqsjHw4+BkdluischxjkEgFSCrGR0Zs8wxEkKNNltRv1josd2QQUa1CIlCx9IfJ6XjM7sGYY4RYGS3GOfBnGPSdfWpwl7RvnJs2doLizQExRoYn5D849x5aCucWz2s8ePn6HGphQsgFSCrGR0Zs8wBAtUvzlSZGoUYAkU6aifjdU3MvvZ8CPAsx7cEhboKpncxVMHkgHSQ0fNM099QYFGMAkS9gDNbGIyOrNnGOL4BIqLjapIR3fh4WOy6w2oKybEjCx8IGVIVjLN3QXA9X7/8BIevR7+mJJhIUcn0OAMKNtTpn2k7x29FAE8s1MdeLqYZQR6f3W935292m/OxX/9HxMyLOXYBGoPMKOyjDk/V5Kohxy7tqBnTHbxBNJD0EUEunt607nN6/uPXu3vvvVa/zElw1KOTqCEceVohSjgKQkCJfXTqUlSmufyPxygZUVMZui8qFBlp079x5CT5pYhY2TZvcaTPpY/DJE0wfft3vr22VSjO54/xz8efiAQg9xlC3T79CYs0NIMS2jLgxqveNu/4XlLfJxJmHvrdPpF1FES+t7987H3G1d3ykE+H34gQNqQjGQD225axALNwpoA3e5jvXhIe97gMqVP2hw7hS+/Wy+BleR5hFQxQLOGmKxn202RWKBZqAlQ+hGPo76Qu4z5z/EMZyIB9yerO0uIaX0uI9CtXFbiSVIGjjBjdmsXmVgieub+zfOWlOXHtHKUQFEhUuZASWDWZIq7byp/yctMJLQynS4+DGWEadxjrBMnCDQqLdQtemYTHGQSmDWZYiOnXdfdTF6u0Os/JmRYynoE6nfa/oKRN0kasF1mYoBJeYiT7OKt7htRZHKSNAswa7LZy53GagTqPgGKjDKNa7x13rVdZtR9OrJMjTCx2VHmHMYmv7pfvEgmAVpOxGR0Zs8wxFoEOtqBGU5keUdtd6A/D0nLG2EWzIBGiiwbPXrVndLfC/kfDtDKJiajM3uGIdYlUPxx+fB8B5sCjdUX6spzFo+ijrJo9Diu7pT+Xgw/EIBWNjEZndkzDLEWgUaXNS2G3en7uN26/566jlnWgacZmZ3UHwt0DQJV2iTsgLN8ZlSgFFmisut1ObM0FbkC5S6+skCJW+B6aYYnSQPEJfaQ+lyXSXrCWEJuF8+TpEMJNLKIlP6iM9Q0rtE73DP4zWSvPlZfoCc/mEDTkyQW6EEgLCL5Mx5vGmR5R213yVBz/IAnkuYgXXwSSqZAK5uYjM7sGYY4jECtSG0xv+kusAen6PYC5m30KVAayuRnntmRLbBS+aWBWZPNXu40DinQxCZi+5RkMM0gUFSbUWkZlzn33DxMSIz8JCmXAwk0Od60AhzEEz0z2ozaHeycF1gwCo0eR4oMzNFZoLkcQKBqnwdpEQlN4Qw2Y3Z705sltCmQ82+8x2aBzsDiAiXM1JU2Udfp9ekUgS6mTeoY0l9EYoHmsqhASefPU6cvwuPNRBe/gDZdWZIe8fjDABZoLksJdDzqDMuQEPwgMhmKC3QpbY7fI+jTxzP73btCmyxg1mSzlzuNJQQaOonu79Is9Z0K7/TZAs/O8Z68aJFobPY7+d9EYEKynT4Rer1cudOYRaBuVOvQPs7hh/orbUKEJbDtnleXc69SOoyq+93wIwrBxQKtbD/Z/RXocxzB0DYzlTuNOQTqBhsOpTACjWtzECSiTSPE2+GdGcVpyXIReRYIlOJigVa2l+z++6+jfyvKcAlmEChxK2dikfPZsEsuXpK1xqnsLhSnq76QyywbYabJ7eIJLpbHoCne6KVOlPRBNsIuueGHsLvcdxr1xXpy2hy9gNxJEgt0li4+vdU4OV2X4qQKdNpsSKkPHWUeTqApluzi9/YotABiudOYKlDCXmPabJ1yUMiaqU+wmzIDmqmL9/xjvtlLTpL2UqGCs3HUkOIM52aaQEmPibBPrUFneh+n7Tfjdke1Z48185fYS/Ddn2/2uyTJYoBmDZLs/ip/Dr96gU5+TJSxXc7v06N2B9U3ngItM0Uf4w4gS+WXBqYlE0706DwoZdSZ8p20kiLjzZjd3uhxqRXNNCElru5Rp4j0XeI9M8qdRlGNpbbOhTYbu5ELafJE5kIUgdbRpqVIShc/A1CerKxvzyt3Gtk1lt7ZGXKcwxQoYx88OlFPdPEH0ObQOyN99gyTJAIwJVnnQkvn8cRyp5FVY8XrSea6FWJJyXWkuEAP5DfLRpHrE2jHtuxR/OoEipzXSN3Mos5pEMshLXIG7T6E27RlmT/DWaVAj2IWn3qOOdOMnbwC7x0wX1ycrrc8FoFu9G6mxgWK9uwpcUrnmdZn3mE22+5FtRnrycs2yq1NoPdXZStMOeVOI11jtFkRsgtkRt9phHjbv7GMOAkjzKIlzLUJ9BDlTiNVYyl5ytNEUX3SenY34gyCtQh/u6w2F8hXsjqB6kedrXbx4jk7dnX148f2H2Oo4pR/Dj/iWIeBZtfmrI924njV/fbt9ExhQrLN05vt+f7uoskd9W96cYY3Ic8wK7J6dUKwmV6gQpwzuqLlZWkYm/1W/jcRKE92f3Upbz3cdv8vVe404peyvrHi1XifziLORDx3H2tf8TwCjWtzIcmOzH47/JgClCcTd8aK+2X8O2bUHUnyUai8tnNllyhY9xYE9IlG3S4RJwln0DlJoPIxJD4DmuMwW4C1CfTh5eU+fAmSXhvdqcdM67qG5g16CM53ntZWztyOnYg/IYoLFPd9tKFm4SpnmrV18fK+rs1loIvfwgdCtN1n+31Ew8Ryp+E3dGrW7r1lgs4RnSfNsp7whCgq0Ljv63VJOUqZTlLG6iZJwjEGL0H6vbxI9uEzuUq6ntuO5W3BUcJXA8tLf+WDduSr+lbfxOW+Pi9e5KV/N/xw3hXgSbxsEilWxEK3HStVvidW8tdyV2e281Q8S/fsRdFosMWkmAf1fF+gP6cMMA8zSZoHKE8mxqAx5OTpm6/EeeRVCBRfkUdPDNNOa+SoM7IKb2RD6eKjY82DrSp55AuUMAYAWk6hZGIWH6MfdFa87biT5K15GUFeLhhVJ2lJifacaCDqOC3xJSZJh1zbzCFboJRZFNCyCibbxR8hWQKtNEkSK0iqxrCtStiCPOkxu77TharPeLdud99xD7pWbUpyBUpahwJaXqFk/ZPO0KNOoUih37vv3NRZZhrW4LG+HdkJQtsF0t8cmNTnixepR5hJga5Zmoq1CRRDuswt1LvteAhZE0+inWfwEMfM6/GUvR9IF79qv2lABfo2QipToJVNTEZn9gzHiIgLWI313jN0IyYpyEKGLVKcyQ0g4UlSG9qUSLOzhLjgJGn1wcPeWJMkj8fIOQ7S7mM6bthiGr3d6xanVlemR8wFSpOtO/yi6tojAs1bVBrJMcd3Dh17ZrAZZfdaxRlV5NrWQdcbwLYfeYZqDF/z9N9zp+g5zrM83MftGn3nSJGBGc7qBHqAckswEyO/xrJX5EcXa1BtmLDpeBUzosExRvtuFmgh9rx9XGOZzlNg7YiPq9OPGYuaGEdrs/o14pQhpb/KzgJN4y4ruTUWkuezPupCNEfZxeOzdmeEWShOZwm+kkBdWSanO556WaApxnfD3Lp/9dGhudFMk0tK1hy9zHd6ffpBBRrwloVbjVmgOK73FEucpsbiQWuSW5WSA89BoGXOMzDgPIRA0U68bKsxCxRj9MzIeUgUG3v20Y9jENfjy+N5ReZDCwuUsF5ZtJ65PoHeX8HTm0180930cqOM9Bi6XMvcgB3JQw49kdEnfQdIgTixyfoiLb3cWnrP6gS6O3u1fXojDncuVm4M97Rb5Hot2cUj8twjHTx9SYkkznHgQnwhKd7SBHUFkiwqS8PaBCo2LIvzSNvDB25wzgtHNoSISVJ8VR4feuYseFJSOdvc06uc0ZYmjA1HSQ6kTcnaBCo2LAuBIttCJ5cbwRIoutsz9klq4k61g9i1W1vpEN9phBRracLs2koyaY9GCWsTaO9BNxUCNwxhQbDtdLEaS64rkUzIGHlqgeI9u+X6pgiUMNSc5ThwgLUJVI9Bt1Wexb+hbEYO1VhqJzJt3p45LXqHuk6JLb7SLl7rMjVDt0qaldUJVO2pLwvBSCwXI7lXPlBj6VVPQsH5c3bC43WSQOOds/GZyf77hAS6fLlR0KDI/eBzVGPp88MEeWYvKVH3fhC6+MgXc+dBp9LFY8eO5yo3RtJ5Spwam/7IaF/gPDM2JqUnSYGvFM3RT2SShB07nqvcMKSZeydIq8Yi8hxEuYTzLN43R2npQ64fEVmbQMvWl/LKDUJaWBIPiYYaQzbT6QuG46X1qsycFk3Z1Jlo6RVqU7I2gWLHjucqN0TywhiBCfq1jz/O1Ps8Uec53J2FpPEvIZi24zg+i1+rNiVrE+ghyvVBooTYf7EEGh98pjZ67oeg3GgaNxzSDBvigy29ZmkqWKCU+7Z6+i4emxs9T8cEeZFe83SfE81xWsMLtLl+cQpCAtVXFZ3Ls5USMbOWr/sptuqJY1cWAq3scDIRQnmpddCQFOny3KtJErqwJOWZ3OyZPpA5CHS2o0R2S7ehTUlQoPIx4/3V05uHl1KDO7ju9NmJZttrUgSZiwO0soPJdvKXYJknSYHg3FnyFKALS+Rpe3pylIy5nYtu6UYc50BcoOKhoxao+EPdu9FvMsLn2kArO5SsXwdd4hIF/3qDbHnunyGDonnXPOc+hnnbnDYliEA7SWqBmq0bO933btELiYFWdihZvw66xG6msUD9Dcnp3fLxUTvtzo1kGs3M8lyXNt9m4X8/6EH1R1o3m/etAakH0OwMJVvSg7pdvO89+6BKmDxjAs26lTDFvOrUjVz92HEZ2Bj0vFfmMCLcaVGK8Wl/n0EAoJUdTLbkGNQWZeAmI/UDl2e4xmaWJzUlAeOBjkmgw9S9n8UP+nR69mg3DLSyw8mWnMUPRM5zpLynwK+xOeU5q/N0+sdjEujQvUoPenehZbkbderR+wqBVjYxGR1qhrHzHKSp+7jGKIFm6fIkJkzij96OV6C9MLfjQWd0rQloZROT0SFmOG1lya0xWhxkEnM5z8jM4ogFut+IHtceFirfuUwXL0of+2oipHKjS0vEhU+7xghL8od1nshk/ZgFKuZEdxe2ZmR8+EUmSWaGlg+h3KnytGuM9MSIxEzOE11JOmaBit59q6ZL/dLTBgvhCbSyQ8mwdVAZo15Hti28TJa2KWQg9Nior7E55UlMiJFc6DwigU4GypMN66C+/NRlsvp6j3lv+YhEWQo+1VQ1Npc8Z3maSVqFZ4EaYEIyNdR1BxT6gw/07V2dJ531nqRY7x5OLWpsHnlOFadUJfkREQvUAFOSxdZB1WWy+oq5OW+ay9wUcps8Z0SbGU32nG9HC50JWKAGmDXZQFygE247Dl5HfBu/hzh5+zDptmHrKuFS1IPqqbmcJgvedjyzB83r3WXfjv9KH8Z5Dh17xgaQI/Kg4Q3L++GyzF3qUSTQyg4kk2PPWP7zCzR3y2enz+dYQ78gHOaYYVY0iDNng9IxCTS0YXnfT6PllrsdqlCgle0nkw8ARGnBp6h3M0+ScubuEjn4jA5ASfcXTR95mnFn3ga6oxOot91uB3oFUvhTf43HAmhl+8nU+r9eTfKQipxtmSm3d+9PakYEOrhN5Aa4qc5z0qbO4xPoaMPyDi7l6rm7tT4I0Mr2ksmwtfq3IbZQr2+RnXyZbEHvro68Bxva6tWjAn33LvyaysQdxysS6Lss/O9HNywrgcotIuiOd6DZ6SWTj5FUcOWF44Pm9u79ylJ4kjS60iioT6ei3TPFBGbYEL8igeaQtWFZqkYNP9FBKNDK9pJJgWoPvWR80Lg8E7FsBF6NeXOiwCRpFK17+IHg3MuWSEvhmAQa3bC8sEDlsHIrcjaHTHIglhuRpxM3xGK0Lj+qMcK6ktdNUQTaz9FnO0p0TAKNbFhevIsXstenSYoiNNHKjd1uFBao99jIqTGSPAPvUfQ58/H14xWo2Z259CRJrhR0hd9dlHTwtHLDl8P14vT16aW1aqxQnvG3DfMHTDpigaoNy3st0CWXmSZCyDAuz31gkhR66j7UWLk801CibmdyzAJV3W7fry+4UD+RZIaxuzXDhDeF9DW2qDz3Mw4+Nccs0P44kh54bpd71DmNVIaPAx4UuXUr/L6qMcx9KmFOk+f8HJFAJwOzJputXOeqTUW2PFWN4YE91e0wuC0RFgwAwgI1wKzJZivXF2i+PLsaS2z3TF1dFGXh6DQsUAPMmmy+ckddfDSGd1yehLuMpDjzBbp46CQWqAHKk91fRaOOzlCuE887X54y8ixeY508s59j5u2ML4UFaoAJyXSQ+qLYN8RyJWiI+QgvUpFny6ZHh4k7d0QCTURYxqMrC4BWNpJMbz3NhFiuIKjPRHD5F8hOun3hZrrDhUU8JoHiEZbx6MoCoJUdSyZ+A5b1oOHuHden9p6xLr5AnYeN2Xl0Ao1GWE7vhANa2cFk4lBn6VVJxHKxPUsxhfa75V+EG7pIntlfmcTxCTQWYRmPriwAWtmhZGV9e1652J66sEDtqXugxvLlWSHe8YoE+iIL//uJCMt4dGUB0OwMJ+tcaOk8Plmu3PIZ0edwRZyPU0deQ5fIM/cbM7AigeaQH2E5EV1ZALSyo8m2SNynogw1cXn298OFPhr9Do9qLFuetYLFH5NACRGWl9kPOrDILF5up4tMj6Jf8roYp8YK5Jn5hdk4JoESIixHoysLgFZ2MNlmubs6iVvmbQIjIFNj2etKVW/aOF6BBiMso2tNQCs7lOz+qjA+PaXc8KGjHHl2krw1L/OofA/MEQvUjbCciK4sAFrZxGR0khkGRqBx9xk6+9b9dzu8zKL6NUXHLFA3wjIeXVkAtLKDyfr7uA9zHXeWPK3Dbut8molyzAJ1IiwnoisLgFZ2MFlX+PYcH+JOLdeQJU8j0Ex5ruOStyMS6GSgPJkI27DrfkEWPRevQdxn5P13BVFnV6HOPQvUBsqTidgNfRS7pcpVBORpnmfGEHE9cwpZh/OUsEANUJ5MnBkNh66br1xJwHvq3SCJ4xzpGisMP7cwLFADTEgmtqN0M7CFu/hQ756O7Sk792SN6QPDK3KekiMSaHg/qNkGumAA271cJAiGrivO0ELrMvJIc085rJls6D4mSMqWQ3NMAg0GsB2W5ts9F693g8S31KGjT/0iLdBV3c0+cHQCHe9m6pfmDxRZ5L/mH4Pq/XTJEMkBrJl7UqCzxwSZh+MT6Gg/aL8NdNHYTFu9Qv/wcoGFemTH0j4xd7f+gje0lGdanxVc7PEJdORB+22gC0e309Gci26TTetfQQIAAAqzSURBVJUb3fC5zwgrjzU0VXc1nOyKBPo8C//7wf2gwzbQBeODyuLur663hRtGkuUWuE9vWT7a0PSRZ+4NMrOwIoHmkLUfVDrORSMsyzLfL91STyzXI0Oe0YbO6bRZoHSyAtjKAejSMeq73w+sexeH6jr7Cm87DpElz3CN5U7bT7yLzyErgK0cgC56y8e1U3yInZ62zXXbcaY8QzVWMOPhSRIV8n7QYRvogstMWqBoB6/2+c1123G2PL0aW+WaZ4hjFqicIA3bQJdbqCcI9OEzWfBMVyGO5GlEGZNnp8bb0d9b4ZgFqk57DNtAFwtgSxDo/UfvicJnue14fC/xO/mffhXkrfxv+BtfNtwopbcd97vpkR31Yop2//3XM3hQr3cf9stHe3dn9t2Q85QckQedDMyazGOW246DB44SsZFtgTYmTxaoDcyazKNTZuEkyXjN4GWaUp/Y98XykKyx1tznngVqA7MmcxDrr3ffuSlbZhqie0Ym7+njHGqS1KA8WaA2MGsyF72dpOS24yG8Z/TIEeW0UTPrSiOOSKDBDcs76J96HiKAbRmJDHuBRvRJlGejDX1UAg1uWN7v1QaS5QPYFpPK8IWKMh/8jCjPZhu6Vbvp2+0E8gHnsgFsp5DMML5nnirPZhu6VbuzAtiq6CKLBrCdRDrDCb17P/RstKFbtTvLg6pLshcOYDuBwgxz5NlsQ6/J7mdZ+N+PBbCV2zUPEcC2lLIMs+S5qobOolG7czYs2ztE2oxuF4DgPt11pUYbulW7czYs2xs1FwtgO4X8DLPl2WxDt2p3xoZl1cNrlgpgO4nsDJPyDKzKN9rQrdpND2DbO82WA9i6JN1n8JlRow3dqt30DcvDEHTZALZTyMqwTJ7NNnSrdmdsWB6OIS0awHYKORkWyrPZhm7V7uY2i8yTIWHXUoxGG7pVu09SoBPk2WxDt2r3KQp0ijybbehW7T49gSbcZ3K3Z6MN3ardpybQqfJstqFbtZseYdmcNl42wvIEkhlOl2ezDd2q3fQNy0N4kXYjLL9Dx5/EwMiNNnSrdpO326kHnVsh2oNEWC4hkaG5KC5AJ05aSK9GG7pVu8kbloeoi4tGWJ5GIkNMoG/31KCIjTZ0q3aTPagWKCwZfnEqqQyjXbzs21mgh+JxFv73gxuWteOE6wUD2E4lmWF4ktQPPbmLXyH0DctqktS2QENYMyOeJK2PjA3LnW4f/eajVw138QHyozA02tCt2p0bYflbr9udJPmUBAlptKFbtTtjw7Kg6WWmMWUxbBpt6FbtJm9YlkFF5Miz3YV6h9IQS402dKt20zcsi5BMSpaLRVieSk6GxRHAGm3oVu0+rc0ic9zk3mhDt2r3SQl0eFw0JYBiow3dqt2nJFD9qGhifM9GG7pVu09PoFPDzzba0K3afUoCne49BY02dKt2529YNqGWBcFwy0Arm5iMTjLDOaJ3N9rQrdpdsGF5v9ehlgXBEDhAK5uYjM7sGYZotKFbtTt/w7JMMjzpDD6TB1rZxGRBZrztOJNGG7pVu/M3LKuP+qfzwXDLQCubmCzIbLcdZ9NoQ6/J7jdZ+N/HNyzLFIP3CoZbBpqdxGQh5rrtuIAVNXQWjdqNjUHDG5b3diDGcLhloJVNTBZiptuOS2i0oVu1O3/D8t7frTweiAKtbGKyELPcdsw0yj//6X/qV//3t1+/vf3jn31dvQ3wJ//y53/nJFD88c/+wvl76W3HxQKdniGdRj1Rq3bnb1gehVqW747WmoBWNjFZCBZoNo3anb9h2YlPHw63DLSyiclC8CQpm0btLtiw7AxBg+GWgVY2MVkQXmbKpVG7izYsK4epPgyFWwZa2cRkQUpuO56HRhu6VbtParPILDTa0K3afVwCZRgSlQR6EKC2AYVAbQPKgBMtuxyobUAhUNuAMuBEyy4HahtQCNQ2oAw40bLLgdoGFAK1DSgDTrTscqC2AYVAbQPKgBMtuxyobUAhUNuAMuBEyy4HahtQCNQ2oAw40bIZJgnUNoBhMKC2AQyDAbUNYBgMqG0Aw2BAbQMYBgNqG8AwGFDbAIbBgNoGMAwG1DYgn7sLgOFATDvI84XBcFarRppdscqhSqmT2GG376yW+yuhzOA5wzWjzK5Y5VCt5GLG51ebYAsf6DAC/kntFaPMrlnlUK3kUh4+Q6/fWSm/vxHCDMe6WDHK7JpVDtVKLuX+o/cSV0StkyYF2sePqVflUKfYCYgYP/ffb6ib1DQs0JpVDlVKnUpjjSxpWKCCWmZDlVKn0lgjS+5anCSxQPMRUdLuvtPoOmhzy0zS7JpVDlVKncQWWlvsluioma3ZLs2uWOVQp1iGoQG1DWAYDKhtAMNgQG0DGAYDahvAMBhQ2wCGwYDaBjAMBtQ2gGEwoLYBDIMBtQ1gGAyobQDDYEBtAxgGA2obwDAYUNsAhsGA2gYwDAbUNoBhMKC2AStgo+/m82Nn3F+N7+i12cU/fHipN/j2VwGHsxwuVfcLeniJFe1m2eABGDJQ24AVsIlGdUEFin6409dP77xrqG0QgW4zTobsGowERAVqG7AClhDo/dV5Im9BXKC47x6R4W2bA2obsAKMiLZdx3x/dXn3zZ9dAFxqmYgRwLV4/cMr+UK/oQNq7UCl/Oin8OgvhSi169vIPr7LbG9yEGl+c2Wy6PL4a6ugrcpKspNf75Kd/fTslfzi66GoK2nN9WBl983jdaFQ24AVYAT68PJSNHanvWvZOQstiFOY27NX3evuh3hh3rje61Tn3f9CrJ2Kem+mnONOBOQwX+jSKM3rd+4u5I9L+e5Wv1Y2CZlvpCo7gYovWkVpgfZW6mKOE6htwAroJ0mXwnH95qNeJp1SOxnIGYhQm3SG3QvrjWupaKkP+al4R0ThEKjZkdC+m4NIM7yjC3r0WhQkna3ynENhIguduVVUL1BtpTVUOD6gtgErwB4nbuDc8n56JLgD7U334zdUSiFb1XOfm95WDBcG4Xg5qHfsgpQX1N9Q3lmKtTfDLUoKdHCeStxHCdQ2YAXYApVdpvKCWhniTPi/X1jyst9QIpH+T6rl0eshUqFMKiXm5TC8owrqfgqBaj8uBSrz3QYE2hclx6DaShbokWMJ9OHlXz167QhU6uLOkpfzxsiD3n/0j2ZNcvP0f2U37+Vg3vE9qIbkQVmgJ4Il0G0nqks9NNzIMahUyc7qoJ033IFh99f3TV67s58pCY1zMO84g117Yckag2515u5wt/tssJLHoEeOEahWj5xca0kp1weXjgfVb1yOptai7zaurFerl4N5xy5IzuLFlEjZ5M7ipaPVRT28fHrz8BKuhy/zLP7I6WfxZ6+EVLvpt1qeNEPO7gMzeR7e6L5nrYMqgfZzeEmvVi+H4R2nILkO2odAGtZBH/2bnOPL9/Q6aadt+KH4TdFf5nXQU6O8x5wtBpzp8HexsF3GyqzHTo0BtQ1YI+UC3c42WdmeKzPi8x9jJT+LPzFKBXp3MZ9SxBOp3bDsFC6tf5DPu5kYphJQ2wCGwYDaBjAMBtQ2gGEwoLYBDIMBtQ1gGAyobQDDYEBtAxgGA2obwDAYUNsAhsGA2gYwDAbUNoBhMKC2AQyDAbUNYBgMqG0Aw2BAbQMYBgNqG8AwGFDbAIbBgNoGMAwG1DaAYTCgtgEMg/H/QkCKnOPXa8MAAAAASUVORK5CYII=" /><!-- --> The resulting model contains four predictors with a RMSE of 3.54212.</p>
+<p><img src="data:image/png;base64,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" /><!-- -->
+The resulting model contains four predictors with a RMSE of 3.54212.</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(norm.model)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Final solution: 6 terms</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; R-Square Adj. = 0.990042</span></span>
@@ -216,36 +503,75 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Regression function: raw ~ -92.16983481 + (0.0195782225*L2) + (1.327109958*L1A1) + (-0.03851643094*L1A2) + (-0.01236535515*L2A1) + (1.320696396e-05*L2A3) + (3.158314092e-07*L4A1)</span></span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Raw Score RMSE = 3.60335</span></span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co">#&gt; Post stratification was applied. The weights range from 1 to 1.415 (m = 1.116, sd = 0.182).</span></span></code></pre></div>
-<p>Moreover, the percentile plot reveals no hints on model violation, like intersecting percentile curves. It reaches a high multiple R2 with only few terms.</p>
+<p>Moreover, the percentile plot reveals no hints on model violation,
+like intersecting percentile curves. It reaches a high multiple R2 with
+only few terms.</p>
 <pre><code>plot(norm.model, &quot;subset&quot;)
 plot(norm.model, &quot;norm&quot;)</code></pre>
 </div>
 <div id="caveats-and-recommendation-for-use" class="section level3">
 <h3>Caveats and recommendation for use</h3>
-<p>We extensively simulated biased distributions and assessed, if our approach can mitigate the effects of unrepresentative samples. cNORM itself already corrects for several types of sampling eror, namely if deviations occur in specific age groups or if joint probabilities of stratification variables are unbalanced (while preserving the marginals). Weighted Continuous Norming as well works very well in most, but not all use cases. Please note the following:</p>
+<p>We extensively simulated biased distributions and assessed, if our
+approach can mitigate the effects of unrepresentative samples. cNORM
+itself already corrects for several types of sampling eror, namely if
+deviations occur in specific age groups or if joint probabilities of
+stratification variables are unbalanced (while preserving the
+marginals). Weighted Continuous Norming as well works very well in most,
+but not all use cases. Please note the following:</p>
 <ul>
-<li>Non-representativeness in most cases leads to (moderately) increased error of the normed scores. It is - of course - always better to ensure the highest feasible degree of representativeness in the data collection.</li>
+<li>Non-representativeness in most cases leads to (moderately) increased
+error of the normed scores. It is - of course - always better to ensure
+the highest feasible degree of representativeness in the data
+collection.</li>
 <li>The data collection should be as random as possible.</li>
-<li>In most but not in all cases, Weighted Continuous Norming reduces negative effects of non-representative norm samples. If the mean of the standardized weights exceeds a value of <span class="math inline">\(m_{weights}=2\)</span>, this is an indication to rather not use weighting.<br />
+<li>In most but not in all cases, Weighted Continuous Norming reduces
+negative effects of non-representative norm samples. If the mean of the
+standardized weights exceeds a value of <span class="math inline">\(m_{weights}=2\)</span>, this is an indication to
+rather not use weighting.<br />
 </li>
-<li>With cNORM, representativeness need not necessarily be established in every single age group. If the marginals are more or less correct, weighting is unnecessary.</li>
-<li>Only use stratification for variables with considerable influence on the dependent variable.</li>
-<li>If available, the probabilities of cross-classifications of the stratification variables can be used. You can recode several variables into one and directly specify the according population marginals (especially in combination with the next point).</li>
-<li>Avoid too many stratification variables with many fine-grained levels. This leads to high weights in specific subgroups. Rather combine different levels of stratification variables, if the according subgroups do not differ in the outcome variable.</li>
+<li>With cNORM, representativeness need not necessarily be established
+in every single age group. If the marginals are more or less correct,
+weighting is unnecessary.</li>
+<li>Only use stratification for variables with considerable influence on
+the dependent variable.</li>
+<li>If available, the probabilities of cross-classifications of the
+stratification variables can be used. You can recode several variables
+into one and directly specify the according population marginals
+(especially in combination with the next point).</li>
+<li>Avoid too many stratification variables with many fine-grained
+levels. This leads to high weights in specific subgroups. Rather combine
+different levels of stratification variables, if the according subgroups
+do not differ in the outcome variable.</li>
 </ul>
 </div>
 </div>
 <div id="references" class="section level2">
 <h2>References</h2>
 <ul>
-<li>Gary, S., &amp; Lenhard, W., (2021). In norming we trust - Verfahren zur statistischen Modellierung kontinuierlicher Testnormen auf dem Prüfstand. <em>Diagnostica</em>, 67(2), 75 - 86.</li>
-<li>Hernandez, A., Aguilar, C., Paradell, È., Munoz, M., Vannier, L.C., &amp; Vallar, F. (2017). The effect of demographic variables on the assesment of cognitive ability. <em>Psicothema</em>. <em>29</em>(4), 469 - 474.</li>
-<li>Kruskal, W., &amp; Mosteller, F. (1979). Representative sampling, III: The current statistical literature. <em>International Statistical Review/Revue Internationale de Statistique</em>, 245 - 265</li>
-<li>Lenhard, A., Lenhard, W., Segerer, R., &amp; Suggate, S. (2015). <em>Peabody Picture Vocbulary Test (PPVT-4)</em>. Frankfurt: Pearson Clinical Assesment.</li>
-<li>Lenhard, A., Lenhard, W., &amp; Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. <em>PloS one</em>, <em>14</em>(9), e0222279.</li>
-<li>Lenhard, W., &amp; Lenhard, A. (2021). Improvement of norm score quality via regression-based continuous norming. <em>Educational and Psychological Measurement</em>, <em>81</em>(2), 229 - 261.</li>
-<li>Lumley, T. (2011). <em>Complex surveys: A guide to analysis using R</em> (Vol. 565); John Wiley &amp; Sons.</li>
-<li>Mercer, A., Lau, A., &amp; Kennedy, C. (2018). For weighting online opt-in samples, what matters most. <em>Pew Research Center</em>.</li>
+<li>Gary, S., &amp; Lenhard, W., (2021). In norming we trust - Verfahren
+zur statistischen Modellierung kontinuierlicher Testnormen auf dem
+Prüfstand. <em>Diagnostica</em>, 67(2), 75 - 86.</li>
+<li>Hernandez, A., Aguilar, C., Paradell, È., Munoz, M., Vannier, L.C.,
+&amp; Vallar, F. (2017). The effect of demographic variables on the
+assesment of cognitive ability. <em>Psicothema</em>. <em>29</em>(4), 469
+- 474.</li>
+<li>Kruskal, W., &amp; Mosteller, F. (1979). Representative sampling,
+III: The current statistical literature. <em>International Statistical
+Review/Revue Internationale de Statistique</em>, 245 - 265</li>
+<li>Lenhard, A., Lenhard, W., Segerer, R., &amp; Suggate, S. (2015).
+<em>Peabody Picture Vocbulary Test (PPVT-4)</em>. Frankfurt: Pearson
+Clinical Assesment.</li>
+<li>Lenhard, A., Lenhard, W., &amp; Gary, S. (2019). Continuous norming
+of psychometric tests: A simulation study of parametric and
+semi-parametric approaches. <em>PloS one</em>, <em>14</em>(9),
+e0222279.</li>
+<li>Lenhard, W., &amp; Lenhard, A. (2021). Improvement of norm score
+quality via regression-based continuous norming. <em>Educational and
+Psychological Measurement</em>, <em>81</em>(2), 229 - 261.</li>
+<li>Lumley, T. (2011). <em>Complex surveys: A guide to analysis using
+R</em> (Vol. 565); John Wiley &amp; Sons.</li>
+<li>Mercer, A., Lau, A., &amp; Kennedy, C. (2018). For weighting online
+opt-in samples, what matters most. <em>Pew Research Center</em>.</li>
 </ul>
 </div>
 
