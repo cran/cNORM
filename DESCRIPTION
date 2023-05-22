@@ -1,9 +1,9 @@
 Package: cNORM
 Type: Package
 Title: Continuous Norming
-Version: 3.0.2
+Version: 3.0.3
 Maintainer: Wolfgang Lenhard <wolfgang.lenhard@uni-wuerzburg.de>
-Date: 2022-06-12
+Date: 2023-05-22
 Authors@R: c(person("Alexandra", "Lenhard", role=c("aut"),
     email="lenhard@psychometrica.de", comment=c(ORCID = "0000-0001-8680-4381")), 
     person("Wolfgang", "Lenhard", role = c("cre","aut"), 
@@ -35,7 +35,7 @@ Suggests: knitr, shiny, shinycssloaders, foreign, readxl, rmarkdown,
         testthat
 License: AGPL-3
 VignetteBuilder: knitr
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.3
 NeedsCompilation: no
 Repository: CRAN
 Encoding: UTF-8
@@ -43,9 +43,9 @@ LazyData: true
 URL: https://www.psychometrica.de/cNorm_en.html,
         https://github.com/WLenhard/cNORM
 BugReports: https://github.com/WLenhard/cNORM/issues
-Packaged: 2022-06-12 08:46:39 UTC; gbpa005
+Packaged: 2023-05-22 13:15:52 UTC; gbpa005
 Author: Alexandra Lenhard [aut] (<https://orcid.org/0000-0001-8680-4381>),
   Wolfgang Lenhard [cre, aut] (<https://orcid.org/0000-0002-8184-6889>),
   Sebastian Gary [aut],
   WPS publisher [fnd] (<https://www.wpspublish.com/>)
-Date/Publication: 2022-06-12 15:50:12 UTC
+Date/Publication: 2023-05-22 15:00:02 UTC
