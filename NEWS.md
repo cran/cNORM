@@ -3,6 +3,19 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+### Version in 3.0.4
+Date: preparing for release, 08.10.2023
+
+
+Changes:
+
+*    Added warning in 'cnorm' in case, both age and group is specified
+*    extended cnorm.cv for use of weights and sliding window
+*    added silent option to several functions to reduced the number of messages
+*    revised function documentation
+
+
+
 ### Version in 3.0.3
 Date: 2023.05.22
 
@@ -17,7 +30,7 @@ Changes:
      large datasets and in cross validation by cnorm.cv
 *    Added WPS publisher as a funder. WPS helped financing the weighting procedure for post stratification 
      based on iterative proportional fitting ("Raking")
-*    citEntry replaced by bibentry in inst/citation  
+*    citeEntry replaced by bibentry in inst/citation  
 
 
 

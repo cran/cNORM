@@ -119,7 +119,7 @@ predicted <- predictNorm(elfe$raw, elfe$group, cnorm.elfe)
 # parameter. For computing the weights, please specify a data.frame with the
 # population margins (further information is available in the computeWeights
 # function). A demonstration based on sex and migration status in vocabulary
-# development (ppvt dataset):
+# development (ppvt dataset; Gary et al., 2023a, 2023b):
 margins <- data.frame(variables = c("sex", "sex",
                                     "migration", "migration"),
                       levels = c(1, 2, 0, 1),
@@ -153,10 +153,12 @@ cNORM is licensed under GNU Affero General Public License v3 (AGPL-3.0). This me
 The authors would like to thank WPS (<https://www.wpspublish.com/>) for providing funding for developing, integrating and evaluating weighting and post stratification in the cNORM package. The research project was conducted in 2022. 
 
 ## References
-*   Gary, S. & Lenhard, W. (2021). In norming we trust. Diagnostica.
+
+*   Gary, S., Lenhard, W., Lenhard, A. et al. A tutorial on automatic post-stratification and weighting in conventional and regression-based norming of psychometric tests. Behav Res (2023a). https://doi.org/10.3758/s13428-023-02207-0
+*   Gary, S., Lenhard, A., Lenhard, W., & Herzberg, D. S. (2023b). Reducing the bias of norm scores in non-representative samples: Weighting as an adjunct to continuous norming methods. Assessment, 10731911231153832. https://doi.org/10.1177/10731911231153832
 *   Lenhard, A., Lenhard, W., Segerer, R. & Suggate, S. (2015). Peabody Picture Vocabulary Test - Revision IV (Deutsche Adaption). Frankfurt a. M./Germany: Pearson Assessment.
-*   Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to the norming problem. Assessment, Online first, 1-14. doi:10.1177/1073191116656437
+*   Lenhard, A., Lenhard, W., Suggate, S. & Segerer, R. (2016). A continuous solution to the norming problem. Assessment, Online first, 1-14. https://doi.org/10.1177/1073191116656437
 *   Lenhard, A., Lenhard, W., Gary, S. (2018). Continuous Norming (cNORM). The Comprehensive R Network, Package cNORM, available: https://CRAN.R-project.org/package=cNORM
-*   Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. doi:10.1371/journal.pone.0222279
+*   Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. https://doi.org/10.1371/journal.pone.0222279
 *   Lenhard, W., & Lenhard, A. (2020). Improvement of Norm Score Quality via Regression-Based Continuous Norming. Educational and Psychological Measurement(Online First), 1-33. https://doi.org/10.1177/0013164420928457
 

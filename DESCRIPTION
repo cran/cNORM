@@ -1,17 +1,16 @@
 Package: cNORM
 Type: Package
 Title: Continuous Norming
-Version: 3.0.3
+Version: 3.0.4
 Maintainer: Wolfgang Lenhard <wolfgang.lenhard@uni-wuerzburg.de>
-Date: 2023-05-22
+Date: 2023-10-08
 Authors@R: c(person("Alexandra", "Lenhard", role=c("aut"),
     email="lenhard@psychometrica.de", comment=c(ORCID = "0000-0001-8680-4381")), 
     person("Wolfgang", "Lenhard", role = c("cre","aut"), 
     email="wolfgang.lenhard@uni-wuerzburg.de", 
     comment=c(ORCID = "0000-0002-8184-6889")), 
     person("Sebastian", "Gary", role=c("aut")),
-    person("WPS publisher", role = c("fnd"),
-    comment=c("<https://www.wpspublish.com/>")))
+    person("WPS publisher", role = c("fnd"), comment=c("<https://www.wpspublish.com/>")))
 Description: Conventional methods for producing standard scores or percentiles 
     in psychometrics or biometrics are often plagued with 'jumps' or 'gaps' 
     (i.e., discontinuities) in norm tables and low confidence for assessing 
@@ -30,7 +29,7 @@ Description: Conventional methods for producing standard scores or percentiles
     and to mitigate violations of representativeness. An online demonstration is 
     available via <https://cnorm.shinyapps.io/cNORM/>.
 Depends: R (>= 4.0.0)
-Imports: lattice (>= 0.20), leaps (>= 3.0), latticeExtra (>= 0.6)
+Imports: lattice (>= 0.21), leaps (>= 3.1), latticeExtra (>= 0.6)
 Suggests: knitr, shiny, shinycssloaders, foreign, readxl, rmarkdown,
         testthat
 License: AGPL-3
@@ -43,9 +42,9 @@ LazyData: true
 URL: https://www.psychometrica.de/cNorm_en.html,
         https://github.com/WLenhard/cNORM
 BugReports: https://github.com/WLenhard/cNORM/issues
-Packaged: 2023-05-22 13:15:52 UTC; gbpa005
+Packaged: 2023-10-08 09:35:17 UTC; gbpa005
 Author: Alexandra Lenhard [aut] (<https://orcid.org/0000-0001-8680-4381>),
   Wolfgang Lenhard [cre, aut] (<https://orcid.org/0000-0002-8184-6889>),
   Sebastian Gary [aut],
   WPS publisher [fnd] (<https://www.wpspublish.com/>)
-Date/Publication: 2023-05-22 15:00:02 UTC
+Date/Publication: 2023-10-08 10:10:02 UTC
