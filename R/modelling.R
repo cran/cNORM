@@ -128,7 +128,7 @@ bestModel <- function(data,
 
   if ((!is.null(predictors)) &&
       (!inherits(predictors, "formula")) &&
-      (!(predictors %in% colnames(data)))) {
+      (!(all(predictors %in% colnames(data))))) {
     stop("ERROR: Missing variables from predictors variable. Please check variable list.")
   }
 
@@ -357,7 +357,8 @@ bestModel <- function(data,
     )
   }
 
-  plotPercentiles(data, bestformula)
+  if(plot)
+    plotPercentiles(data, bestformula)
 
   return(bestformula)
 }
