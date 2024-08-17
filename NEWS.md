@@ -2,14 +2,38 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
-### Version in 3.1.0, preparing release
+### Version in 3.2.0,
+Date: 2023.08.17
+
+
+Changes:
+
+*    Parametric modelling with beta binomial functions now fully implemented
+*    S3 functions predict, plot and summary added for bet a binomial models
+*    Fixed input validation in getNormScoreSE    
+*    Started intensive work on regularization in Taylor models (planned for v4.0)
+*    Vignette on modelling with beta binomial distribution
+*    Transition from lattice to ggplot2
+*    Code on covariates removed from the complete package
+*    cNORM-Demo vignette revised
+*    code simplification in plotting functions, parameters removed
+*    new parameter to plot raw scores in plotPercentiles (default FALSE)
+*    'buildCnormObject' function added to help with compatibility (joins data and model
+     to cnorm object)
+*    cNORM.GUI() updated
+*    datasets life, mortality and EPM removed
+*    performance optimization
+
+
+
+### Version in 3.1.0,
 Date: 2023.07.19
 
 
 Changes:
 
 *    Added parametric continuous norming with beta binomial family and new functions
-     betaCoefficients, betaTable, betaByGroup and betaContinuous; beware - still experimental
+     betaCoefficients, betaTable, betaByGroup and betaContinuous; beware - still experimental (Jan. 2024)
 *    Fixed bug in bestModels function when predictors are specified     
 
 

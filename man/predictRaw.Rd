@@ -2,32 +2,22 @@
 % Please edit documentation in R/predict.R
 \name{predictRaw}
 \alias{predictRaw}
-\title{Predict single raw value}
+\title{Predict raw values}
 \usage{
-predictRaw(
-  norm,
-  age,
-  coefficients,
-  minRaw = -Inf,
-  maxRaw = Inf,
-  covariate = NULL
-)
+predictRaw(norm, age, coefficients, minRaw = -Inf, maxRaw = Inf)
 }
 \arguments{
 \item{norm}{The norm score, e. g. a specific T score or a vector of scores}
 
 \item{age}{The age value or a vector of scores}
 
-\item{coefficients}{The coefficients from the regression model or a cnorm model}
+\item{coefficients}{The a cnorm object or the coefficients from the regression model}
 
 \item{minRaw}{Minimum score for the results; can be used for clipping unrealistic outcomes,
 usually set to the lower bound of the range of values of the test (default: 0)}
 
 \item{maxRaw}{Maximum score for the results; can be used for clipping unrealistic outcomes
 usually set to the upper bound of the range of values of the test}
-
-\item{covariate}{In case, a covariate has been used, please specify the degree of the covariate /
-the specific value here.}
 }
 \value{
 the predicted raw score or a data.frame of scores in case, lists of norm scores or age is used
@@ -35,34 +25,21 @@ the predicted raw score or a data.frame of scores in case, lists of norm scores 
 \description{
 Most elementary function to predict raw score based on Location (L, T score),
 Age (grouping variable) and the coefficients from a regression model.
-WARNING! This function, and all functions  depending on it, only works with regression
-functions including L, A and interactions. Manually adding predictors to bestModel via the
-predictors parameter is currently incompatible.
-In that case, and if you are primarily interested on fitting a complete data set,
-rather user the predict function of the stats:lm package on the ideal model solution.
-You than have to provide a prepared data frame with the according input variables.
 }
 \examples{
 # Prediction of single scores
-normData <- prepareData(elfe)
-m <- bestModel(data = normData)
-predictRaw(35, 3.5, m$coefficients)
+model <- cnorm(raw = elfe$raw, group = elfe$group)
+predictRaw(35, 3.5, model)
 
-# using a cnorm object
-result <- cnorm(raw = elfe$raw, group = elfe$group)
-predictRaw(35, 3.5, result)
 
-# Fitting complete data sets
-fitted.values <- predict(m)
-
-# break up contribution of each predictor variable
-fitted.partial <- predict(m, type = "terms")
 }
 \seealso{
 Other predict: 
 \code{\link{derivationTable}()},
 \code{\link{getNormCurve}()},
 \code{\link{normTable}()},
+\code{\link{predict.cnormBetaBinomial}()},
+\code{\link{predict.cnormBetaBinomial2}()},
 \code{\link{predictNorm}()},
 \code{\link{rawTable}()}
 }

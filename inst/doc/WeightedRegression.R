@@ -4,6 +4,9 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 
+library(cNORM)
+library(ggplot2)
+
 ## ----message = FALSE----------------------------------------------------------
 library(cNORM)
 # Assign data to object norm.data

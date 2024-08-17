@@ -2,9 +2,10 @@
 #'
 #' The package provides methods for generating regression based continuous standard
 #' scores, as f. e. for psychometric test development, biometrics (e. g. physiological
-#' growth curves), and screenings in the medical domain. Contrary to parametric
-#' approaches, it does not rely on distribution assumptions of the initial norm data
-#' and is thus a very robust approach in generating norm tables.
+#' growth curves), and screenings in the medical domain. It includes a distribution free approach
+#' on the basis of Taylor polynomials and parametric modelling with beta binomial distributions.
+#' Both approaches can generate robust norm data models and alleviate the computation of norm scores
+#' and norm tables.
 #'
 #' Conventional methods for producing test norm score tables are often plagued with
 #' "jumps" or "gaps" (i.e., discontinuities) in norm tables and low confidence for
@@ -15,7 +16,8 @@
 #' by modeling the latter ones as a function  of both percentile scores and an explanatory
 #' variable (e.g., age). The method minimizes bias arising from sampling and measurement
 #' error, while handling marked deviations from normality - such as are commonplace in
-#' clinical samples.
+#' clinical samples. For pre-requisites and use cases of the beta binomial modelling, please
+#' consult the vignette 'Beta Binomial'.
 #'
 #' Conducting the analysis consists of four steps and cNORM offers all according functions
 #' for preparing data, conducting the  regression, selecting the best model and generating
@@ -37,7 +39,7 @@
 #' The function \link{cnorm}
 #' For an easy start, you can use the graphical user interface by typing \code{cNORM.GUI()} on the console.
 #' Example datasets with large cohorts are available for demonstration purposes ('elfe',
-#' 'ppvt', 'CDC', 'life' and 'mortality' sample data from the references). Use
+#' 'ppvt', and 'CDC' sample data from the references). Use
 #' \code{model <- cnorm(raw = elfe$raw, group = elfe$group)} to get a first impression.
 #' Use  \code{vignette(cNORM-Demo)} for a walk through on
 #' conducting  the modeling and \url{https://www.psychometrica.de/cNorm_en.html} for a
@@ -60,11 +62,6 @@
 #'   Test - Revision IV (German Adaption). Frankfurt a. M.: Pearson Assessment.
 #'   \item Lenhard, W. & Schneider, W. (2006). ELFE 1-6 - Ein Leseverstaendnistest fuer Erst- bis
 #'   Sechstklässler. Goettingen: Hogrefe.
-#'   \item The World Bank (2018). Mortality rate, infant (per 1,000 live births). Data Source
-#'   available https://data.worldbank.org/indicator/SP.DYN.IMRT.IN (date of retrieval: 02/09/2018)
-#'   \item The World Bank (2018). Life expectancy at birth, total (years). Data Source World
-#'   Development Indicators available https://data.worldbank.org/indicator/sp.dyn.le00.in
-#'   (date of retrieval: 01/09/2018)
 #' }
 #' @author Wolfgang Lenhard, Alexandra Lenhard and Sebastian Gary
 #' @keywords Psychometrics Biometrics Test Development Regression Based Norming
@@ -178,6 +175,7 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' @param t The age power parameter (max = 6). If not set, it uses k and if both
 #' parameters are NULL, k is set to 3, since age trajectories are most often well
 #' captured by cubic polynomials.
+#' @param plot Default TRUE; plot the raw data and the regression model
 #'
 #' @return cnorm object including the ranked raw data and the regression model
 #' @seealso rankByGroup, rankBySlidingWindow, computePowers, bestModel
@@ -245,7 +243,8 @@ cnorm <- function(raw = NULL,
                   k = NULL,
                   t = NULL,
                   terms = 0,
-                  R2 = NULL){
+                  R2 = NULL,
+                  plot = TRUE){
 
   if(!is.null(group)&&!is.null(age)){
     warning("Specifying both 'group' as well as 'age' is discouraged.")
@@ -323,11 +322,11 @@ cnorm <- function(raw = NULL,
 
     data <- rankByGroup(data, raw=data$raw, group=FALSE, scale=scale, weights=data$weights, descend = descend, method = method)
     data <- computePowers(data, k = k, t = t)
-    model <- bestModel(data, k = k, t = t, terms = terms, R2 = R2)
+    model <- bestModel(data, k = k, t = t, terms = terms, R2 = R2, plot = plot)
 
     result <- list(data = data, model = model)
     class(result) <- "cnorm"
-
+    print(rawTable(0, result))
     return(result)
   }
 
@@ -352,7 +351,7 @@ cnorm <- function(raw = NULL,
     stop("Please provide a numerical vector for the raw scores and either a vector for grouping and/or age of the same length. If you use an age vector only, please specify the width of the window.")
   }
 
-  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights)
+  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights, plot = plot)
   result <- list(data = data, model = model)
   class(result) <- "cnorm"
   return(result)

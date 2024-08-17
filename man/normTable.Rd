@@ -12,7 +12,6 @@ normTable(
   minRaw = NULL,
   maxRaw = NULL,
   step = NULL,
-  covariate = NULL,
   monotonuous = TRUE,
   CI = 0.9,
   reliability = NULL,
@@ -22,7 +21,7 @@ normTable(
 \arguments{
 \item{A}{the age as single value or a vector of age values}
 
-\item{model}{The regression model or a cnorm object}
+\item{model}{The regression model from the cnorm function}
 
 \item{minNorm}{The lower bound of the norm score range}
 
@@ -33,9 +32,6 @@ normTable(
 \item{maxRaw}{clipping parameter for the upper bound of raw scores}
 
 \item{step}{Stepping parameter with lower values indicating higher precision}
-
-\item{covariate}{In case, a covariate has been used, please specify the degree of the covariate /
-the specific value here.}
 
 \item{monotonuous}{corrects for decreasing norm scores in case of model inconsistencies (default)}
 
@@ -73,6 +69,11 @@ norms <- normTable(c(2.5, 3.5, 4.5), cnorm.elfe,
   minNorm = 25, maxNorm = 75,
   step = 1, minRaw = 0, maxRaw = 26
 )
+
+# conventional norming, set age to arbitrary value
+model <- cnorm(raw=elfe$raw)
+normTable(0, model)
+
 }
 \references{
 Eid, M. & Schmidt, K. (2012). Testtheorie und Testkonstruktion. Hogrefe.
@@ -83,6 +84,8 @@ rawTable
 Other predict: 
 \code{\link{derivationTable}()},
 \code{\link{getNormCurve}()},
+\code{\link{predict.cnormBetaBinomial}()},
+\code{\link{predict.cnormBetaBinomial2}()},
 \code{\link{predictNorm}()},
 \code{\link{predictRaw}()},
 \code{\link{rawTable}()}

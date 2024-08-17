@@ -1,3 +1,24 @@
+#' Standardize a numeric vector
+#'
+#' This function standardizes a numeric vector by subtracting the mean
+#' and dividing by the standard deviation. The resulting vector will have
+#' a mean of 0 and a standard deviation of 1.
+#'
+#' @param x A numeric vector to be standardized.
+#'
+#' @return A numeric vector of the same length as x, containing the standardized values.
+#'
+#' @examples
+#' data <- c(1, 2, 3, 4, 5)
+#' standardized_data <- standardize(data)
+#' print(standardized_data)
+#'
+#' @export
+standardize <- function(x) {
+  (x - mean(x)) / sd(x)
+}
+
+
 #' Weighted rank estimation
 #'
 #' Conducts weighted ranking on the basis of sums of weights per unique raw score.
@@ -383,6 +404,7 @@ simulateRasch <- function(data = NULL, n = 100, minAge = 1, maxAge = 7, items.n 
   return(list(data = dat, sim = sim, theta = theta))
 }
 
+#' @keywords internal
 simulate.weighting <- function(n1, m1, sd1, weight1, n2, m2, sd2, weight2){
   group1 <- data.frame(group=rep(1, length.out = n1), raw=rnorm(n1, mean=m1, sd=sd1), weights=rep(weight1, length.out = n1))
   group2 <- data.frame(group=rep(2, length.out = n2), raw=rnorm(n2, mean=m2, sd=sd2), weights=rep(weight2, length.out = n2))
@@ -407,4 +429,96 @@ simulate.weighting <- function(n1, m1, sd1, weight1, n2, m2, sd2, weight2){
   points(total$raw, total$percentileUnweighted, type = "l", lty = 1, col="red")
   legend("bottomright", legend = c("Real percentile", "Weighted", "Unweighted"), col = c("black", "blue", "red"), pch = 19)
 
+}
+
+#' Build cnorm object from data and bestModle model object
+#'
+#' Helper function to build a cnorm object from a data object and
+#' a model object from the bestModel function for compatibility reasons.
+#'
+#'
+#' @param data A data object from 'prepareData', or from 'rankByGroup' and
+#'             'computePower'
+#' @param model Object obtained from the bestModel function
+#'
+#' @return A cnorm object
+#'
+#' @examples
+#' \dontrun{
+#'   data <- prepareData(elfe)
+#'   model <- bestModel(data, k = 4)
+#'   model.cnorm <- buildCnormObject(data, model)
+#' }
+#'
+#' @export
+buildCnormObject <- function(data, model){
+  result <- list(data = data, model = model)
+  class(result) <- "cnorm"
+  return(result)
+}
+
+#' Prepare design matrix for LASSO regression
+#'
+#' @description
+#' This function prepares the design matrix, including powers and interaction terms of location and age.
+#'
+#' @param location Numeric vector of location values (norm scores).
+#' @param age Numeric vector of age values.
+#' @param k Integer. Maximum power for location terms. Default is 5.
+#' @param t Integer. Maximum power for age terms. Default is 3.
+#'
+#' @return A matrix with columns for powers of location and age, and their interactions.
+#'
+#' @details
+#' The function creates a matrix with columns for powers of location (up to k),
+#' powers of age (up to t), and their interactions. The resulting matrix has
+#' (k+1)*(t+1)-1 columns (excluding the intercept term).
+#'
+#' @note
+#' It is recommended to keep k and t below 8 to avoid numerical instability.
+#'
+#' @keywords internal
+#'
+#' @noRd
+prepare_matrix <- function(location, age, k = 5, t = 3) {
+  # Ensure location and age are numeric vectors of the same length
+  if (!is.numeric(location) || !is.numeric(age) || length(location) != length(age)) {
+    stop("location and age must be numeric vectors of the same length")
+  }
+
+  # Ensure k and t are positive integers
+  if (!is.numeric(k) || !is.numeric(t) || k < 0 || t < 0 || k != round(k) || t != round(t)) {
+    stop("k and t must be positive integers and may not exceed 8")
+  }
+
+  if(k>8||t>8)
+    warning("k and t should not exceed 8")
+
+  n <- length(location)
+
+  # Create matrix for powers and interaction terms
+  interaction_matrix <- matrix(NA, nrow = n, ncol = (k + 1)*(t+1) - 1)
+  colnames <- rep("", (k + 1)*(t+1) - 1)
+  col_index <- 1
+  for (i in 0:k) {
+    for (j in 0:t) {
+      if(i==0 && j == 0) next
+
+      interaction_matrix[, col_index] <- location^i * age^j
+
+      if(i>0&&j>0)
+        colnames[col_index] <- paste0("L", i, "A", j)
+      else if(i>0)
+        colnames[col_index] <- paste0("L", i)
+      else
+        colnames[col_index] <- paste0("A", j)
+
+      col_index <- col_index + 1
+    }
+  }
+  colnames(interaction_matrix) <- colnames
+  attr(interaction_matrix, "k") <- k
+  attr(interaction_matrix, "t") <- t
+
+  return(interaction_matrix)
 }

@@ -1,29 +1,26 @@
-
-import(lattice)
 importFrom(leaps, regsubsets)
-importFrom(stats, pf, xtabs, as.formula, summary.lm, pbeta, approx, poly, na.omit, complete.cases, predict, predict.lm, t.test, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile, coef)
+importFrom(stats, setNames, qbeta, optim, pf, xtabs, as.formula, summary.lm, pbeta, approx, poly, na.omit, complete.cases, predict, predict.lm, t.test, formula, ave, aggregate, median, sd, qnorm, rnorm, dnorm, pnorm, lm, runif, optimize, cor, quantile, coef)
 importFrom(grDevices, rainbow, dev.off)
 importFrom(graphics, par, plot, points, legend, abline, text, lines)
-importFrom(latticeExtra, panel.2dsmoother)
 importFrom(utils, tail, menu, head)
+importFrom(ggplot2, .data, margin, element_rect, unit, geom_tile, ggsave, geom_contour_filled, facet_wrap, geom_contour, scale_fill_gradientn, geom_abline, element_text, element_blank, element_line, scale_color_viridis_d, scale_color_brewer, ylim, geom_text, scale_y_log10, geom_vline, theme, geom_point, guides, guide_legend, aes, geom_hline, geom_line, geom_smooth, ggplot, labs, scale_color_manual, scale_y_continuous, theme_minimal)
 export(
 	bestModel,
 	betaCoefficients,
-	betaTable,
-	betaByGroup,
-	betaContinuous,
-	betaNormTable,
-	predictBeta,
+	buildCnormObject,
 	checkConsistency,
 	cNORM.GUI,
 	cnorm.cv,
 	cnorm,
+	cnorm.betabinomial,
 	computePowers,
+	diagnostics.betabinomial,
 	derivationTable,
 	derive,
 	getNormCurve,
 	getGroups,
 	normTable,
+	normTable.betabinomial,
 	plotDensity,
 	plotDerivative,
 	plotNormCurves,
@@ -33,7 +30,9 @@ export(
 	plotRaw,
 	plotNorm,
 	plotCnorm,
+	plot.cnormBetaBinomial,
 	predictNorm,
+	predict.cnormBetaBinomial,
 	predictRaw,
 	prepareData,
 	printSubset,
@@ -43,7 +42,9 @@ export(
 	rawTable,
 	regressionFunction,
 	simulateRasch,
+	standardize,
 	modelSummary,
+	summary.cnormBetaBinomial,
 	getNormScoreSE,
 	weighted.rank,
 	weighted.quantile,
@@ -58,3 +59,11 @@ export(
 S3method(plot, cnorm)
 S3method(print, cnorm)
 S3method(summary, cnorm)
+
+S3method(predict, cnormBetaBinomial)
+S3method(plot, cnormBetaBinomial)
+S3method(summary, cnormBetaBinomial)
+
+S3method(predict, cnormBetaBinomial2)
+S3method(plot, cnormBetaBinomial2)
+S3method(summary, cnormBetaBinomial2)

@@ -5,15 +5,13 @@
 #' age, while keeping the norm value constant. This way, e. g. academic performance or intelligence development
 #' of a specific ability is shown.
 #' @param norm The specific norm score, e. g. T value
-#' @param model The model from the regression modeling or a cnorm object
+#' @param model The model from the regression modeling obtained with the cnorm function
 #' @param minAge Age to start from
 #' @param maxAge Age to stop at
 #' @param step Stepping parameter for the precision when retrieving of the values, lower
 #' values indicate higher precision (default 0.1).
 #' @param minRaw lower bound of the range of raw scores (default = 0)
 #' @param maxRaw upper bound of raw scores
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate or
-#' the specific value here.
 #' @return data.frame of the variables raw, age and norm
 #' @examples
 #' # Generate cnorm object from example data
@@ -28,18 +26,14 @@ getNormCurve <-
              maxAge = NULL,
              step = 0.1,
              minRaw = NULL,
-             maxRaw = NULL,
-           covariate = NULL) {
+             maxRaw = NULL) {
+
+    if(!inherits(model, "cnorm")&&!inherits(model, "cnormModel")){
+      stop("Please provide a cnorm object.")
+    }
 
     if(inherits(model, "cnorm")){
       model <- model$model
-    }
-
-    if(!is.null(covariate)&&is.null(model$covariate)){
-      warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
-      covariate = NULL
-    }else if(is.null(covariate)&&!is.null(model$covariate)){
-      stop("Covariate specified in the model, but no function parameter available.")
     }
 
     if (is.null(minAge)) {
@@ -57,69 +51,36 @@ getNormCurve <-
     if (is.null(maxRaw)) {
       maxRaw <- model$maxRaw
     }
-    raw <- vector("list", (maxAge - minAge) / step)
-    age <- vector("list", (maxAge - minAge) / step)
-    normList <- vector("list", (maxAge - minAge) / step)
 
-    i <- 1
-    while (minAge <= maxAge) {
-      r <-
-        predictRaw(norm, minAge, model$coefficients, minRaw, maxRaw, covariate)
+    ages <- seq(minAge, maxAge, by = step)
+    results <- lapply(ages, function(age) {
+      r <- predictRaw(norm, age, model$coefficients, minRaw, maxRaw)
+      data.frame(norm = paste(norm, "T"), age = age, raw = r)
+    })
+    curve <- do.call(rbind, results)
 
-      raw[[i]] <- r
-      age[[i]] <- minAge
-      normList[[i]] <- paste(norm, "T")
-      minAge <- minAge + step
-      i <- i + 1
-    }
-    curve <-
-      do.call(
-        rbind,
-        Map(
-          data.frame,
-          norm = normList,
-          age = age,
-          raw = raw
-        )
-      )
     return(curve)
   }
 
-#' Predict single raw value
+#' Predict raw values
 #'
 #' Most elementary function to predict raw score based on Location (L, T score),
 #' Age (grouping variable) and the coefficients from a regression model.
-#' WARNING! This function, and all functions  depending on it, only works with regression
-#' functions including L, A and interactions. Manually adding predictors to bestModel via the
-#' predictors parameter is currently incompatible.
-#' In that case, and if you are primarily interested on fitting a complete data set,
-#' rather user the predict function of the stats:lm package on the ideal model solution.
-#' You than have to provide a prepared data frame with the according input variables.
+#'
 #' @param norm The norm score, e. g. a specific T score or a vector of scores
 #' @param age The age value or a vector of scores
-#' @param coefficients The coefficients from the regression model or a cnorm model
+#' @param coefficients The a cnorm object or the coefficients from the regression model
 #' @param minRaw Minimum score for the results; can be used for clipping unrealistic outcomes,
 #' usually set to the lower bound of the range of values of the test (default: 0)
 #' @param maxRaw Maximum score for the results; can be used for clipping unrealistic outcomes
 #' usually set to the upper bound of the range of values of the test
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
 #' @return the predicted raw score or a data.frame of scores in case, lists of norm scores or age is used
 #' @examples
 #' # Prediction of single scores
-#' normData <- prepareData(elfe)
-#' m <- bestModel(data = normData)
-#' predictRaw(35, 3.5, m$coefficients)
+#' model <- cnorm(raw = elfe$raw, group = elfe$group)
+#' predictRaw(35, 3.5, model)
 #'
-#' # using a cnorm object
-#' result <- cnorm(raw = elfe$raw, group = elfe$group)
-#' predictRaw(35, 3.5, result)
 #'
-#' # Fitting complete data sets
-#' fitted.values <- predict(m)
-#'
-#' # break up contribution of each predictor variable
-#' fitted.partial <- predict(m, type = "terms")
 #' @family predict
 #' @export
 predictRaw <-
@@ -127,78 +88,63 @@ predictRaw <-
              age,
              coefficients,
              minRaw = -Inf,
-             maxRaw = Inf,
-           covariate = NULL) {
+             maxRaw = Inf) {
 
     if(inherits(coefficients, "cnorm")){
-      coefficients <- coefficients$model$coefficients
+      coef <- coefficients$model$coefficients
+    }else if(inherits(coefficients, "cnormModel")){
+      coef <- coefficients$coefficients
+    }else{
+      coef <- coefficients
     }
 
-    score.matrix <- matrix(nrow = length(norm), ncol = length(age), dimnames = list(norm, age))
-
-
-    for(no in 1:nrow(score.matrix)){
-    # first intercept
-    coef <- coefficients
-    if(!is.null(covariate)){
-      coef <- simplifyCoefficients(coef, covariate)
-    }
-    predict <- 0
-
-    i <- 1
-    while (i <= length(coef)) {
-      nam <- strsplit(names(coef[i]), "")
-      p <- coef[[i]][1]
-
-      # first variable, either L or A
-      if (length(nam[[1]]) < 2 | length(nam[[1]]) > 4) {
-        # nothing to do
-      } else if (nam[[1]][1] == "L") {
-        j <- 1
-        while (j <= nam[[1]][2]) {
-          p <- p * norm[[no]]
-          j <- j + 1
-        }
-      } else if (nam[[1]][1] == "A") {
-        j <- 1
-        while (j <= nam[[1]][2]) {
-          p <- p * age
-          j <- j + 1
-        }
-      }
-
-      # in case, second factor is present
-      if (length(nam[[1]]) == 4) {
-        j <- 1
-        while (j <= nam[[1]][4]) {
-          p <- p * age
-          j <- j + 1
-        }
-      }
-
-      # add up
-      predict <- predict + p
-      i <- i + 1
+    if(length(age) == 1 && length(norm) > 1){
+      age <- rep(age, length(norm))
+    }else if(length(norm) == 1 && length(age) > 1){
+      norm <- rep(norm, length(age))
     }
 
 
-    score.matrix[no,] <- predict
-    }
+    k <- max(as.numeric(gsub("L([0-9]+).*", "\\1", names(coef)[grep("^L[0-9]+", names(coef))])))
+    t <- as.numeric(gsub(".*A([0-9]+)$", "\\1", names(coef)[grep("A[0-9]+$", names(coef))]))
+    if(length(t) > 0)
+      t = max(t)
+    else
+      t = 0
 
-    if(nrow(score.matrix)==1&&ncol(score.matrix)==1){
-      if(score.matrix[1, 1] > maxRaw)
-        return(maxRaw)
-      else if(score.matrix[1, 1] < minRaw)
-        return(minRaw)
-      return(score.matrix[1, 1])
-    }   else{
-      score.matrix[score.matrix > maxRaw] <- maxRaw
-      score.matrix[score.matrix < minRaw] <- minRaw
-      return(score.matrix)
-    }
+    # If k or t is -Inf (i.e., no L or A terms), set them to 0
+    k <- if(is.finite(k)) k else 0
+    t <- if(is.finite(t)) t else 0
 
+    # Prepare the matrix for new data
+    X_new <- prepare_matrix(norm, age, k, t)
 
+    # Get all variable names from the model
+    all_vars <- c("Intercept", colnames(X_new))
 
+    # Identify which variables are in the model
+    model_vars <- names(coef)
+    model_vars[[1]] <- "Intercept"
+
+    # Create a matrix with all possible variables, filled with zeros
+    X_new_full <- matrix(0, nrow = nrow(X_new), ncol = length(all_vars))
+    colnames(X_new_full) <- all_vars
+
+    # Fill in the values for the variables that are present in X_new
+    X_new_full[, colnames(X_new)] <- X_new
+
+    # Add the intercept column
+    X_new_full[, "Intercept"] <- 1
+
+    # Subset X_new_full to include only the variables that are in the model
+    X_new_selected <- X_new_full[, model_vars]
+
+    # Make predictions
+    predictions <- as.vector(X_new_selected %*% coef)
+    predictions[predictions < minRaw] <- minRaw
+    predictions[predictions > maxRaw] <- maxRaw
+
+    return(predictions)
   }
 
 #' Create a norm table based on model for specific age
@@ -215,14 +161,12 @@ predictRaw <-
 #' regression to the mean (Eid & Schmidt, 2012, p. 272).
 #'
 #' @param A the age as single value or a vector of age values
-#' @param model The regression model or a cnorm object
+#' @param model The regression model from the cnorm function
 #' @param minNorm The lower bound of the norm score range
 #' @param maxNorm The upper bound of the norm score range
 #' @param minRaw clipping parameter for the lower bound of raw scores
 #' @param maxRaw clipping parameter for the upper bound of raw scores
 #' @param step Stepping parameter with lower values indicating higher precision
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
 #' @param monotonuous corrects for decreasing norm scores in case of model inconsistencies (default)
 #' @param CI confidence coefficient, ranging from 0 to 1, default .9
 #' @param reliability coefficient, ranging between  0 to 1
@@ -243,6 +187,11 @@ predictRaw <-
 #'   minNorm = 25, maxNorm = 75,
 #'   step = 1, minRaw = 0, maxRaw = 26
 #' )
+#'
+#' # conventional norming, set age to arbitrary value
+#' model <- cnorm(raw=elfe$raw)
+#' normTable(0, model)
+#'
 #' @family predict
 #' @export
 normTable <- function(A,
@@ -251,21 +200,18 @@ normTable <- function(A,
                       maxNorm = NULL,
                       minRaw = NULL,
                       maxRaw = NULL,
-                      step = NULL, covariate = NULL,
+                      step = NULL,
                       monotonuous = TRUE,
                       CI = .9,
                       reliability = NULL,
                       pretty = T) {
 
-  if(inherits(model, "cnorm")){
+  if(inherits(model, "cnormBetaBinomial")||inherits(model, "cnormBetaBinomial2")){
+    return(normTable.betabinomial(model, A, CI = CI, reliability = reliability))
+  }else if(inherits(model, "cnorm")){
     model <- model$model
-  }
-
-  if(!is.null(covariate)&&is.null(model$covariate)){
-    warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
-    covariate = NULL
-  }else if(is.null(covariate)&&!is.null(model$covariate)){
-    stop("Covariate specified in the model, but no function parameter available.")
+  }else if(!inherits(model, "cnormModel")){
+    stop("Please provide a cnorm object.")
   }
 
   if (model$useAge&&!is.numeric(A)){
@@ -331,7 +277,7 @@ normTable <- function(A,
     l <- length(norm)
 
       while (i <= l) {
-        r <- predictRaw(minn, A[[x]], model$coefficients, minRaw = minRaw, maxRaw = maxRaw, covariate = covariate)
+        r <- predictRaw(minn, A[[x]], model$coefficients, minRaw = minRaw, maxRaw = maxRaw)
 
         norm[[i]] <- minn
         raw[[i]] <- r
@@ -413,8 +359,6 @@ normTable <- function(A,
 #' @param minNorm Clipping parameter for the lower bound of norm scores (default 25)
 #' @param maxNorm Clipping parameter for the upper bound of norm scores (default 25)
 #' @param step Stepping parameter for the raw scores (default 1)
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
 #' @param monotonuous corrects for decreasing norm scores in case of model inconsistencies (default)
 #' @param CI confidence coefficient, ranging from 0 to 1, default .9
 #' @param reliability coefficient, ranging between  0 to 1
@@ -434,6 +378,11 @@ normTable <- function(A,
 #'
 #' # additionally compute confidence intervals
 #' table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
+#'
+#' # conventional norming, set age to arbitrary value
+#' model <- cnorm(raw=elfe$raw)
+#' rawTable(0, model)
+#'
 #' @family predict
 #' @export
 rawTable <- function(A,
@@ -442,21 +391,16 @@ rawTable <- function(A,
                      maxRaw = NULL,
                      minNorm = NULL,
                      maxNorm = NULL,
-                     step = 1, covariate = NULL,
+                     step = 1,
                      monotonuous = TRUE,
                      CI = .9,
                      reliability = NULL,
                      pretty = TRUE) {
 
-  if(inherits(model, "cnorm")){
+  if(inherits(model, "cnorm")||inherits(model, "cnormTemp")){
     model <- model$model
-  }
-
-  if(!is.null(covariate)&&is.null(model$covariate)){
-    warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
-    covariate = NULL
-  }else if(is.null(covariate)&&!is.null(model$covariate)){
-    stop("Covariate specified in the model, but no function parameter available.")
+  }else if(!inherits(model, "cnormModel")){
+    stop("Please provide a cnorm object.")
   }
 
   if (model$useAge&&!is.numeric(A)){
@@ -510,7 +454,7 @@ rawTable <- function(A,
       while (minr <= maxr) {
         i <- i + 1
         n <-
-          predictNorm(minr, A[[x]], model, minNorm, maxNorm, covariate = covariate)
+          predictNorm(minr, A[[x]], model, minNorm, maxNorm)
         norm[[i]] <- n
         raw[[i]] <- minr
 
@@ -592,8 +536,6 @@ rawTable <- function(A,
 #' @param minNorm The lower bound of the norm value range
 #' @param maxNorm The upper bound of the norm value range
 #' @param step Stepping parameter with lower values indicating higher precision
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
 #' @return data.frame with norm scores and the predicted scores based on the
 #' derived regression function
 #' @seealso plotDerivative, derive
@@ -611,17 +553,13 @@ derivationTable <-
              model,
              minNorm = NULL,
              maxNorm = NULL,
-             step = 0.1, covariate = NULL) {
+             step = 0.1) {
+
 
     if(inherits(model, "cnorm")){
       model <- model$model
-    }
-
-    if(!is.null(covariate)&&is.null(model$covariate)){
-      warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
-      covariate = NULL
-    }else if(is.null(covariate)&&!is.null(model$covariate)){
-      stop("Covariate specified in the model, but no function parameter available.")
+    }else if(!inherits(model, "cnormModel")){
+      stop("Please provide a cnorm object.")
     }
 
     if (is.null(minNorm)) {
@@ -635,10 +573,10 @@ derivationTable <-
     norm <- vector("list", 1 + (maxNorm - minNorm) / step)
     raw <- vector("list", 1 + (maxNorm - minNorm) / step)
     i <- 1
-    coeff <- derive(model, covariate = covariate)
+    coeff <- derive(model)
     while (minNorm <= maxNorm) {
       i <- i + 1
-      r <- predictRaw(minNorm, A, coeff, covariate = covariate)
+      r <- predictRaw(minNorm, A, coeff)
 
       norm[[i]] <- minNorm
       raw[[i]] <- r
@@ -660,8 +598,6 @@ derivationTable <-
 #' @param minNorm The lower bound of the norm score range
 #' @param maxNorm The upper bound of the norm score range
 #' @param force Try to resolve missing norm scores in case of inconsistent models
-#' @param covariate In case, a covariate has been used, please specify the degree of the covariate /
-#' the specific value here.
 #' @param silent set to TRUE to suppress messages
 #' @return The predicted norm score for a raw score, either single value or vector
 #' @examples
@@ -682,8 +618,11 @@ predictNorm <-
              model,
              minNorm = NULL,
              maxNorm = NULL, force = FALSE,
-             covariate = NULL,
              silent = FALSE) {
+
+    if(!inherits(model, "cnormModel")&&!inherits(model, "cnorm")&&!inherits(model, "cnormLasso")){
+      stop("Please provide a cnorm object.")
+    }
 
     if(length(raw)==1&&is.na(raw)){
       return(rep(NA, times=length(A)))
@@ -715,28 +654,26 @@ predictNorm <-
       }
 
       model <- model$model
-    }  else{
+    } else if(inherits(model, "cnormModel")){
+      if(is.null(minNorm)){
+        minNorm <- attributes(model)$scaleMean - (attributes(model)$scaleSD * 2.5)
+      }
+
+      if(is.null(maxNorm)){
+        maxNorm <- attributes(model)$scaleMean + (attributes(model)$scaleSD * 2.5)
+      }
+
+    } else{
       if (is.null(minNorm) || is.null(maxNorm)) {
         stop("ERROR: Please specify minimum and maximum norm score")
       }
     }
 
 
-    if(!is.null(covariate)&&is.null(model$covariate)){
-      if(!silent)
-        warning("Covariate specified but no covariate available in the model. Setting covariate to NULL.")
-      covariate = NULL
-    }else if(is.null(covariate)&&!is.null(model$covariate)){
-      stop("Covariate specified in the model, but no function parameter available.")
-    }
-
 
     # determine single norm value by optimization
     if (length(raw) == 1 && length(A) == 1) {
       coef <- model$coefficients
-      if(!is.null(covariate)){
-        coef <- simplifyCoefficients(coef, covariate)
-      }
       startNormScore <- minNorm
       currentRawValue <- predictRaw(norm = minNorm, age = A, coefficients = coef)
 
@@ -754,11 +691,6 @@ predictNorm <-
         A <- rep(A, length(raw))
       }
 
-
-      if(!is.vector(covariate))
-        cov <- rep(covariate, times = length(raw))
-      else
-        cov <- covariate
 
       # initialize vectors and starting values
       # of retrieved norm scores to specific cases; needed for later matching
@@ -781,7 +713,7 @@ predictNorm <-
 
       # iterate through cases
       for (i in 1:n) {
-        v <- predictNormByRoots(raw2[[i]], A2[[i]], model, minNorm, maxNorm, force = force, covariate = cov[[i]])
+        v <- predictNormByRoots(raw2[[i]], A2[[i]], model, minNorm, maxNorm, force = force)
         if (length(v) == 0) {
           v <- NA
         }
@@ -854,3 +786,5 @@ prettyPrint <- function(table){
 
   return(tab)
 }
+
+

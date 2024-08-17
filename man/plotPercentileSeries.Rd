@@ -5,20 +5,16 @@
 \title{Generates a series of plots with number curves by percentile for different models}
 \usage{
 plotPercentileSeries(
-  data,
   model,
   start = 1,
   end = NULL,
   group = NULL,
   percentiles = c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975),
-  type = 7,
   filename = NULL
 )
 }
 \arguments{
-\item{data}{The raw data including the percentiles and norm scores or a cnorm object}
-
-\item{model}{The model from the bestModel function (optional)}
+\item{model}{The Taylor polynomial regression model object from the cNORM}
 
 \item{start}{Number of predictors to start with}
 
@@ -28,9 +24,6 @@ plotPercentileSeries(
 determined}
 
 \item{percentiles}{Vector with percentile scores, ranging from 0 to 1 (exclusive)}
-
-\item{type}{The type parameter of the quantile function to estimate the percentiles
-of the raw data (default 7)}
 
 \item{filename}{Prefix of the filename. If specified, the plots are saves as
 png files in the directory of the workspace, instead of displaying them}
@@ -48,17 +41,20 @@ additional model check to determine the best fitting model. Please have a look a
 \examples{
 # Load example data set, compute model and plot results
 result <- cnorm(raw = elfe$raw, group = elfe$group)
-plotPercentileSeries(result, start=1, end=5, group="group")
+plotPercentileSeries(result, start=4, end=6)
+
 }
 \seealso{
 plotPercentiles
 
 Other plot: 
 \code{\link{plot.cnorm}()},
+\code{\link{plot.cnormBetaBinomial}()},
+\code{\link{plot.cnormBetaBinomial2}()},
 \code{\link{plotDensity}()},
 \code{\link{plotDerivative}()},
-\code{\link{plotNormCurves}()},
 \code{\link{plotNorm}()},
+\code{\link{plotNormCurves}()},
 \code{\link{plotPercentiles}()},
 \code{\link{plotRaw}()},
 \code{\link{plotSubset}()}

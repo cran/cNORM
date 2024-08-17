@@ -4,16 +4,14 @@
 \alias{plotRaw}
 \title{Plot manifest and fitted raw scores}
 \usage{
-plotRaw(data, model, group = NULL, raw = NULL, type = 0)
+plotRaw(model, group = FALSE, raw = NULL, type = 0)
 }
 \arguments{
-\item{data}{The raw data within a data.frame or cnorm object}
+\item{model}{The regression model from the 'cnorm' function}
 
-\item{model}{The regression model (optional)}
+\item{group}{Should the fit be displayed by group?}
 
-\item{group}{The grouping variable}
-
-\item{raw}{The raw score variable}
+\item{raw}{Vector of the observed raw data}
 
 \item{type}{Type of display: 0 = plot manifest against fitted values, 1 = plot
 manifest against difference values}
@@ -32,10 +30,12 @@ plotRaw(result)
 \seealso{
 Other plot: 
 \code{\link{plot.cnorm}()},
+\code{\link{plot.cnormBetaBinomial}()},
+\code{\link{plot.cnormBetaBinomial2}()},
 \code{\link{plotDensity}()},
 \code{\link{plotDerivative}()},
-\code{\link{plotNormCurves}()},
 \code{\link{plotNorm}()},
+\code{\link{plotNormCurves}()},
 \code{\link{plotPercentileSeries}()},
 \code{\link{plotPercentiles}()},
 \code{\link{plotSubset}()}

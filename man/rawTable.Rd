@@ -12,7 +12,6 @@ rawTable(
   minNorm = NULL,
   maxNorm = NULL,
   step = 1,
-  covariate = NULL,
   monotonuous = TRUE,
   CI = 0.9,
   reliability = NULL,
@@ -33,9 +32,6 @@ rawTable(
 \item{maxNorm}{Clipping parameter for the upper bound of norm scores (default 25)}
 
 \item{step}{Stepping parameter for the raw scores (default 1)}
-
-\item{covariate}{In case, a covariate has been used, please specify the degree of the covariate /
-the specific value here.}
 
 \item{monotonuous}{corrects for decreasing norm scores in case of model inconsistencies (default)}
 
@@ -70,6 +66,11 @@ table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28)
 
 # additionally compute confidence intervals
 table <- rawTable(c(2.5, 3.5, 4.5), cnorm.elfe, minRaw = 0, maxRaw = 28, CI = .9, reliability = .94)
+
+# conventional norming, set age to arbitrary value
+model <- cnorm(raw=elfe$raw)
+rawTable(0, model)
+
 }
 \references{
 Eid, M. & Schmidt, K. (2012). Testtheorie und Testkonstruktion. Hogrefe.
@@ -81,6 +82,8 @@ Other predict:
 \code{\link{derivationTable}()},
 \code{\link{getNormCurve}()},
 \code{\link{normTable}()},
+\code{\link{predict.cnormBetaBinomial}()},
+\code{\link{predict.cnormBetaBinomial2}()},
 \code{\link{predictNorm}()},
 \code{\link{predictRaw}()}
 }
