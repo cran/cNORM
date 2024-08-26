@@ -30,6 +30,12 @@ cNORM.GUI()
 # via object$data and the model via object$model.
 cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 
+# ... and since we love pop music as much as Taylor polynomials, you
+# can also use the taylorSwift function to swiftly compute a distribution-
+# free Taylor polynomial model (which is however identical to cnorm). Here
+# with the sample dataset 'ppvt':
+model <- taylorSwift(ppvt$raw, ppvt$group)
+
 # Plot different indicators of model fit depending on the number of
 # predictors
 plot(cnorm.elfe, "subset", type=0) # plot R2
@@ -90,7 +96,6 @@ model.betabinomial <- cnorm.betabinomial(ppvt$age, ppvt$raw)
 model.betabinomial <- cnorm.betabinomial(ppvt$age, ppvt$raw, alpha = 4)
 
 # Plot percentile curves and display manifest and modelled norm scores.
-# Normwerte plotten
 plot(model.betabinomial, ppvt$age, ppvt$raw)
 plotNorm(model.betabinomial, ppvt$age, ppvt$raw, width = 1)
 
@@ -125,7 +130,7 @@ vignette("BetaBinomial", package = "cNORM")
 
 
 ## Sample Data
-The package includes data from two large test norming projects, namely ELFE 1-6 (Lenhard & Schneider, 2006) and German adaption of the PPVT4 (A. Lenhard, Lenhard, Suggate & Seegerer, 2015), which can be used to run the analysis. Furthermore, large samples from the Center of Disease Control (CDC) on growth curves in childhood and adolescence (for computing Body Mass Index 'BMI' curves), Type `?elfe`, `?ppvt` or to display information on the data sets.
+The package includes data from two large test norming projects, namely ELFE 1-6 (Lenhard & Schneider, 2006) and German adaption of the PPVT4 (A. Lenhard, Lenhard, Suggate & Seegerer, 2015), which can be used to run the analysis. Furthermore, large samples from the Center of Disease Control (CDC) on growth curves in childhood and adolescence (for computing Body Mass Index 'BMI' curves), Type `?elfe`, `?ppvt` or `?CDC` to display information on the data sets.
 
 ## Terms of use, license and declaration of interest
 cNORM is licensed under GNU Affero General Public License v3 (AGPL-3.0). This means that copyrighted parts of cNORM can be used free of charge for commercial and non-commercial purposes that run under this same license, retain the copyright notice, provide their source code and correctly cite cNORM. Copyright protection includes, for example, the reproduction and distribution of source code or parts of the source code of cNORM or of graphics created with cNORM. The integration of the package into a server environment in order to access the functionality of the software (e.g. for online delivery of norm scores) is also subject to this license. However, a regression function determined with cNORM, the norm tables ... are not subject to copyright protection and may be used freely without preconditions. If you want to apply cNORM in a way that is not compatible with the terms of the AGPL 3.0 license, please do not hesitate to contact us to negotiate individual conditions. If you want to use cNORM for scientific publications, we would also ask you to quote the source.

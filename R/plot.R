@@ -112,6 +112,7 @@ plotRaw <- function(model, group = FALSE, raw = NULL, type = 0) {
 #' @return A ggplot object representing the norm scores plot.
 #'
 #' @examples
+#' \dontrun{
 #' # Load example data set, compute model and plot results
 #'
 #' # Taylor polynomial model
@@ -121,7 +122,7 @@ plotRaw <- function(model, group = FALSE, raw = NULL, type = 0) {
 #' # Beta binomial models; maximum number of items in elfe is n = 28
 #' model.bb <- cnorm.betabinomial(elfe$group, elfe$raw, n = 28)
 #' plotNorm(model.bb, age = elfe$group, score = elfe$raw)
-#'
+#' }
 #'
 #' @import ggplot2
 #' @export
@@ -425,6 +426,7 @@ plotNormCurves <- function(model,
 #' f. e. c(10, 3) for Wechsler scale index points; if NULL, scale information from the
 #' data preparation is used (default)
 #' @param title custom title for plot
+#' @param subtitle custom title for plot
 #' @param points Logical indicating whether to plot the data points. Default is TRUE.
 #' @seealso plotNormCurves, plotPercentileSeries
 #' @examples
@@ -443,6 +445,7 @@ plotPercentiles <- function(model,
                             percentiles = c(0.025, 0.1, 0.25, 0.5, 0.75, 0.9, 0.975),
                             scale = NULL,
                             title = NULL,
+                            subtitle = NULL,
                             points = F) {
 
   is_beta_binomial <- inherits(model, "cnormBetaBinomial2")||inherits(model, "cnormBetaBinomial")
@@ -578,19 +581,10 @@ plotPercentiles <- function(model,
 
   if (is.null(title)) {
     title <- "Observed and Predicted Percentile Curves"
-    subtitle <- paste0("Model: ", m$ideal.model, ", R2 = ", round(m$subsets$adjr2[[m$ideal.model]], digits = 4))
-  }else{
-    seg <- strsplit(title, "\n")
-    if(length(seg[[1]]) == 2){
-      title <- seg[[1]][1]
-      subtitle <- seg[[1]][2]
-    }else{
-      title <- title
-      subtitle <- ""
-    }
+    subtitle <- bquote(paste("Model: ", .(m$ideal.model), ", R"^2, "=", .(round(m$subsets$adjr2[[m$ideal.model]], digits = 4))))
   }
 
-  # Prepare data for ggplot without using tidyr
+  # Prepare data for ggplot
   plot_data <- data.frame(
     group = rep(percentile$group, 2 * length(percentiles)),
     value = c(as.matrix(percentile[, NAMES]), as.matrix(percentile[, NAMESP])),
@@ -722,6 +716,8 @@ plotDensity <- function(model,
     maxRaw <- if(is_beta_binomial) attr(model$result, "max") else model$maxRaw
   }
 
+
+
   if (is.null(group)) {
     if(is_beta_binomial) {
       age_min <- attr(model$result, "ageMin")
@@ -767,6 +763,8 @@ plotDensity <- function(model,
   } else {
     title <- "Density Functions (Taylor Polynomial)"
   }
+
+  matrix <- matrix[complete.cases(matrix), ]
   p <- ggplot(matrix, aes(x = .data$raw, y = .data$density, color = factor(group))) +
     geom_line(size = 1, na.rm = TRUE) +
     scale_color_viridis_d(name = "Age",
@@ -905,7 +903,9 @@ plotPercentileSeries <- function(model, start = 1, end = NULL, group = NULL,
                                           percentiles = percentiles,
                                           scale = NULL,
                                           group = group,
-                                          title = paste0("Observed and Predicted Percentiles\nModel with ", bestformula$subsets$numberOfTerms[[start]], " predictors, R2=", round(bestformula$subsets$adjr2[[start]], digits = 4))
+                                          title = "Observed and Predicted Percentiles",
+                                          subtitle = bquote(paste("Model with ", start, " predictors, ", R^2, "=",
+                                                               .(round(bestformula$subsets$adjr2[[start]], digits = 4))))
     )
 
     if (!is.null(filename)) {
@@ -928,7 +928,8 @@ plotPercentileSeries <- function(model, start = 1, end = NULL, group = NULL,
 #'
 #' This function plots various information criteria and model fit statistics against
 #' the number of predictors or adjusted R-squared, depending on the type of plot selected.
-#' It helps in model selection by visualizing different aspects of model performance.
+#' It helps in model selection by visualizing different aspects of model performance. Models,
+#' which did not pass the initial consistency check are depicted with an empty circle.
 #'
 #' @param model The regression model from the bestModel function or a cnorm object.
 #' @param type Integer specifying the type of plot to generate:
@@ -997,6 +998,13 @@ plotSubset <- function(model, type = 0) {
   F <- ((RSS1-RSS2)/df1)/(RSS2/df2)
   p <- 1 - pf(F, df1, df2)
 
+  filled <- rep(TRUE, length(model$subsets$rss))
+  if(!is.null(model$subsets$consistent))
+    filled <- model$subsets$consistent
+  cutoff <- .99
+  if(!is.null(model$cutoff))
+    cutoff <- model$cutoff
+
   dataFrameTMP <- data.frame(
     adjr2 = model$subsets$adjr2,
     bic = model$subsets$bic,
@@ -1005,7 +1013,8 @@ plotSubset <- function(model, type = 0) {
     RMSE = sqrt(model$subsets$rss / length(model$fitted.values)),
     F = head(F, -1),
     p = head(p, -1),
-    nr = seq(1, length(model$subsets$adjr2), by = 1)
+    nr = seq(1, length(model$subsets$adjr2), by = 1),
+    filled = filled
   )
 
   # Improved base theme
@@ -1033,62 +1042,70 @@ plotSubset <- function(model, type = 0) {
   if (type == 1) {
     p <- p +
       geom_line(aes(x = .data$adjr2, y = .data$cp, color = "Model in Ascending Order"), size = .75) +
-      geom_point(aes(x = .data$adjr2, y = .data$cp), size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$adjr2, y = .data$cp, shape = .data$filled), size = 2.5, color = "#1f77b4") +
       scale_y_log10() +
       labs(title = "Information Function: Mallows's Cp",
-           x = "Adjusted R2",
+           x = expression(paste("Adjusted ", R^2)),
            y = "log-transformed Mallows's Cp") +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else if (type == 2) {
     p <- p +
       geom_line(aes(x = .data$adjr2, y = .data$bic, color = "Model in Ascending Order"), size = .75) +
-      geom_point(aes(x = .data$adjr2, y = .data$bic), size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$adjr2, y = .data$bic, shape = .data$filled), size = 2.5, color = "#1f77b4") +
       labs(title = "Information Function: BIC",
-           x = "Adjusted R2",
+           x = expression(paste("Adjusted ", R^2)),
            y = "Bayesian Information Criterion (BIC)") +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else if (type == 3) {
     p <- p +
       geom_line(aes(x = .data$nr, y = .data$RMSE, color = "Model in Ascending Order"), size = .75) +
-      geom_point(aes(x = .data$nr, y = .data$RMSE), size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$nr, y = .data$RMSE, shape = .data$filled), size = 2.5, color = "#1f77b4") +
       labs(title = "Information Function: RMSE",
            x = "Number of Predictors",
            y = "Root Mean Square Error (Raw Score)") +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else if (type == 4) {
     p <- p +
       geom_line(aes(x = .data$nr, y = .data$RSS, color = "Model in Ascending Order"), size = .75) +
-      geom_point(aes(x = .data$nr, y = .data$RSS), size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$nr, y = .data$RSS, shape = .data$filled), size = 2.5, color = "#1f77b4") +
       labs(title = "Information Function: RSS",
            x = "Number of Predictors",
            y = "Residual Sum of Squares (RSS)") +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else if (type == 5) {
     p <- p +
       geom_line(aes(x = .data$nr, y = .data$F, color = "Model in Ascending Order"), na.rm = TRUE, size = .75) +
-      geom_point(aes(x = .data$nr, y = .data$F), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$nr, y = .data$F, shape = .data$filled), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
       labs(title = "Information Function: F-test Statistics",
            x = "Number of Predictors",
            y = "F-test Statistics for Consecutive Models") +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else if (type == 6) {
     p <- p +
       geom_line(aes(x = .data$nr, y = .data$p, color = "Model in Ascending Order"), na.rm = TRUE, size = .75) +
-      geom_point(aes(x = .data$nr, y = .data$p), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
+      geom_point(aes(x = .data$nr, y = .data$p, shape = .data$filled), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
       ylim(-0.005, 0.11) +
       labs(title = "Information Function: p-values",
            x = "Number of Predictors",
-           y = "p-values for Tests on R2 adj. of Consecutive Models") +
+           y = expression(paste("p-values for Tests on ", R^2, " adj. of Consecutive Models"))) +
       geom_hline(aes(yintercept = 0.05, color = "p = .05"), linetype = "dashed", size = 1) +
-      scale_color_manual(values = custom_colors)
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   } else {
     p <- p +
       geom_line(aes(x = .data$nr, y = .data$adjr2, color = "Model in Ascending Order"), na.rm = TRUE, size = .75) +
-      geom_point(aes(x = .data$nr, y = .data$adjr2), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
-      labs(title = "Information Function: Adjusted R2",
+      geom_point(aes(x = .data$nr, y = .data$adjr2, shape = .data$filled), na.rm = TRUE, size = 2.5, color = "#1f77b4") +
+      labs(title = expression(paste("Information Function: Adjusted ", R^2)),
            x = "Number of Predictors",
-           y = "Adjusted R2") +
-      scale_color_manual(values = custom_colors)
+           y = expression(paste("Adjusted ", R^2))) +
+      geom_hline(aes(yintercept = cutoff, color = "R2 = .05"), linetype = "dashed", size = 1, color = "#d62728") +
+      scale_color_manual(values = custom_colors) +
+      scale_shape_manual(values = c(1, 16))
   }
 
   # Add legend title
@@ -1144,8 +1161,8 @@ plotDerivative <- function(model,
                            maxAge = NULL,
                            minNorm = NULL,
                            maxNorm = NULL,
-                           stepAge = 0.2,
-                           stepNorm = 1,
+                           stepAge = NULL,
+                           stepNorm = NULL,
                            order = 1) {
 
   if(inherits(model, "cnorm")){
@@ -1177,10 +1194,25 @@ plotDerivative <- function(model,
     maxNorm <- model$maxL1
   }
 
+  if (is.null(stepAge)) {
+    stepAge <- (maxAge - minAge)/100
+  }
+
+  if (is.null(stepNorm)) {
+    stepNorm <- (maxNorm - minNorm)/100
+  }
+
+  if(order <=0 )
+    stop("Order of derivative must be a positive integer.")
+
   rowS <- seq(minNorm, maxNorm, by = stepNorm)
   colS <- seq(minAge, maxAge, by = stepAge)
 
   coeff <- derive(model, order)
+  if(length(coeff) == 0){
+    stop("Derivative of order ", order, " not available for this model.")
+  }
+
   cat(paste0(rangeCheck(model, minAge, maxAge, minNorm, maxNorm), " Coefficients from the ", order, " order derivative function:\n\n"))
   print(coeff)
 
@@ -1193,21 +1225,37 @@ plotDerivative <- function(model,
   custom_palette <- c("#FF0000", "#FF4000", "#FF8000", "#FFBF00", "#FFFF00",
                       "#80FF00", "#00FF00", "#00FF80", "#00FFFF",
                       "#0080FF", "#0000FF", "#4B0082", "#8B00FF")
+  theme_custom <- theme_minimal() +
+    theme(
+      plot.title = element_text(face = "bold", size = 14, hjust = 0.5),
+      axis.title = element_text(face = "bold", size = 12),
+      axis.title.x = element_text(margin = margin(t = 10)),
+      axis.title.y = element_text(margin = margin(r = 10)),
+      axis.text = element_text(size = 8),
+      legend.position = "right",
+      legend.text = element_text(size = 8),
+      panel.grid.major = element_line(color = "gray90"),
+      panel.grid.minor = element_line(color = "gray95")
+    )
+
   p <- ggplot(dev2, aes(x = .data$Y, y = .data$X, z = .data$Z)) +
     geom_tile(aes(fill = .data$Z)) +
     geom_contour(color = "white", alpha = 0.5) +
     scale_fill_gradientn(colors = custom_palette) +
-    labs(title = paste("Slope of the Regression Function - ", desc),
+    labs(title = "Slope of the Regression Function",
          x = "Explanatory Variable (Age)",
-         y = "Norm Score",
+         y = paste("Norm Score - ", desc),
          fill = "Derivative") +
-    theme_minimal() +
+    theme_custom +
     theme(legend.position = "right")
+
+  if(min(dev2$Z)<0 && max(dev2$Z)>0)
+    p <- p + geom_contour(aes(z = .data$Z), color = "black", linewidth = 0.5, breaks = 0, linetype = "dashed")
 
   return(p)
 }
 
-#' General convencience plotting function
+#' General convenience plotting function
 #'
 #' @param x a cnorm object
 #' @param y the type of plot as a string, can be one of

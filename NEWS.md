@@ -2,6 +2,29 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
+### Version in 3.3.0,
+Date: 2024.08.26
+
+
+Changes:
+
+*    checkConsistency performance improvement; now runs 100 times faster
+*    visualization improvement in 'plotDerivative'
+*    bug in subheadline of plotPercentileSeries fixed
+*    reduced number of messages
+*    Starting work on inclusion of regularized Taylor models. Since simulation
+     studies with glmnet did not show improvement, we generate much more models
+     and preselect those, which pass an initial consistency check.
+     Now, the a consistent model with the highest R2 is selected. R^2 and terms
+     can of course still be specified as usual.
+*    plotSubset improved: now indicates, which models did not pass the initial 
+     consistency check via empty circles
+*    Plots improved generally, now prints formula and statistical indicators
+     in Greek letters and R^2 with the 2 uppercase
+  
+
+
+
 ### Version in 3.2.0,
 Date: 2023.08.17
 
@@ -109,7 +132,7 @@ Changes:
      by providing marginal means factor levels of stratification variables in the 
      population as a data frame
      New function: computeWeights()
-*    Newly developed, highly performant and biasless weighted ranking procedure
+*    Newly developed, highly performant and unbiased weighted ranking procedure
 *    New vignette: 'WeightedRanking'
 *    Modelling returns info on range of weights if post stratification is used
 *    automatically remove  cases with missings in 'cnorm' function

@@ -17,7 +17,8 @@ cnorm(
   t = NULL,
   terms = 0,
   R2 = NULL,
-  plot = TRUE
+  plot = TRUE,
+  extensive = TRUE
 )
 }
 \arguments{
@@ -63,7 +64,9 @@ this number of terms is used}
 \item{R2}{Adjusted R square as a stopping criterion for the model building
 (default R2 = 0.99)}
 
-\item{plot}{Default TRUE; plot the raw data and the regression model}
+\item{plot}{Default TRUE; plots the regression model and prints report}
+
+\item{extensive}{If TRUE, screen models for consistency and - if possible, exclude inconsistent ones}
 }
 \value{
 cnorm object including the ranked raw data and the regression model
@@ -100,10 +103,10 @@ cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 # return norm tables including 90\% confidence intervals for a
 # test with a reliability of r = .85; table are set to mean of quartal
 # in grade 3 (children completed 2 years of schooling)
-normTable(c(2.125, 2.375, 2.625, 2.875), cnorm.elfe, CI = .90, reliability = .95)
+normTable(c(2.125, 2.375, 2.625), cnorm.elfe, CI = .90, reliability = .95)
 
 # ... or instead of raw scores for norm scores, the other way round
-rawTable(c(2.125, 2.375, 2.625, 2.875), cnorm.elfe, CI = .90, reliability = .95)
+rawTable(c(2.125, 2.375, 2.625), cnorm.elfe, CI = .90, reliability = .95)
 
 
 # Using a continuous age variable instead of distinct groups, using a sliding
@@ -135,6 +138,7 @@ model <- cnorm(raw = ppvt$raw, group=ppvt$group, weights = weights)
   \item Lenhard, A., Lenhard, W., Gary, S. (2018). Continuous Norming (cNORM). The Comprehensive R Network, Package cNORM, available: https://CRAN.R-project.org/package=cNORM
   \item Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9),  e0222279. doi:10.1371/journal.pone.0222279
   \item Lenhard, W., & Lenhard, A. (2020). Improvement of Norm Score Quality via Regression-Based Continuous Norming. Educational and Psychological Measurement(Online First), 1-33. https://doi.org/10.1177/0013164420928457
+
 }
 }
 \seealso{

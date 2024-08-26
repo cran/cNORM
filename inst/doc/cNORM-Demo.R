@@ -28,6 +28,8 @@ plot(model, "subset", type = 0) # R2
 plot(model, "subset", type = 3) # RMSE
 
 ## -----------------------------------------------------------------------------
+model <- cnorm(elfe$raw, elfe$group, terms = 5, plot = FALSE)
+
 # Search for intersecting percentiles
 checkConsistency(model, minNorm = 25, maxNorm = 75)
 
