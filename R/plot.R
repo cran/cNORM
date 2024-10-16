@@ -767,8 +767,8 @@ plotDensity <- function(model,
   matrix <- matrix[complete.cases(matrix), ]
   p <- ggplot(matrix, aes(x = .data$raw, y = .data$density, color = factor(group))) +
     geom_line(size = 1, na.rm = TRUE) +
-    scale_color_viridis_d(name = "Age",
-                          labels = paste("Age", group),
+    scale_color_viridis_d(name = "Group",
+                          labels = paste("Group", group),
                           option = "plasma") +
     labs(title = title,
          x = "Raw Score",
@@ -904,7 +904,7 @@ plotPercentileSeries <- function(model, start = 1, end = NULL, group = NULL,
                                           scale = NULL,
                                           group = group,
                                           title = "Observed and Predicted Percentiles",
-                                          subtitle = bquote(paste("Model with ", start, " predictors, ", R^2, "=",
+                                          subtitle = bquote(paste("Model with ", .(start), " predictors, ", R^2, "=",
                                                                .(round(bestformula$subsets$adjr2[[start]], digits = 4))))
     )
 

@@ -32,8 +32,8 @@ log_likelihood <- function(params, X, Z, y, weights) {
 #' This function fits a beta binomial regression model where both the mean and
 #' standard deviation of the response variable are modeled as polynomial functions
 #' of the predictor variable. While 'cnorm-betabinomial2' fits a beta-binomial model
-#' on the basis of /$alpha$ and /$beta$ of a beta binomial function, this function
-#' fits /$mu$ and /$sigma$, which are then used to estimate the beta binomial distribution
+#' on the basis of \eqn{\gamma} and \eqn{\beta} of a beta binomial function, this function
+#' fits \eqn{\mu} and \eqn{\sigma}, which are then used to estimate the beta binomial distribution
 #' parameters.
 #'
 #' @param age A numeric vector of predictor values (e.g., age).
@@ -615,7 +615,7 @@ plot.cnormBetaBinomial <- function(x, ...) {
     )
 
   # Calculate and add manifest percentiles
-  if (length(age) / length(unique(age)) > 50) {
+  if (length(age) / length(unique(age)) > 50 && min(table(data$age)) > 30) {
     # Distinct age groups
     data$group <- age
   } else {
@@ -803,8 +803,7 @@ diagnostics.betabinomial <- function(model,
   rmse <- NA
   bias <- NA
   if (!is.null(age) && !is.null(score)) {
-
-    if (length(age) / length(unique(age)) > 50) {
+    if (length(age) / length(unique(age)) > 50 && min(table(age)) > 30) {
       data <- data.frame(group = age, raw = score)
       data <- rankByGroup(
         data = data,
@@ -935,8 +934,8 @@ log_likelihood2 <- function(params, X, Z, y, n, weights = NULL) {
 #' This function fits a beta-binomial regression model where both the alpha and beta
 #' parameters of the beta-binomial distribution are modeled as polynomial functions
 #' of the predictor variable (typically age). While 'cnorm-betabinomial' fits a beta-binomial model
-#' on the basis of /$mu$ and /$sigma$, this function fits a beta-binomial model directly on the basis
-#' of /$alpha$ and /$beta$.
+#' on the basis of \eqn{\mu} and \eqn{\sigma}, this function fits a beta-binomial model directly on the basis
+#' of \eqn{\gamma} and \eqn{\beta}.
 #'
 #' @param age A numeric vector of predictor values (e.g., age).
 #' @param score A numeric vector of response values.
@@ -986,17 +985,20 @@ cnorm.betabinomial2 <- function(age,
   y <- data$score
 
   # Initial parameters: use some sensible starting values
-  initial_alpha <- log(mean(y) / (n - mean(y)) + 1e-6)  # Add small constant
-  initial_beta <- log(1 + 1e-6)  # Add small constant
+  starting_values <- betaCoefficients(y)
+  starting_values[starting_values<=0] <- 1e-6
+  initial_alpha <- log(starting_values[1])
+  initial_beta <- log(starting_values[2])
+
   initial_params <- c(initial_alpha,
-                      rep(0, alpha_degree),
+                      rep(1e-9, alpha_degree),
                       initial_beta,
-                      rep(0, beta_degree))
+                      rep(1e-9, beta_degree))
 
   # Optimize to find parameter estimates. If control is NULL, set default
   if (is.null(control)){
     n_param <-alpha_degree + beta_degree + 2
-    control = list(factr = 1e-8, maxit = n_param*50)
+    control = list(factr = 1e-6, maxit = n_param*50, lmm = n_param)
   }
 
   result <- optim(
@@ -1011,6 +1013,10 @@ cnorm.betabinomial2 <- function(age,
     hessian = TRUE,
     control = control
   )
+
+  if (result$convergence != 0) {
+    warning("Optimization did not converge. Consider adjusting control parameters.")
+  }
 
   # Extract results and calculate standard errors
   alpha_est <- result$par[1:(alpha_degree + 1)]
@@ -1128,29 +1134,28 @@ predictCoefficients2 <- function(model, ages, n = NULL) {
 
 #' Fit a beta-binomial regression model for continuous norming
 #'
-#' This function fits a beta-binomial regression model where both the /$alpha$ and /$beta$
+#' This function fits a beta-binomial regression model where both the \eqn{\alpha} and \eqn{\beta}
 #' parameters of the beta-binomial distribution are modeled as polynomial functions
 #' of the predictor variable (typically age). Setting mode to 1 fits a beta-binomial
-#' model on the basis of /$mu$ and /$sigma$, setting it to 2 (default) fits a beta-binomial
-#' model directly on the basis of /$alpha$ and /$beta$.
+#' model on the basis of \eqn{\mu} and \eqn{\sigma}, setting it to 2 (default) fits a beta-binomial
+#' model directly on the basis of \eqn{\alpha} and \eqn{\beta}.
 #'
 #' @param age A numeric vector of predictor values (e.g., age).
 #' @param score A numeric vector of response values.
 #' @param n The maximum score (number of trials in the beta-binomial distribution). If NULL, max(score) is used.
 #' @param weights A numeric vector of weights for each observation. Default is NULL (equal weights).
-#' @param mode Integer specifying the mode of the model. Default is 2 (direct modelling of /$alpha$ and /$beta$).
-#'             If set to 1, the model is fitted on the basis of /$mu$ and /$sigma$, the predicted
+#' @param mode Integer specifying the mode of the model. Default is 2 (direct modelling of \eqn{\gamma} and \eqn{\beta}).
+#'             If set to 1, the model is fitted on the basis of \eqn{\mu} and \eqn{\sigma}, the predicted
 #'             mean and standard deviation over age.
 #' @param alpha Integer specifying the degree of the polynomial for the alpha model.
 #'              Default is 3. If mode is set to 1, this parameter is used to specify the degree
-#'              of the polynomial for the /$mu$ model.
+#'              of the polynomial for the \eqn{\mu} model.
 #' @param beta Integer specifying the degree of the polynomial for the beta model. Default is 3.
 #'             If mode is set to 1, this parameter is used to specify the degree of the polynomial
-#'             for the /$sigma$ model.
+#'             for the \eqn{\sigma} model.
 #' @param control A list of control parameters to be passed to the `optim` function.
 #'   If NULL, default values are used, namely control = list(reltol = 1e-8, maxit = 1000)
 #'   for mode 1 and control = list(factr = 1e-8, maxit = 1000) for mode 2.
-#'   and
 #' @param scale Type of norm scale, either "T" (default), "IQ", "z" or a double vector with the mean and standard deviation.
 #' @param plot Logical indicating whether to plot the model. Default is TRUE.
 #'
@@ -1199,6 +1204,11 @@ cnorm.betabinomial <- function(age,
   if (is.null(n)) {
     n <- max(score)
     message("n parameter not specified, using the maximum score in the data instead. Consider to provide n manually.")
+  }
+
+  if(!(all(score >= 0) & all(score == floor(score)))){
+    warning("The score variable needs to include only positive integers for modelling with beta-binomial distributions. Trying to use Taylor polynomials instead (function 'cnorm').")
+    return(cnorm(raw=score, age=age, weights = weights, scale = scale, plot = plot))
   }
 
   if (mode == 2) {

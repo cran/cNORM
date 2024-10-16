@@ -2,6 +2,24 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
+### Version in 3.3.1,
+Date: 16.10.2024
+
+
+Changes:
+
+*    added check on score data in cnorm.betabinomial
+*    switch to rankByGroup in cnorm in case age variable is plausibly grouping variable
+*    bug in subtitles of plotPercentileSeries fixed
+*    adjusted output and model recommendations in cnorm.cv
+*    fixed legend in plotDensity()
+*    bug in predictRaw fixed, which caused plotDerivative to plot wrong results
+*    improved initial starting and control parameters in cnorm.betabinomial2
+*    bugs in diagnostics.betabinomial fixed
+*    vignettes revised
+
+
+
 ### Version in 3.3.0,
 Date: 2024.08.26
 
