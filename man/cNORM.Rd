@@ -18,7 +18,8 @@ cnorm(
   terms = 0,
   R2 = NULL,
   plot = TRUE,
-  extensive = TRUE
+  extensive = TRUE,
+  subsampling = TRUE
 )
 }
 \arguments{
@@ -30,7 +31,7 @@ or age variable is provided, conventional norming is applied}
 \item{age}{Numeric vector with chronological age, please additionally specify
 width of window}
 
-\item{width}{Size of the moving window in case an age vector is used}
+\item{width}{Size of the sliding window in case an age vector is used}
 
 \item{weights}{Vector or variable name in the dataset with weights for each
 individual case. It can be used to compensate for moderate imbalances due to
@@ -67,6 +68,9 @@ this number of terms is used}
 \item{plot}{Default TRUE; plots the regression model and prints report}
 
 \item{extensive}{If TRUE, screen models for consistency and - if possible, exclude inconsistent ones}
+
+\item{subsampling}{If TRUE (default), model coefficients are calculated using 10-folds and averaged across the folds.
+This produces more robust estimates with a slight increase in bias.}
 }
 \value{
 cnorm object including the ranked raw data and the regression model

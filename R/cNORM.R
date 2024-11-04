@@ -150,7 +150,7 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' or age variable is provided, conventional norming is applied
 #' @param age Numeric vector with chronological age, please additionally specify
 #' width of window
-#' @param width Size of the moving window in case an age vector is used
+#' @param width Size of the sliding window in case an age vector is used
 #' @param scale type of norm scale, either T (default), IQ, z or percentile (= no
 #' transformation); a double vector with the mean and standard deviation can as
 #' well, be provided f. e. c(10, 3) for Wechsler scale index points
@@ -177,6 +177,8 @@ cNORM.GUI <- function(launch.browser=TRUE){
 #' captured by cubic polynomials.
 #' @param plot Default TRUE; plots the regression model and prints report
 #' @param extensive If TRUE, screen models for consistency and - if possible, exclude inconsistent ones
+#' @param subsampling If TRUE (default), model coefficients are calculated using 10-folds and averaged across the folds.
+#'                    This produces more robust estimates with a slight increase in bias.
 #'
 #' @return cnorm object including the ranked raw data and the regression model
 #' @seealso rankByGroup, rankBySlidingWindow, computePowers, bestModel
@@ -245,7 +247,8 @@ cnorm <- function(raw = NULL,
                   terms = 0,
                   R2 = NULL,
                   plot = TRUE,
-                  extensive = TRUE){
+                  extensive = TRUE,
+                  subsampling = TRUE){
 
   if(!is.null(group)&&!is.null(age)){
     warning("Specifying both 'group' as well as 'age' is discouraged.")
@@ -327,7 +330,7 @@ cnorm <- function(raw = NULL,
 
     data <- rankByGroup(data, raw=data$raw, group=FALSE, scale=scale, weights=data$weights, descend = descend, method = method)
     data <- computePowers(data, k = k, t = t, silent = silent)
-    model <- bestModel(data, k = k, t = t, terms = terms, R2 = R2, plot = plot, extensive = extensive)
+    model <- bestModel(data, k = k, t = t, terms = terms, R2 = R2, plot = plot, extensive = extensive, subsampling = subsampling)
 
     result <- list(data = data, model = model)
     class(result) <- "cnorm"
@@ -385,7 +388,7 @@ cnorm <- function(raw = NULL,
     stop("Please provide a numerical vector for the raw scores and either a vector for grouping and/or age of the same length. If you use an age vector only, please specify the width of the window.")
   }
 
-  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights, plot = plot, extensive = extensive)
+  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights, plot = plot, extensive = extensive, subsampling = subsampling)
   result <- list(data = data, model = model)
   class(result) <- "cnorm"
   return(result)
@@ -432,6 +435,8 @@ cnorm <- function(raw = NULL,
 #' captured by cubic polynomials.
 #' @param plot Default TRUE; plots the regression model and prints report
 #' @param extensive If TRUE, screen models for consistency and - if possible, exclude inconsistent ones
+#' @param subsampling If TRUE (default), model coefficients are calculated using 10-folds and averaged across the folds.
+#'                    This produces more robust estimates with a slight increase in bias.
 #'
 #' @return cnorm object including the ranked raw data and the regression model
 #' @seealso rankByGroup, rankBySlidingWindow, computePowers, bestModel

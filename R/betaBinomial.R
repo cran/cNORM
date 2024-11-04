@@ -404,7 +404,6 @@ normTable.betabinomial <- function(model,
 #' This function calculates norm scores based on raw scores, age, and a fitted cnormBetaBinomial model.
 #'
 #' @param object A fitted model object of class 'cnormBetaBinomial' or 'cnormBetaBinomial2'.
-#' @param ... Additional arguments passed to the prediction method.
 #' @param ... Additional arguments passed to the prediction method:
 #'   \itemize{
 #'      \item age A numeric vector of ages, same length as raw.
@@ -998,7 +997,7 @@ cnorm.betabinomial2 <- function(age,
   # Optimize to find parameter estimates. If control is NULL, set default
   if (is.null(control)){
     n_param <-alpha_degree + beta_degree + 2
-    control = list(factr = 1e-6, maxit = n_param*50, lmm = n_param)
+    control = list(factr = 1e-6, maxit = n_param*100, lmm = n_param)
   }
 
   result <- optim(
