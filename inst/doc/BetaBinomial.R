@@ -1,5 +1,5 @@
 ## ----setup, include = FALSE---------------------------------------------------
-knitr::opts_chunk$set(
+knitr::opts_chunk$set(tidy.opts=list(width.cutoff=60),
   collapse = TRUE,
   comment = "#>"
 )
