@@ -12,7 +12,7 @@
 
 <meta name="author" content="Wolfgang Lenhard &amp; Alexandra Lenhard" />
 
-<meta name="date" content="2025-05-11" />
+<meta name="date" content="2025-09-27" />
 
 <title>Modelling Psychometric Data with Beta-Binomial Distributions</title>
 
@@ -50,8 +50,9 @@ overflow: visible;
 }
 </style>
 <style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
 pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
 pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
 code.sourceCode > span { color: inherit; text-decoration: inherit; }
@@ -62,7 +63,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -341,7 +342,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <h1 class="title toc-ignore">Modelling Psychometric Data with
 Beta-Binomial Distributions</h1>
 <h4 class="author">Wolfgang Lenhard &amp; Alexandra Lenhard</h4>
-<h4 class="date">2025-05-11</h4>
+<h4 class="date">2025-09-27</h4>
 
 
 
@@ -376,9 +377,11 @@ can usually be modeled very well with the beta-binomial distribution, at
 least for unspeeded tests.</p>
 <p>Since version 3.2, cNORM is not only able to model psychometric data
 across age using Taylor polynomials, but also using the beta-binomial
-distribution. In the following we will show the mathematical derivation,
-explain the requirements, demonstrate a practical modeling example and
-present the results of a simulation study.</p>
+distribution (additionally, since 3.5, modelling with the four
+parametric ShaSh distribution is possible). In the following we will
+show the mathematical derivation, explain the requirements, demonstrate
+a practical modeling example and present the results of a simulation
+study.</p>
 </div>
 <div id="mathematical-derivation" class="section level1">
 <h1>Mathematical Derivation</h1>
