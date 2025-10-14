@@ -1,41 +1,101 @@
-#' Sinh-Arcsinh (ShaSh) distribution functions
+#' Sinh-Arcsinh (shash) Distribution
 #'
 #' Density, distribution function, quantile function and random generation
-#' for the Sinh-Arcsinh distribution
+#' for the Sinh-Arcsinh distribution with location parameter \code{mu},
+#' scale parameter \code{sigma}, skewness parameter \code{epsilon}, and
+#' tail weight parameter \code{delta}.
 #'
-#' @param x vector of quantiles
-#' @param mu location parameter
-#' @param sigma scale parameter (> 0)
-#' @param epsilon skewness parameter
-#' @param delta tail weight parameter (> 0)
-#' @param log logical; if TRUE, probabilities p are given as log(p)
+#' @name shash
+#' @aliases dshash pshash qshash rshash
 #'
-#' @keywords internal
+#' @param x,q vector of quantiles
+#' @param p vector of probabilities
+#' @param n number of observations. If \code{length(n) > 1}, the length is
+#'   taken to be the number required.
+#' @param mu location parameter (default: 0)
+#' @param sigma scale parameter (must be > 0, default: 1)
+#' @param epsilon skewness parameter (default: 0, symmetric distribution)
+#' @param delta tail weight parameter (must be > 0, default: 1 for normal-like tails)
+#' @param log,log.p logical; if TRUE, probabilities p are given as log(p)
+#' @param lower.tail logical; if TRUE (default), probabilities are P[X <= x]
+#'   otherwise, P[X > x]
+#'
+#' @details
+#' The Sinh-Arcsinh distribution (Jones & Pewsey, 2009) is defined by the transformation:
+#' \deqn{X = \mu + \sigma \cdot \sinh\left(\frac{\text{asinh}(Z) - \epsilon}{\delta}\right)}
+#' where \eqn{Z \sim N(0,1)} is a standard normal variable.
+#'
+#' The four parameters control:
+#' \itemize{
+#'   \item \code{mu}: Location (similar to mean)
+#'   \item \code{sigma}: Scale (similar to standard deviation)
+#'   \item \code{epsilon}: Skewness (\code{epsilon = 0} gives symmetry)
+#'   \item \code{delta}: Tail weight (\code{delta = 1} gives normal-like tails,
+#'         \code{delta > 1} gives heavier tails, \code{delta < 1} gives lighter tails)
+#' }
+#'
+#' @return
+#' \code{dshash} gives the density, \code{pshash} gives the distribution
+#' function, \code{qshash} gives the quantile function, and \code{rshash}
+#' generates random deviates.
+#'
+#' The length of the result is determined by \code{n} for \code{rshash}, and
+#' is the maximum of the lengths of the numerical arguments for the other functions.
+#'
+#' @references
+#' Jones, M. C., & Pewsey, A. (2009). Sinh-arcsinh distributions.
+#' \emph{Biometrika}, 96(4), 761-780. \doi{10.1093/biomet/asp053}
+#'
+#' @seealso
+#' \link[stats]{Normal} for the normal distribution.
+#'
+#' @examples
+#' # Generate random samples
+#' x <- rshash(1000, mu = 0, sigma = 1, epsilon = 0.5, delta = 1.2)
+#'
+#' # Density
+#' plot(density(x))
+#' curve(dshash(x, mu = 0, sigma = 1, epsilon = 0.5, delta = 1.2),
+#'       add = TRUE, col = "red")
+#'
+#' # Cumulative probability
+#' pshash(0, mu = 0, sigma = 1, epsilon = 0.5, delta = 1.2)
+#'
+#' # Quantiles
+#' qshash(c(0.025, 0.5, 0.975), mu = 0, sigma = 1, epsilon = 0.5, delta = 1.2)
+#'
+#' # Compare with normal distribution (epsilon = 0, delta = 1)
+#' par(mfrow = c(2, 2))
+#' x_vals <- seq(-4, 4, length.out = 200)
+#' plot(x_vals, dshash(x_vals), type = "l", main = "Symmetric (like normal)")
+#' plot(x_vals, dshash(x_vals, epsilon = 1), type = "l", main = "Right skewed")
+#' plot(x_vals, dshash(x_vals, delta = 2), type = "l", main = "Heavy tails")
+#' plot(x_vals, dshash(x_vals, delta = 0.5), type = "l", main = "Light tails")
+#'
+#' @export
+#' @rdname shash
 dshash <- function(x, mu = 0, sigma = 1, epsilon = 0, delta = 1, log = FALSE) {
   z <- (x - mu) / sigma
-  sinh_z <- sinh(delta * asinh(z) + epsilon)
-  cosh_z <- cosh(delta * asinh(z) + epsilon)
+  z_sq <- z * z
 
-  logdens <- log(delta) - log(sigma) - 0.5 * log(2 * pi) -
-    0.5 * log(1 + z^2) - 0.5 * sinh_z^2 + log(cosh_z)
+  # Pre-compute asinh(z) once
+  asinh_z <- log(z + sqrt(z_sq + 1))
+  arg <- delta * asinh_z + epsilon
+
+  # Compute sinh and cosh more efficiently
+  exp_arg <- exp(arg)
+  exp_neg_arg <- 1 / exp_arg
+  sinh_z <- (exp_arg - exp_neg_arg) * 0.5
+  cosh_z <- (exp_arg + exp_neg_arg) * 0.5
+
+  logdens <- log(delta) - log(sigma) - 0.918938533204673 -  # log(sqrt(2*pi))
+    0.5 * log1p(z_sq) - 0.5 * sinh_z * sinh_z + log(cosh_z)
 
   if (log) return(logdens) else return(exp(logdens))
 }
 
-#' Sinh-Arcsinh (ShaSh) probability
-#'
-#' Density, distribution function, quantile function and random generation
-#' for the Sinh-Arcsinh distribution
-#'
-#' @param q vector of quantiles
-#' @param mu location parameter
-#' @param sigma scale parameter (> 0)
-#' @param epsilon skewness parameter
-#' @param delta tail weight parameter (> 0)
-#' @param log.p logical; if TRUE, probabilities p are given as log(p)
-#' @param lower.tail logical; if TRUE, probabilities are P[X <= x]
-#'
-#' @keywords internal
+#' @export
+#' @rdname shash
 pshash <- function(q, mu = 0, sigma = 1, epsilon = 0, delta = 1,
                    lower.tail = TRUE, log.p = FALSE) {
   z <- (q - mu) / sigma
@@ -45,20 +105,8 @@ pshash <- function(q, mu = 0, sigma = 1, epsilon = 0, delta = 1,
   return(p)
 }
 
-#' Sinh-Arcsinh (ShaSh) quantile function
-#'
-#' Density, distribution function, quantile function and random generation
-#' for the Sinh-Arcsinh distribution
-#'
-#' @param p vector of probabilities
-#' @param mu location parameter
-#' @param sigma scale parameter (> 0)
-#' @param epsilon skewness parameter
-#' @param delta tail weight parameter (> 0)
-#' @param log.p logical; if TRUE, probabilities p are given as log(p)
-#' @param lower.tail logical; if TRUE, probabilities are P[X <= x]
-#'
-#' @keywords internal
+#' @export
+#' @rdname shash
 qshash <- function(p, mu = 0, sigma = 1, epsilon = 0, delta = 1,
                    lower.tail = TRUE, log.p = FALSE) {
   if (log.p) p <- exp(p)
@@ -71,17 +119,8 @@ qshash <- function(p, mu = 0, sigma = 1, epsilon = 0, delta = 1,
   return(x)
 }
 
-#' Sinh-Arcsinh (ShaSh) random generation
-#'
-#' Density, distribution function, quantile function and random generation
-#' for the Sinh-Arcsinh distribution
-#'
-#' @param mu location parameter
-#' @param sigma scale parameter (> 0)
-#' @param epsilon skewness parameter
-#' @param delta tail weight parameter (> 0)
-#'
-#' @keywords internal
+#' @export
+#' @rdname shash
 rshash <- function(n, mu = 0, sigma = 1, epsilon = 0, delta = 1) {
   u <- rnorm(n)
   z <- sinh((asinh(u) - epsilon) / delta)
@@ -90,7 +129,7 @@ rshash <- function(n, mu = 0, sigma = 1, epsilon = 0, delta = 1) {
   return(x)
 }
 
-#' Calculate the negative log-likelihood for a ShaSh regression model
+#' Calculate the negative log-likelihood for a shash regression model
 #'
 #' This function computes the negative log-likelihood for a Sinh-Arcsinh regression model
 #' where the location, scale, and skewness parameters are modeled as functions of predictors.
@@ -114,53 +153,48 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
   n_epsilon <- ncol(X_epsilon)
   n_delta <- if (!is.null(X_delta)) ncol(X_delta) else 0
 
-  # Extract parameter vectors
-  mu_coef <- params[1:n_mu]
-  sigma_coef <- params[(n_mu + 1):(n_mu + n_sigma)]
-  epsilon_coef <- params[(n_mu + n_sigma + 1):(n_mu + n_sigma + n_epsilon)]
+  # Extract coefficients
+  mu_coef <- params[seq_len(n_mu)]
+  sigma_idx <- n_mu + seq_len(n_sigma)
+  sigma_coef <- params[sigma_idx]
+  epsilon_idx <- n_mu + n_sigma + seq_len(n_epsilon)
+  epsilon_coef <- params[epsilon_idx]
 
-  if (!is.null(X_delta)) {
-    delta_coef <- params[(n_mu + n_sigma + n_epsilon + 1):(n_mu + n_sigma + n_epsilon + n_delta)]
-  }
-
-  # Compute parameters with constraints
-  mu <- X_mu %*% mu_coef
-  log_sigma <- pmax(pmin(X_sigma %*% sigma_coef, 10), -10)
+  # Compute parameters with efficient matrix operations
+  mu <- drop(X_mu %*% mu_coef)
+  log_sigma <- pmin.int(pmax.int(drop(X_sigma %*% sigma_coef), -10), 10)
   sigma <- exp(log_sigma)
-  epsilon <- pmax(pmin(X_epsilon %*% epsilon_coef, 10), -10)
+  epsilon <- pmin.int(pmax.int(drop(X_epsilon %*% epsilon_coef), -10), 10)
 
   if (!is.null(X_delta)) {
-    log_delta <- pmax(pmin(X_delta %*% delta_coef, 2), -2)  # Tighter bounds for delta
+    delta_idx <- n_mu + n_sigma + n_epsilon + seq_len(n_delta)
+    delta_coef <- params[delta_idx]
+    log_delta <- pmin.int(pmax.int(drop(X_delta %*% delta_coef), -2), 2)
     delta <- exp(log_delta)
   } else {
-    delta <- rep(fixed_delta, length(y))
+    delta <- rep.int(fixed_delta, length(y))
   }
 
-  # Use weights if provided
   if (is.null(weights)) {
-    weights <- rep(1, length(y))
+    weights <- 1  # Will broadcast in multiplication
   }
 
-  log_densities <- dshash(y, mu = mu, sigma = sigma, epsilon = epsilon,
-                          delta = delta, log = TRUE)
+  log_densities <- dshash(y, mu, sigma, epsilon, delta, log = TRUE)
+  loglik <- sum(weights * log_densities)
 
-  loglik <- sum(weights * log_densities, na.rm = TRUE)
+  if (!is.finite(loglik)) return(1e10)
 
-  if (!is.finite(loglik)) {
-    return(1e10)
-  }
-
-  return(-loglik)  # Return negative log-likelihood for minimization
+  return(-loglik)
 }
 
-#' Fit a Sinh-Arcsinh (ShaSh) Regression Model for Continuous Norming
+#' Fit a Sinh-Arcsinh (shash) Regression Model for Continuous Norming
 #'
-#' This function fits a Sinh-Arcsinh (ShaSh; Jones & Pewsey, 2009) regression model for continuous norm
+#' This function fits a Sinh-Arcsinh (shash; Jones & Pewsey, 2009) regression model for continuous norm
 #' score modeling, where the distribution parameters vary smoothly as polynomial functions of age or other
-#' predictors. The ShaSh distribution is well-suited for psychometric data as it can flexibly model
+#' predictors. The shash distribution is well-suited for psychometric data as it can flexibly model
 #' skewness and tail weight independently, making it ideal for handling floor effects, ceiling effects,
 #' and varying degrees of individual differences across age groups. In a simulation study (Lenhard et
-#' al, 2019), the ShaSh model demonstrated superior performance compared to other parametric approaches
+#' al, 2019), the shash model demonstrated superior performance compared to other parametric approaches
 #' from the Box Cox family of functions. In contrast to Box Cox, Sinh-Arcsinh can model distributions
 #' including zero and negativ values.
 #'
@@ -182,21 +216,22 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' @param sigma_degree Integer specifying the degree of the polynomial for modeling the scale parameter sigma(age).
 #'   Default is 2. This controls how the variability (spread) of scores changes with age.
 #'   Lower degrees are often sufficient as variability typically changes more smoothly than location.
+#'
 #' @param epsilon_degree Integer specifying the degree of the polynomial for modeling the skewness parameter epsilon(age).
-#'   Default is 1. This controls how the asymmetry of the distribution changes with age.
+#'   Default is 2. This controls how the asymmetry of the distribution changes with age.
+#'
+#' @param delta_degree Integer specifying the plynomial for modelling the tail weight parameter delte(age). Default is 1.
+#'   The tail weight can be fixed as well in case of numerical instability. In that case, set 'delta_degree' to NULL and
+#'   specify a value for delta instead. Recommendation: Keep delta_degree low to avoid overfitting.
 #'
 #' @param delta Fixed tail weight parameter (must be > 0). Default is 1. This parameter controls the
 #'   heaviness of the distribution tails and is kept constant across all ages in this implementation.
+#'   It is only used, if 'delta_degree' is set to NULL. Common values:
 #'   \itemize{
 #'     \item delta = 1: Normal-like tail behavior (baseline)
 #'     \item delta > 1: Heavier tails, higher kurtosis (more extreme scores than normal distribution)
 #'     \item delta < 1: Lighter tails, lower kurtosis (fewer extreme scores than normal distribution)
 #'   }
-#'
-#' @param delta_degree Instead of the fixed delta parameter, you can also model delta as a polynomial function of age.
-#'   The default setting is NULL, which means delta is fixed. If you specify an integer value (e.g., 1, 2),
-#'   the function will fit a polynomial of that degree to model how tail weight changes with age. The degree
-#'   has to be set explicitly and should be kept low (1 or 2) to avoid overfitting.
 #'
 #' @param control An optional list of control parameters passed to the \code{optim} function for
 #'   maximum likelihood estimation. If NULL, sensible defaults are chosen automatically based on
@@ -220,7 +255,7 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' @param plot Logical indicating whether to automatically display a diagnostic plot of the fitted model.
 #'   Default is TRUE.
 #'
-#' @return An object of class "cnormShaSh" containing the fitted model results. This is a list with components:
+#' @return An object of class "cnormShash" containing the fitted model results. This is a list with components:
 #'   \item{mu_est}{Numeric vector of estimated coefficients for the location parameter mu(age).
 #'     The first coefficient is the intercept, subsequent coefficients correspond to polynomial terms.}
 #'   \item{sigma_est}{Numeric vector of estimated coefficients for the scale parameter log(sigma(age)).
@@ -236,10 +271,11 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #'
 #' @details
 #' This implementation uses the Jones & Pewsey (2009) parameterization of the Sinh-Arcsinh distribution.
-#' Parameters are estimated using maximum likelihood via the L-BFGS-B algorithm.
+#' Parameters are estimated using maximum likelihood via the L-BFGS-B algorithm. In case, optimization
+#' fails, try reducing model complexity by reducing polynomial degrees or fixing the delta parameter.
 #'
 #' \subsection{The Sinh-Arcsinh Distribution}{
-#' The ShaSh distribution is defined by the transformation:
+#' The shash distribution is defined by the transformation:
 #' \deqn{X = \mu + \sigma \cdot \sinh\left(\frac{\text{arcsinh}(Y) - \epsilon}{\delta}\right)}
 #' where Y is a standard normal variable, Y ~ N(0,1).
 #'
@@ -261,7 +297,7 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #'   \item Visual inspection of fitted curves
 #' }
 #'
-#' For most applications, mu_degree = 3, sigma_degree = 2, epsilon_degree = 2 provides
+#' For most applications, mu_degree = 3, sigma_degree = 2, epsilon_degree = 2, delta_degree = 1 provides
 #' a good balance of flexibility and parsimony.
 #' }
 #'
@@ -278,8 +314,8 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' }
 #'
 #' @seealso
-#' \code{\link{plot.cnormShaSh}} for plotting fitted models,
-#' \code{\link{predict.cnormShaSh}} for generating predictions,
+#' \code{\link{plot}} for plotting fitted models,
+#' \code{\link{predict}} for generating predictions,
 #' \code{\link{cnorm.betabinomial2}} for discrete beta-binomial alternative
 #'
 #' @examples
@@ -291,28 +327,11 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' model_complex <- cnorm.shash(
 #'   age = adolescents$age,
 #'   score = adolescents$vocabulary_score,
-#'   mu_degree = 4,      # Complex mean trajectory
-#'   sigma_degree = 3,   # Changing variability pattern
-#'   epsilon_degree = 2, # Skewness shifts
-#'   delta = 1.3         # Slightly heavy tails
-#' )
-#'
-#' # Even more complex model, including a polynomial for the delta parameter
-#' model_complex2 <- cnorm.shash(
-#'   age = adolescents$age,
-#'   score = adolescents$vocabulary_score,
-#'   mu_degree = 4,      # Complex mean trajectory
-#'   sigma_degree = 3,   # Changing variability pattern
-#'   epsilon_degree = 2, # Skewness shifts
-#'   delta_deree = 2     # Quadratic change for the tail weight
-#' )
-#'
-#' # Homogeneous population with light tails
-#' model_selective <- cnorm.shash(
-#'   age = gifted$age,
-#'   score = gifted$achievement,
-#'   delta = 0.8,        # Lighter tails for selected population
-#'   sigma_degree = 1    # Simple linear variance change
+#'   mu_degree = 4,         # Complex mean trajectory
+#'   sigma_degree = 3,      # Changing variability pattern
+#'   epsilon_degree = 2,    # Skewness shifts
+#'   epsilon_degree = NULL, # set to NULL to activate fixed delta
+#'   delta = 1.3            # Slightly heavy tails
 #' )
 #'
 #' # With sampling weights
@@ -331,7 +350,7 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' )
 #'
 #' # Compare model fit
-#' compare(model_complex, model_complex2)
+#' compare(model, model_complex)
 #' }
 #'
 #' @author Wolfgang Lenhard
@@ -339,7 +358,7 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #' Jones, M. C., & Pewsey, A. (2009). Sinh-arcsinh distributions. *Biometrika*, 96(4), 761-780.
 #'
 #' Lenhard, A., Lenhard, W., Gary, S. (2019). Continuous norming of psychometric tests: A
-#' simulation study of parametric and semi-parametric approaches. PLoS ONE, 14(9), e0222279.
+#' simulation study of parametric and semi-parametric approaches. *PLoS ONE*, 14(9), e0222279.
 #' https://doi.org/10.1371/journal.pone.0222279
 #'
 #' @export
@@ -348,9 +367,9 @@ cnorm.shash <- function(age,
                         weights = NULL,
                         mu_degree = 3,
                         sigma_degree = 2,
-                        epsilon_degree = 1,
+                        epsilon_degree = 2,
+                        delta_degree = 1,
                         delta = 1,
-                        delta_degree = NULL,
                         control = NULL,
                         scale = "T",
                         plot = TRUE) {
@@ -358,6 +377,15 @@ cnorm.shash <- function(age,
   # Input validation
   if (length(age) != length(score)) {
     stop("Length of 'age' and 'score' must be the same.")
+  }
+
+  # Check for non finite values
+  if(any(!is.finite(age))){
+    stop("Age vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
+  }
+
+  if(any(!is.finite(score))){
+    stop("Score vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
   }
 
   if (delta <= 0) {
@@ -442,10 +470,10 @@ cnorm.shash <- function(age,
       X_mu = X_mu,
       X_sigma = X_sigma,
       X_epsilon = X_epsilon,
-      X_delta = X_delta,        # ADD this line
+      X_delta = X_delta,
       y = score,
       weights = weights,
-      fixed_delta = if(!use_varying_delta) delta else NULL,  # ADD this line
+      fixed_delta = if(!use_varying_delta) delta else NULL,
       method = "L-BFGS-B",
       lower = lower_bounds,
       upper = upper_bounds,
@@ -558,27 +586,27 @@ cnorm.shash <- function(age,
     result = result
   )
 
-  class(model) <- "cnormShaSh"
+  class(model) <- "cnormShash"
 
   if (plot) {
-    p <- plot.cnormShaSh(model, age, score, weights = weights)
+    p <- plot.cnormShash(model, age, score, weights = weights)
     print(p)
   }
 
   return(model)
 }
 
-#' Predict parameters for a ShaSh regression model
+#' Predict parameters for a shash regression model
 #'
-#' @param model An object of class "cnormShaSh"
+#' @param model An object of class "cnormShash"
 #' @param ages A numeric vector of age points for prediction
 #'
 #' @return A data frame with predicted parameters and statistics
 #'
 #' @keywords internal
 predictCoefficients_shash <- function(model, ages) {
-  if (!inherits(model, "cnormShaSh")) {
-    stop("Wrong object. Please provide object from class 'cnormShaSh'.")
+  if (!isSHASH(model)) {
+    stop("Wrong object. Please provide object from class 'cnormShash'.")
   }
 
   # Standardize new ages
@@ -617,15 +645,15 @@ predictCoefficients_shash <- function(model, ages) {
   return(predicted)
 }
 
-#' Plot cnormShaSh Model with Data and Percentile Lines
+#' Plot SinH-ArcSinH Model with Data and Percentile Lines
 #'
-#' @param x A fitted model object of class "cnormShaSh"
+#' @param x A fitted model object of class "cnormShash"
 #' @param ... Additional arguments including age, score, weights, percentiles, points
 #'
 #' @return A ggplot object
 #'
 #' @export
-plot.cnormShaSh <- function(x, ...) {
+plot.cnormShash <- function(x, ...) {
   model <- x
   args <- list(...)
 
@@ -638,8 +666,8 @@ plot.cnormShaSh <- function(x, ...) {
   if(is.null(age) || is.null(score))
     stop("Please provide 'age' and 'score' vectors.")
 
-  if (!inherits(model, "cnormShaSh")) {
-    stop("Wrong object. Please provide object from class 'cnormShaSh'.")
+  if (!isSHASH(model)) {
+    stop("Wrong object. Please provide object from class 'cnormShash'.")
   }
 
   if (length(age) != length(score)) {
@@ -665,7 +693,7 @@ plot.cnormShaSh <- function(x, ...) {
   # Get predictions
   preds <- predictCoefficients_shash(model, pred_ages)
 
-  # Calculate percentile lines using ShaSh quantiles
+  # Calculate percentile lines using shash quantiles
   percentile_lines <- lapply(percentiles, function(p) {
     qshash(p, mu = preds$mu, sigma = preds$sigma,
            epsilon = preds$epsilon, delta = preds$delta)
@@ -700,6 +728,11 @@ plot.cnormShaSh <- function(x, ...) {
     data$group <- getGroups(age)
   }
 
+  # Limit to max 30 groups for better visibility
+  if(length(unique(data$group))>30){
+    data$group <- getGroups(age, n=30)
+  }
+
   # Get actual percentiles
   NAMES <- paste("PR", percentiles * 100, sep = "")
   percentile.actual <- as.data.frame(do.call("rbind", lapply(split(data, data$group), function(df) {
@@ -719,7 +752,7 @@ plot.cnormShaSh <- function(x, ...) {
           y = .data[[paste0("P", percentiles[i] * 100)]],
           color = !!NAMES[i]
         ),
-        size = 0.6
+        linewidth = 0.6
       ) +
       geom_point(
         data = manifest_data,
@@ -770,13 +803,13 @@ plot.cnormShaSh <- function(x, ...) {
   return(p)
 }
 
-#' Print method for cnormShaSh objects
+#' Print method for SinH-ArcSinH objects
 #'
-#' @param x A cnormShaSh object
+#' @param x A cnormShash object
 #' @param ... Additional arguments
 #' @export
-print.cnormShaSh <- function(x, ...) {
-  cat("Sinh-Arcsinh Regression Model for Continuous Norming\n")
+print.cnormShash <- function(x, ...) {
+  cat("SinH-ArcSinH Regression Model for Continuous Norming\n")
   cat("====================================================\n\n")
 
   cat("Model Parameters:\n")
@@ -797,11 +830,11 @@ print.cnormShaSh <- function(x, ...) {
 
 #' Calculate Norm Tables for Sinh-Arcsinh Distribution
 #'
-#' Generates norm tables for specific ages based on a fitted Sinh-Arcsinh (ShaSh) regression model.
+#' Generates norm tables for specific ages based on a fitted SinH-ArcSinH (shash) regression model.
 #' Computes probabilities, percentiles, z-scores, and norm scores for a specified range of raw scores.
 #' Optionally includes confidence intervals when reliability is provided.
 #'
-#' @param model Fitted ShaSh model object of class "cnormShaSh"
+#' @param model Fitted shash model object of class "cnormShash"
 #' @param ages Numeric vector of age points for norm table generation
 #' @param start Minimum raw score value for the norm table
 #' @param end Maximum raw score value for the norm table
@@ -820,7 +853,7 @@ print.cnormShaSh <- function(x, ...) {
 #'   \item{lowerCI_PR, upperCI_PR}{CI as percentile ranks (if reliability provided)}
 #'
 #' @details
-#' For continuous ShaSh distributions, probability densities are computed and converted to
+#' For continuous shash distributions, probability densities are computed and converted to
 #' cumulative probabilities and percentiles. When reliability is specified, confidence
 #' intervals include correction for regression to the mean.
 #'
@@ -845,8 +878,8 @@ normTable.shash <- function(model,
                             reliability = NULL) {
 
   # Input validation
-  if (!inherits(model, "cnormShaSh")) {
-    stop("Wrong object. Please provide object from class 'cnormShaSh'.")
+  if (!isSHASH(model)) {
+    stop("Wrong object. Please provide object from class 'cnormShash'.")
   }
 
   if (is.null(start)) {
@@ -963,12 +996,12 @@ normTable.shash <- function(model,
   return(result)
 }
 
-#' Summarize a Sinh-Arcsinh Continuous Norming Model
+#' Summarize a SinH-ArcSinH Continuous Norming Model
 #'
-#' This function provides a summary of a fitted Sinh-Arcsinh continuous norming model,
+#' This function provides a summary of a fitted SinH-ArcSinH (shash) continuous norming model,
 #' including model fit statistics, convergence information, and parameter estimates.
 #'
-#' @param object An object of class "cnormShaSh", typically the result of a call to
+#' @param object An object of class "cnormShash", typically the result of a call to
 #'   \code{\link{cnorm.shash}}.
 #' @param ... Additional arguments passed to the summary method:
 #'   \itemize{
@@ -1003,7 +1036,7 @@ normTable.shash <- function(model,
 #'
 #' @seealso \code{\link{cnorm.shash}}, \code{\link{diagnostics.shash}}
 #' @export
-summary.cnormShaSh <- function(object, ...) {
+summary.cnormShash <- function(object, ...) {
   args <- list(...)
 
   if ("age" %in% names(args)) { age <- args$age } else {if(length(args)>0) age <- args[[1]] else age <- NULL}
@@ -1012,7 +1045,7 @@ summary.cnormShaSh <- function(object, ...) {
 
   diag <- diagnostics.shash(object, age, score, weights)
 
-  cat("Sinh-Arcsinh Continuous Norming Model\n")
+  cat("SinH-ArcSinH Continuous Norming Model\n")
   cat("-------------------------------------\n")
   cat("Polynomial degrees:\n")
   cat("  Location (mu):", diag$mu_degree, "\n")
@@ -1094,12 +1127,12 @@ summary.cnormShaSh <- function(object, ...) {
   invisible(diag)
 }
 
-#' Diagnostic Statistics for Sinh-Arcsinh Continuous Norming Model
+#' Diagnostic Statistics for SiHh-ArcSinH Continuous Norming Model
 #'
-#' This function computes detailed diagnostic statistics for a fitted ShaSh model,
+#' This function computes detailed diagnostic statistics for a fitted shash model,
 #' including fit statistics, parameter estimates, and convergence information.
 #'
-#' @param object An object of class "cnormShaSh"
+#' @param object An object of class "cnormShash"
 #' @param age An optional numeric vector of age values for computing fit statistics
 #' @param score An optional numeric vector of raw scores for computing fit statistics
 #' @param weights An optional numeric vector of observation weights
@@ -1109,8 +1142,8 @@ summary.cnormShaSh <- function(object, ...) {
 #' @keywords internal
 diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) {
 
-  if (!inherits(object, "cnormShaSh")) {
-    stop("Wrong object. Please provide object from class 'cnormShaSh'.")
+  if (!isSHASH(object)) {
+    stop("Wrong object. Please provide object from class 'cnormShash'.")
   }
 
   # Basic model information
@@ -1277,9 +1310,9 @@ diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) 
 
 #' Predict Norm Scores from Raw Scores
 #'
-#' This function calculates norm scores based on raw scores, age, and a fitted cnormShaSh model.
+#' This function calculates norm scores based on raw scores, age, and a fitted cnormShash model.
 #'
-#' @param object A fitted model object of class 'cnormShaSh'.
+#' @param object A fitted model object of class 'cnormShash'.
 #' @param ... Additional arguments passed to the prediction method:
 #'   \itemize{
 #'      \item age A numeric vector of ages, same length as score.
@@ -1291,9 +1324,9 @@ diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) 
 #' @return A numeric vector of norm scores.
 #'
 #' @details
-#' The function predicts the ShaSh distribution parameters (mu, sigma, epsilon, delta) for each age
+#' The function predicts the SinH-ArcSinH (shash) distribution parameters (mu, sigma, epsilon, delta) for each age
 #' using the provided model. It then calculates the cumulative probability for each
-#' raw score given these parameters using the continuous ShaSh distribution. Finally,
+#' raw score given these parameters using the continuous shash distribution. Finally,
 #' it converts these probabilities to the norm scale specified in the model.
 #'
 #' @examples
@@ -1307,7 +1340,7 @@ diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) 
 #'
 #' @export
 #' @family predict
-predict.cnormShaSh <- function(object, ...) {
+predict.cnormShash <- function(object, ...) {
 
   model <- object
   args <- list(...)
@@ -1316,8 +1349,8 @@ predict.cnormShaSh <- function(object, ...) {
   if ("score" %in% names(args)) { score <- args$score } else {if(length(args)>1) score <- args[[2]] else score <- NULL}
   if ("range" %in% names(args)) { range <- args$range } else { if(length(args)>2) range <- args[[3]] else range <- 3 }
 
-  if (!inherits(model, "cnormShaSh")) {
-    stop("Wrong object. Please provide object from class 'cnormShaSh'.")
+  if (!isSHASH(model)) {
+    stop("Wrong object. Please provide object from class 'cnormShash'.")
   }
 
   if (is.null(age) || is.null(score)) {

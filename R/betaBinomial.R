@@ -72,6 +72,39 @@ cnorm.betabinomial1 <- function(age,
                                 control = NULL,
                                 scale = "T",
                                 plot = T) {
+
+  # Input validation
+  if (length(age) != length(score)) {
+    stop("'age' and 'score' must be of the same length.")
+  }
+
+  # Check for non finite values
+  if(any(!is.finite(age))){
+    stop("Age vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
+  }
+
+  # Check for non-finite values
+  if (any(!is.finite(score))) {
+    stop("'score' contains non-finite values (NA, NaN, or Inf). ",
+         "Beta-binomial modelling requires positive integers (including zero). Please clean the data.")
+  }
+
+  # Check for negative values
+  if (any(score < 0)) {
+    stop("'score' contains negative values. ",
+         "Beta-binomial modelling requires positive integers (including zero). Please consider using
+         Taylor polynomials (function 'cnorm') or SinusH-ArcsinH distributions (function 'cnorm.shash') instead,
+         or transform your data to positive integers.")
+  }
+
+  # Check for non-integers
+  if (any(score != floor(score))) {
+    stop("'score' contains non-integer values. ",
+         "Beta-binomial modelling requires positive integers (including zero). Please consider using
+         Taylor polynomials (function 'cnorm') or SinusH-ArcsinH distributions (function 'cnorm.shash') instead,
+         or transform your data to positive integers.")
+  }
+
   # If weights are not provided, use equal weights
   if (is.null(weights)) {
     weights <- rep(1, length(age))
@@ -302,8 +335,7 @@ normTable.betabinomial <- function(model,
                                    range = 3,
                                    CI = .9,
                                    reliability = NULL) {
-  if (!(inherits(model, "cnormBetaBinomial") ||
-        inherits(model, "cnormBetaBinomial2"))) {
+  if (!isBeta(model)) {
     stop(
       "Wrong object. Please provide object from class 'cnormBetaBinomial' or 'cnormBetaBinomial2'."
     )
@@ -439,8 +471,7 @@ predict.cnormBetaBinomial <- function(object, ...) {
   if ("score" %in% names(args)) { score <- args$score } else {if(length(args)>1) score <- args[[2]] else score <- NULL}
   if ("range" %in% names(args)) { range <- args$range } else { if(length(args)>2) range <- args[[3]] else range <- 3 }
 
-  if (!(inherits(model, "cnormBetaBinomial") ||
-        inherits(model, "cnormBetaBinomial2"))) {
+  if (!isBeta(model)) {
     stop(
       "Wrong object. Please provide object from class 'cnormBetaBinomial' or 'cnormBetaBinomial2'."
     )
@@ -555,8 +586,7 @@ plot.cnormBetaBinomial <- function(x, ...) {
   if(is.null(age) || is.null(score))
     stop("Please provide 'age' and 'score' vectors.")
 
-  if (!(inherits(model, "cnormBetaBinomial") ||
-        inherits(model, "cnormBetaBinomial2"))) {
+  if (!isBeta(model)) {
     stop(
       "Wrong object. Please provide object from class 'cnormBetaBinomial' or 'cnormBetaBinomial2'."
     )
@@ -615,11 +645,14 @@ plot.cnormBetaBinomial <- function(x, ...) {
 
   # Calculate and add manifest percentiles
   if (length(age) / length(unique(age)) > 50 && min(table(data$age)) > 30) {
-    # Distinct age groups
     data$group <- age
   } else {
-    # Use getGroups function
     data$group <- getGroups(age)
+  }
+
+  # Limit to max 30 groups for better visibility
+  if(length(unique(data$group))>30){
+    data$group <- getGroups(age, n=30)
   }
 
   # get actual percentiles
@@ -641,7 +674,7 @@ plot.cnormBetaBinomial <- function(x, ...) {
           y = .data[[paste0("P", percentiles[i] * 100)]],
           color = !!NAMES[i]
         ),
-        size = 0.6
+        linewidth = 0.6
       ) +
       geom_point(
         data = manifest_data,
@@ -755,8 +788,7 @@ diagnostics.betabinomial <- function(model,
                                      age = NULL,
                                      score = NULL,
                                      weights = NULL) {
-  if (!(inherits(model, "cnormBetaBinomial") ||
-        inherits(model, "cnormBetaBinomial2"))) {
+  if (!isBeta(model)) {
     stop(
       "Wrong object. Please provide object from class 'cnormBetaBinomial' or 'cnormBetaBinomial2'."
     )
@@ -985,7 +1017,34 @@ cnorm.betabinomial2 <- function(age,
                                 plot = TRUE) {
   # Input validation
   if (length(age) != length(score)) {
-    stop("Length of 'age' and 'score' must be the same.")
+    stop("'age' and 'score' must be of the same length.")
+  }
+
+  # Check for non finite values
+  if(any(!is.finite(age))){
+    stop("Age vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
+  }
+
+  # Check for non-finite values
+  if (any(!is.finite(score))) {
+    stop("'score' contains non-finite values (NA, NaN, or Inf). ",
+         "Beta-binomial modelling requires positive integers (including zero). Please clean the data.")
+  }
+
+  # Check for negative values
+  if (any(score < 0)) {
+    stop("'score' contains negative values. ",
+         "Beta-binomial modelling requires positive integers (including zero). Please consider using
+         Taylor polynomials (function 'cnorm') or SinusH-ArcsinH distributions (function 'cnorm.shash') instead,
+         or transform your data to positive integers.")
+  }
+
+  # Check for non-integers
+  if (any(score != floor(score))) {
+    stop("'score' contains non-integer values. ",
+         "Beta-binomial modelling requires positive integers (including zero). Please consider using
+         Taylor polynomials (function 'cnorm') or SinusH-ArcsinH distributions (function 'cnorm.shash') instead,
+         or transform your data to positive integers.")
   }
 
   # Standardize inputs

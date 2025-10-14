@@ -110,21 +110,29 @@ NULL
 #' # Launch graphical user interface
 #' cNORM.GUI()
 #' }
-cNORM.GUI <- function(launch.browser=TRUE){
-  packageList <- c("shiny", "shinycssloaders", "foreign", "readxl", "markdown")
+cNORM.GUI <- function(launch.browser = TRUE) {
+  packageList <- c("shiny", "shinycssloaders", "foreign", "readxl", "markdown", "rmarkdown")
 
-  if (!requireNamespace(packageList, quietly = TRUE)) {
-    cat("Additional packages are needed to start the user interface. Would you like to try to install them now?")
+  # Check which packages are missing
+  missing <- packageList[!sapply(packageList, requireNamespace, quietly = TRUE)]
+
+  if (length(missing) > 0) {
+    cat("Additional packages are needed to start the user interface:\n")
+    cat(paste("-", missing, collapse = "\n"), "\n")
+    cat("\nWould you like to try to install them now?\n")
     installChoice <- menu(c("yes", "no"))
-    if(installChoice == 1){
-      utils::install.packages(packageList)
+
+    if (installChoice == 1) {
+      utils::install.packages(missing)
     } else {
-      stop("Packages are missing. Unable to start the GUI")
+      stop("Required packages are missing. Unable to start the GUI")
     }
   }
 
-  shiny::runApp(system.file('shiny', package='cNORM'),
-                launch.browser=TRUE)
+  shiny::runApp(
+    system.file('shiny', package = 'cNORM'),
+    launch.browser = launch.browser  # Use the parameter!
+  )
 }
 
 #' Continuous Norming
@@ -388,9 +396,13 @@ cnorm <- function(raw = NULL,
     stop("Please provide a numerical vector for the raw scores and either a vector for grouping and/or age of the same length. If you use an age vector only, please specify the width of the window.")
   }
 
-  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights, plot = plot, extensive = extensive, subsampling = subsampling)
+  model <- bestModel(data, R2=R2, terms=terms, weights = data$weights, plot = FALSE, extensive = extensive, subsampling = subsampling)
   result <- list(data = data, model = model)
   class(result) <- "cnorm"
+
+  if(plot){
+    plotPercentiles(result)
+  }
   return(result)
 }
 

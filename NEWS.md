@@ -2,8 +2,26 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
+### Version in 3.5.1
+Date: 14.10.2025
+
+
+Changes:
+
+*    fixed inconsistencies in terminology. Move class cnormShaSh to cnormShash
+*    stripped down vignette on shash modelling to essentials
+*    updated documentation
+*    additional checks for shash and bb modelling
+*    improved error messages
+*    replaced deprecated ggplot2 function parameter (linewidth instead of size)
+*    Performance optimamization in shash modelling
+*    shash documentation improved
+*    improved code safety in diverse functions
+*    shash distribution functions exported to NAMESPACE
+
+
 ### Version in 3.5.0
-Date: 26.09.2025 - in progress
+Date: 26.09.2025
 
 
 Changes:
