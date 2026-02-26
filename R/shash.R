@@ -330,7 +330,7 @@ log_likelihood_shash <- function(params, X_mu, X_sigma, X_epsilon, X_delta = NUL
 #'   mu_degree = 4,         # Complex mean trajectory
 #'   sigma_degree = 3,      # Changing variability pattern
 #'   epsilon_degree = 2,    # Skewness shifts
-#'   epsilon_degree = NULL, # set to NULL to activate fixed delta
+#'   delta_degree = NULL, # set to NULL to activate fixed delta
 #'   delta = 1.3            # Slightly heavy tails
 #' )
 #'
@@ -379,15 +379,29 @@ cnorm.shash <- function(age,
     stop("Length of 'age' and 'score' must be the same.")
   }
 
-  # Check for non finite values
-  if(any(!is.finite(age))){
-    stop("Age vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
+  if(!is.null(weights) && length(age) != length(weights)) {
+    stop("Length of 'weights' must match length of 'age' and 'score'.")
   }
 
-  if(any(!is.finite(score))){
-    stop("Score vector contains non-finite values (NA, NaN, Inf). Please clean the data.")
+  # Prepare vectors
+  vectors_to_check <- list(age = age, score = score)
+  if(!is.null(weights)) {
+    vectors_to_check$weights <- weights
   }
 
+  # Check if filtering needed
+  needs_filtering <- any(sapply(vectors_to_check, function(x) any(!is.finite(x))))
+
+  if(needs_filtering) {
+    message("Vector(s) contained non-finite values (NA, NaN, Inf). These cases will be removed.")
+    tmp <- do.call(filter_complete, c(vectors_to_check, verbose = FALSE))
+    age <- tmp[[1]]
+    score <- tmp[[2]]
+    if(!is.null(weights)) weights <- tmp[[3]]
+  }
+
+
+  # ensure positivity of delta
   if (delta <= 0) {
     stop("Delta parameter must be positive.")
   }
@@ -450,16 +464,15 @@ cnorm.shash <- function(age,
 
   # Bounds for epsilon parameters
   epsilon_start <- sigma_end + 1
-  epsilon_end <- length(initial_params)
+  epsilon_end   <- epsilon_start + ncol(X_epsilon) - 1   # correct: stays within epsilon range
   lower_bounds[epsilon_start:epsilon_end] <- -10
   upper_bounds[epsilon_start:epsilon_end] <- 10
 
-  # in case delta parameters are used
   if (use_varying_delta) {
-    delta_start <- epsilon_end + 1
-    delta_end <- delta_start + ncol(X_delta) - 1
-    lower_bounds[delta_start:delta_end] <- -2   # exp(-2) = 0.135
-    upper_bounds[delta_start:delta_end] <- 2    # exp(2) = 7.39
+    delta_start <- epsilon_end + 1                      # now correctly points at delta params
+    delta_end   <- delta_start + ncol(X_delta) - 1
+    lower_bounds[delta_start:delta_end] <- -2
+    upper_bounds[delta_start:delta_end] <- 2
   }
 
   # Optimization
@@ -816,7 +829,11 @@ print.cnormShash <- function(x, ...) {
   cat("- Location (mu) polynomial degree:", x$mu_degree, "\n")
   cat("- Scale (sigma) polynomial degree:", x$sigma_degree, "\n")
   cat("- Skewness (epsilon) polynomial degree:", x$epsilon_degree, "\n")
-  cat("- Tail weight (delta): Fixed at", x$delta, "\n\n")
+  if (!is.null(x$delta_degree)) {
+    cat("- Tail weight (delta): Polynomial degree", x$delta_degree, "\n\n")
+  } else {
+    cat("- Tail weight (delta): Fixed at", x$delta, "\n\n")
+  }
 
   cat("Sample size:", attr(x$result, "N"), "\n")
   cat("Age range:", attr(x$result, "ageMin"), "to", attr(x$result, "ageMax"), "\n")
@@ -933,7 +950,7 @@ normTable.shash <- function(model,
   result <- list()
 
   # Generate norm table for each age
-  for (k in 1:length(ages)) {
+  for (k in seq_along(ages)) {
     mu_k <- predictions$mu[k]
     sigma_k <- predictions$sigma[k]
     epsilon_k <- predictions$epsilon[k]
@@ -1233,7 +1250,8 @@ diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) 
         data = data,
         raw = "raw",
         group = "group",
-        weights = weights
+        weights = weights,
+        scale = c(attr(object$result, "scaleMean"), attr(object$result, "scaleSD"))
       )
       norm_scores <- predict(object, data$group, data$raw)
     } else{
@@ -1245,7 +1263,8 @@ diagnostics.shash <- function(object, age = NULL, score = NULL, weights = NULL) 
         age = "age",
         raw = "raw",
         width = width,
-        weights = weights
+        weights = weights,
+        scale = c(attr(object$result, "scaleMean"), attr(object$result, "scaleSD"))
       )
       norm_scores <- predict(object, data$age, data$raw)
     }
@@ -1370,13 +1389,7 @@ predict.cnormShash <- function(object, ...) {
   delta <- predictions$delta
 
   # Calculate cumulative probabilities (percentiles) for each score
-  percentiles <- numeric(length(age))
-
-  for (i in 1:length(age)) {
-    # Calculate cumulative probability using ShaSh CDF
-    percentiles[i] <- pshash(score[i], mu = mu[i], sigma = sigma[i],
-                             epsilon = epsilon[i], delta = delta[i])
-  }
+  percentiles <- pshash(score, mu = mu, sigma = sigma, epsilon = epsilon, delta = delta)
 
   # Convert percentiles to z-scores
   z_scores <- qnorm(percentiles)

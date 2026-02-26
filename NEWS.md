@@ -2,6 +2,30 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
+### Version in 3.5.2
+Date: 26.02.2026
+
+
+Changes:
+
+*    fixed scale information in diagnostics (betabinomial and shash), which
+     was not correctly passed to the function
+*    input validation checks in cnorm.betabinomial and cnorm.shash     
+*    optimization of shash functions
+*    robustness of betabinomial functions
+*    new shiny GUI for parametric modelling
+*    Shiny GUI files restructured
+*    plotPercentile did not minAge and maxAge parameter - fixed
+*    plotPercentile performance improvement
+*    saving plots in plotPercentileSeries, can run out of bounds - fixed
+*    plotNorm object checks improved
+*    plotCnorm helper parameter checks - fixed
+*    fixed geom_hline warning in plotSubset
+*    removed the raw parameter from plotRaw - it always uses the model data
+*    improved model type check in plotDensity
+
+
+
 ### Version in 3.5.1
 Date: 14.10.2025
 
