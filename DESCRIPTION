@@ -1,6 +1,6 @@
 Package: cNORM
 Title: Continuous Norming
-Version: 3.5.2
+Version: 3.5.3
 Authors@R: c(
     person("Alexandra", "Lenhard", 
            email = "lenhard@psychometrica.de",
@@ -51,7 +51,7 @@ LazyData: true
 LazyDataCompression: xz
 RoxygenNote: 7.3.3
 NeedsCompilation: no
-Packaged: 2026-02-26 20:50:20 UTC; gbpa005
+Packaged: 2026-05-01 07:00:33 UTC; gbpa005
 Author: Alexandra Lenhard [aut] (ORCID:
     <https://orcid.org/0000-0001-8680-4381>),
   Wolfgang Lenhard [cre, aut] (ORCID:
@@ -60,4 +60,4 @@ Author: Alexandra Lenhard [aut] (ORCID:
   WPS Publisher [fnd] (https://www.wpspublish.com/)
 Maintainer: Wolfgang Lenhard <wolfgang.lenhard@uni-wuerzburg.de>
 Repository: CRAN
-Date/Publication: 2026-02-26 21:30:02 UTC
+Date/Publication: 2026-05-01 07:20:11 UTC

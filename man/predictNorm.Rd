@@ -10,7 +10,7 @@ predictNorm(
   model,
   minNorm = NULL,
   maxNorm = NULL,
-  force = FALSE,
+  force = TRUE,
   silent = FALSE
 )
 }
@@ -37,14 +37,13 @@ This functions numerically determines the norm score for raw scores depending on
 level of the explanatory variable A, e. g. norm scores for raw scores at given ages.
 }
 \examples{
+\dontrun{
 # Generate cnorm object from example data
 cnorm.elfe <- cnorm(raw = elfe$raw, group = elfe$group)
 
 # return norm value for raw value 21 for grade 2, month 9
 specificNormValue <- predictNorm(raw = 21, A = 2.75, cnorm.elfe)
-
-# predicted norm scores for the elfe dataset
-# predictNorm(elfe$raw, elfe$group, cnorm.elfe)
+}
 
 }
 \seealso{
