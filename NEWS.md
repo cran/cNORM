@@ -2,6 +2,33 @@
 This file documents the development of the package as well as open issues or points for further improvements.
 
 
+
+### Version in 3.5.4
+Date: 15.05.2026 - release
+
+This release aims at a better integration of parametric functions for the 
+plotting functions, an overhaul of the Shiny Apps and huge performance
+improvements in the Taylor modelling (rankBySlidingWindows and checking for
+monotonicity). The subsampling will be deprecated and deleted from a future
+release of cNORM.
+
+Changes:
+
+*    Set nbest to 10 in exhaustive search
+*    Author name order corrected in README.md
+*    ShinyApp streamlined
+*    discrete parameter when plotting betabinomial models added
+*    plotNorm, plotNormCurves and plotDensity fixed to correctly handle parametric
+     models
+*    boost performance in rankBySlidingWindow, which as well affects performance
+     of the parametric modelling, especially when plotting
+*    broader test coverage
+*    subsampling set to FALSE on default; the internal function is deprecated and  
+     will be removed in a future release
+*    Monotinicity with performance improvements
+
+
+
 ### Version in 3.5.3
 Date: 01.05.2026
 

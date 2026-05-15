@@ -15,7 +15,7 @@ plotNormCurves(
 )
 }
 \arguments{
-\item{model}{The model from the bestModel function, a cnorm object, or a cnormBetaBinomial / cnormBetaBinomial2 object.}
+\item{model}{The model from the bestModel function, a cnorm object, or a cnormBetaBinomial / cnormBetaBinomial2 / cnormShash object.}
 
 \item{normList}{Vector with norm scores to display. If NULL, default values are used.}
 
@@ -34,7 +34,7 @@ A ggplot object representing the norm curves.
 }
 \description{
 This function plots the norm curves based on the regression model. It supports both
-Taylor polynomial models and beta-binomial models.
+Taylor polynomial models, beta-binomial models, and shash models.
 }
 \details{
 Please check the function for inconsistent curves: The different curves should not intersect.
@@ -60,17 +60,17 @@ plotNormCurves(bb_model)
 \seealso{
 \code{\link{checkConsistency}}, \code{\link{plotDerivative}}, \code{\link{plotPercentiles}}
 
-Other plot: 
-\code{\link{compare}()},
-\code{\link{plot.cnorm}()},
-\code{\link{plot.cnormBetaBinomial}()},
-\code{\link{plot.cnormBetaBinomial2}()},
-\code{\link{plotDensity}()},
-\code{\link{plotDerivative}()},
-\code{\link{plotNorm}()},
-\code{\link{plotPercentileSeries}()},
-\code{\link{plotPercentiles}()},
-\code{\link{plotRaw}()},
-\code{\link{plotSubset}()}
+Other plot:
+\code{\link[=compare]{compare()}},
+\code{\link[=plot.cnorm]{plot.cnorm()}},
+\code{\link[=plot.cnormBetaBinomial]{plot.cnormBetaBinomial()}},
+\code{\link[=plot.cnormBetaBinomial2]{plot.cnormBetaBinomial2()}},
+\code{\link[=plotDensity]{plotDensity()}},
+\code{\link[=plotDerivative]{plotDerivative()}},
+\code{\link[=plotNorm]{plotNorm()}},
+\code{\link[=plotPercentileSeries]{plotPercentileSeries()}},
+\code{\link[=plotPercentiles]{plotPercentiles()}},
+\code{\link[=plotRaw]{plotRaw()}},
+\code{\link[=plotSubset]{plotSubset()}}
 }
 \concept{plot}

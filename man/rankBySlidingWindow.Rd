@@ -105,7 +105,7 @@ through other functions like \code{cnorm}.
 \examples{
 \dontrun{
 # Transformation using a sliding window
-data.elfe2 <- rankBySlidingWindow(relfe, raw = "raw", age = "group", width = 0.5)
+data.elfe2 <- rankBySlidingWindow(elfe, raw = "raw", age = "group", width = 0.5)
 
 # Comparing this to the traditional approach should give us exactly the same
 # values, since the sample dataset only has a grouping variable for age
@@ -116,9 +116,9 @@ mean(data.elfe$normValue - data.elfe2$normValue)
 \seealso{
 rankByGroup, computePowers, computeWeights, weighted.rank, weighted.quantile
 
-Other prepare: 
-\code{\link{computePowers}()},
-\code{\link{prepareData}()},
-\code{\link{rankByGroup}()}
+Other prepare:
+\code{\link[=computePowers]{computePowers()}},
+\code{\link[=prepareData]{prepareData()}},
+\code{\link[=rankByGroup]{rankByGroup()}}
 }
 \concept{prepare}

@@ -16,7 +16,7 @@ bestModel(
   force.in = NULL,
   plot = TRUE,
   extensive = TRUE,
-  subsampling = TRUE
+  subsampling = FALSE
 )
 }
 \arguments{
@@ -43,8 +43,8 @@ regression object. FALSE turns off plotting and report.}
 
 \item{extensive}{If TRUE (default), screen models for consistency and - if possible, exclude inconsistent ones}
 
-\item{subsampling}{If TRUE (default), model coefficients are calculated using 10-folds and averaged across the folds.
-This produces more robust estimates with a slight increase in bias.}
+\item{subsampling}{(deprecated) If TRUE (default is FALSE), use 10-fold
+subsampled coefficient averaging in `bestModel`.}
 }
 \value{
 The model. Further exploration can be done using \code{plotSubset(model)} and \code{plotPercentiles(data, model)}.
@@ -69,7 +69,7 @@ Additional functions like \code{plotSubset(model)} and \code{cnorm.cv} can aid i
 
 # Example with sample data
 \dontrun{
-# It is not recommende to use this function. Rather use 'cnorm' instead.
+# It is not recommended to directly use this function. Rather use 'cnorm' instead.
 normData <- prepareData(elfe)
 model <- bestModel(normData)
 plotSubset(model)
@@ -83,15 +83,15 @@ print(regressionFunction(preselectedModel))
 \seealso{
 plotSubset, plotPercentiles, plotPercentileSeries, checkConsistency
 
-Other model: 
-\code{\link{checkConsistency}()},
-\code{\link{cnorm.cv}()},
-\code{\link{derive}()},
-\code{\link{modelSummary}()},
-\code{\link{print.cnorm}()},
-\code{\link{printSubset}()},
-\code{\link{rangeCheck}()},
-\code{\link{regressionFunction}()},
-\code{\link{summary.cnorm}()}
+Other model:
+\code{\link[=checkConsistency]{checkConsistency()}},
+\code{\link[=cnorm.cv]{cnorm.cv()}},
+\code{\link[=derive]{derive()}},
+\code{\link[=modelSummary]{modelSummary()}},
+\code{\link[=print.cnorm]{print.cnorm()}},
+\code{\link[=printSubset]{printSubset()}},
+\code{\link[=rangeCheck]{rangeCheck()}},
+\code{\link[=regressionFunction]{regressionFunction()}},
+\code{\link[=summary.cnorm]{summary.cnorm()}}
 }
 \concept{model}
