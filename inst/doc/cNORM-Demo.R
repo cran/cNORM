@@ -130,6 +130,20 @@ rawTable(3.5, model, minRaw = 0, maxRaw = 28, minNorm = 25, maxNorm = 75, step =
 # generate several raw tables
 table <- rawTable(c(2.5, 3.5, 4.5), model, minRaw = 0, maxRaw = 28)
 
+## ----irt-cnorm, eval = FALSE------------------------------
+# library(TAM)
+# 
+# # 1. Simulate a Rasch dataset with 700 persons and 30 items
+# data <- simulateRasch(n = 700, items.n = 30)
+# data <- data$sim[, (ncol(data$sim) - 30):(ncol(data$sim) - 1)] # only use item data
+# 
+# # 2. Fit a Rasch model and extract WLE person abilities
+# tam.model <- tam(data)
+# theta     <- tam.wle(tam.model)$theta
+# 
+# # 3. Model continuous norms for the latent ability scores
+# cnorm.model <- cnorm(raw = theta, group = data$sim$group)
+
 ## ----fig2, fig.height = 7, fig.width = 7------------------
 plot(model, "raw", group = TRUE)
 

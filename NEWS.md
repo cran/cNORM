@@ -3,6 +3,31 @@ This file documents the development of the package as well as open issues or poi
 
 
 
+
+### Version in 3.6.0
+Date: 17.06.2026 - release
+
+This release includes autoselect methods for shash and betabinomial models 
+using parallel code execution. The raking and weighting was revised and 
+ranking methods optimized. The monotonicity checks are now much more strict. 
+
+Changes:
+
+*    new methods: autoselect.betabinomial, autoselect.shash
+*    Information on modelling Logits from IRT models added to vignette
+*    function getGroups hardened for rare exceptions
+*    Stricter check on monotonicity in Taylor polynomials
+*    Cleaned up derive function
+*    Vectorization in regressionFunction()
+*    Code review of the raking code and the weighted.rank
+*    Code review for rankByGroups and rankBySlidingWindow; performance improvements
+*    prepareData and cnorm functions hardened
+*    added example code for new functions to vignette and README.md
+
+
+
+
+
 ### Version in 3.5.4
 Date: 15.05.2026 - release
 
