@@ -1,6 +1,103 @@
 # cNORM:news and change-log
-This file documents the development of the package as well as open issues or points for further improvements.
+This file documents the development of the package as well as open issues or 
+points for further improvements.
 
+
+
+### Version in 3.6.1
+Date: 13.07.2026 - release
+
+This release mainly targets optimization and code hardening. The central new
+feature is the `averaging` argument in the `bestModel()` and `bestModel()`,
+which conducts a model averaging for the consistent models in order to reduce
+variance in model estimation. Beta binomial models are now drawn as stepping
+and this as well is applied for the compare function.
+
+## New features
+
+* `bestModel()` gains an `averaging` argument: instead of selecting a single
+  model, the final coefficients can now be computed as a BIC-weighted average
+  across all consistency-screened candidate models (`weightedAverageModel()`,
+  new exported function). Since only monotone models of identical direction
+  enter the average and the weights form a convex combination, the averaged
+  model is guaranteed to remain consistent. This addresses model *selection*
+  variance and replaces the deprecated subsampling approach.
+* Analytical monotonicity check: model consistency is now verified exactly
+  within each age. As the model is polynomial in the norm score L (degree <= k),
+  the real roots of its derivative are computed via `polyroot()` and the sign
+  of the derivative is evaluated between consecutive roots. This detects
+  narrow violations that a discrete norm score grid can miss, and is faster
+  than the previous 50-point grid.
+* `checkConsistency()` gains a `method` argument (`"analytic"`, the new
+  default, or `"grid"` for the previous numerical behaviour). The analytic
+  method is clipping-aware: violations lying entirely outside
+  `[minRaw, maxRaw]` are ignored, matching the former clipped grid check.
+  Models with non-Taylor predictors automatically fall back to the grid method.
+* Consistency screening in `bestModel()` now evaluates 8 age points instead of
+  only the age minimum and maximum, so intersecting percentile curves at
+  interior ages are now detected.
+
+## Deprecations
+
+* `subsample_lm()` is deprecated and returns a plain (weighted) least squares
+  fit. Averaging OLS coefficients over subsamples cannot improve on the
+  full-sample fit (Gauss-Markov) and only added Monte-Carlo noise; use
+  `bestModel(..., averaging = TRUE)` instead. The `subsampling` argument of
+  `bestModel()` is deprecated and ignored.
+
+## Bug fixes
+
+* `cnorm.cv()` and the internal consistency screening used `.lm.fit()`, which
+  neither returns fitted values nor unpivoted, named coefficients. This could
+  yield `NaN` RMSE values and mislabeled coefficients in rank-deficient cases.
+  Replaced by `lm.fit()`.
+* `bestModel()` with `extensive = TRUE` and user-defined predictors crashed
+  during screening ("subscript out of bounds"); screening is now skipped
+  gracefully for non-Taylor predictor sets (best model per size retained).
+* `checkConsistency()` failed for conventional norming (`minA1 == maxA1`)
+  due to a zero age stepping parameter.
+* `nvmax` was computed incorrectly when `predictors` was supplied as a formula
+  (`length(formula)` returns 3) or as a character vector.
+* Violating age points in `checkConsistency()` were concatenated with `sep`
+  instead of `collapse` and hence not fully displayed.
+* `normTable.betabinomial()`: tables truncated via `m < n` were erroneously  
+  renormalized over the truncated support, distorting percentiles and norm  
+  scores. Probabilities are now always computed on the full support 0:n.
+* `cnorm.betabinomial()` (mode 2): corrected infeasible `factr` settings for  
+  L-BFGS-B that caused spurious convergence failures; retry path no longer  
+  fails with user-supplied control lists.
+* Mode 1 predictions in beta binomial modelling: mean-preserving fallback when 
+  the method of moments yields invalid beta-binomial parameters (previously 
+  both parameters were clamped, biasing the predicted mean).
+* `diagnostics.betabinomial()`: robust against singular Hessians; removed dead 
+  code.
+* Consistent clamping of linear predictors between likelihood and prediction 
+  (mode 2); more robust scale specification (`is.numeric` instead of `typeof`).
+
+
+## Performance Optimizations in beta binomial modelling
+
+* `lchoose(n, y)` is precomputed once per fit instead of in every optimizer
+  iteration.
+* `predict()` for beta-binomial models computes the distribution once per  
+  unique age (major speed-up for grouped data).
+* Shared internal helpers for input validation, design matrices and the  
+  beta-binomial pmf/cdf; percentile plots now use a single long-format layer.
+
+
+## Behavioural changes
+
+* Candidate models in Taylor modelling that do not depend on L at all (flat 
+  percentile lines) are now flagged as *inconsistent* during screening; 
+  previously they passed the monotonicity check. Such models are degenerate
+  for norming purposes.
+* In beta binomial modelling, the plotting now show discrete beta-binomial 
+  quantiles are now rendered as proper step functions (geom_step, midpoint 
+  risers) in plot() and compare(); compare() gained a discrete argument 
+  default TRUE) controlling whether beta-binomial models are displayed with 
+  exact discrete quantiles or the continuous beta approximation.  This as well
+  resolves an artefact of compressed percentile lines in areas +/- 1 SD that 
+  falsly indicated an inferiority of beta binomial models.
 
 
 
