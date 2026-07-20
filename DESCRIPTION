@@ -1,6 +1,6 @@
 Package: cNORM
 Title: Continuous Norming
-Version: 3.6.1
+Version: 3.6.2
 Authors@R: c(
     person("Alexandra", "Lenhard", 
            email = "lenhard@psychometrica.de",
@@ -42,8 +42,8 @@ BugReports: https://github.com/WLenhard/cNORM/issues
 Depends: R (>= 4.0.0)
 Imports: ggplot2 (>= 3.5.0), leaps (>= 3.1), grDevices, parallel,
         stats, utils
-Suggests: DT, haven, foreign, knitr, markdown, readxl, rmarkdown,
-        shiny, shinycssloaders, testthat (>= 3.0.0)
+Suggests: DT, haven, foreign, knitr, markdown, numDeriv, readxl,
+        rmarkdown, shiny, shinycssloaders, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
@@ -52,7 +52,7 @@ LazyData: true
 LazyDataCompression: xz
 Config/roxygen2/version: 8.0.0
 NeedsCompilation: no
-Packaged: 2026-07-13 09:47:59 UTC; gbpa005
+Packaged: 2026-07-20 11:10:14 UTC; gbpa005
 Author: Alexandra Lenhard [aut] (ORCID:
     <https://orcid.org/0000-0001-8680-4381>),
   Wolfgang Lenhard [cre, aut] (ORCID:
@@ -61,4 +61,4 @@ Author: Alexandra Lenhard [aut] (ORCID:
   WPS Publisher [fnd] (https://www.wpspublish.com/)
 Maintainer: Wolfgang Lenhard <wolfgang.lenhard@uni-wuerzburg.de>
 Repository: CRAN
-Date/Publication: 2026-07-13 10:30:02 UTC
+Date/Publication: 2026-07-20 11:40:02 UTC

@@ -15,7 +15,8 @@ plot(ppvt$age, ppvt$raw, main="PPVT Raw Scores by Age",
 ## ----fig1, fig.height = 4, fig.width = 7--------------------------------------
 # Models the data across a continuos explanatroy variable such as age,
 # thereby assuming that the raw scores follow a beta-binomial distribution
-# at a given age level:
+# at a given age level. Use autoselect.betabinomial (same syntax) to find
+# the model with the lowest BIC automatically.
 
 model.betabinomial <- cnorm.betabinomial(age = ppvt$age, score = ppvt$raw, n = 228)
 
@@ -48,4 +49,7 @@ model_weighted <- cnorm.betabinomial(ppvt$age, ppvt$raw, weights = weights)
 
 tables <- normTable.betabinomial(model.betabinomial, c(14.25, 14.75), CI = .95, reliability = .97)
 head(tables[[1]]) # head is used to show only the first few rows of the table
+
+## ----echo=FALSE, out.height="450px", out.width="555px", fig.align='center'----
+knitr::include_graphics("beta.png")
 

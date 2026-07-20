@@ -16,7 +16,8 @@ checkConsistency(
   stepNorm = 1,
   method = c("analytic", "grid"),
   warn = FALSE,
-  silent = FALSE
+  silent = FALSE,
+  minDip = 0.01
 )
 }
 \arguments{
@@ -40,13 +41,18 @@ age points are used. Lower values indicate higher precision.}
 \item{stepNorm}{Stepping parameter for the norm table check within age
 (only used with \code{method = "grid"})}
 
-\item{method}{Either "analytic" (default; exact within age via polynomial
-derivative roots) or "grid" (numerical check on a norm score grid)}
+\item{method}{Monotonicity cgeck. Either "analytic" (default; exact within
+age via polynomial derivative roots) or "grid" (numerical check on a norm
+score grid)}
 
 \item{warn}{Retained for backwards compatibility (violations below numerical
 tolerance are always suppressed)}
 
 \item{silent}{turn off messages}
+
+\item{minDip}{Tolerance for monotonicity check. Allow small violations
+(default: .01 or 1% of the raw score range). Decrease e. g. to 1e-6
+for strict checking.}
 }
 \value{
 Boolean, indicating model violations (TRUE) or no problems (FALSE)
